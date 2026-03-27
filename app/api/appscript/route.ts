@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const action = body.action
     
-    console.log("[v0] Proxy AppScript POST - Action:", action, "Body:", JSON.stringify(body))
+
     
     // Construire les parametres pour AppScript
     // AppScript attend les donnees dans e.parameter, donc on utilise URLSearchParams
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
       formData.append('payload', JSON.stringify(payload))
     }
 
-    console.log("[v0] Envoi a AppScript:", formData.toString())
+
 
     const response = await fetch(APPSCRIPT_URL, {
       method: "POST",
@@ -48,11 +48,10 @@ export async function POST(request: NextRequest) {
     })
 
     const text = await response.text()
-    console.log("[v0] Reponse brute AppScript:", text.substring(0, 500))
     
     // Verifier si c'est une page de connexion Google (erreur)
     if (text.includes("<!doctype html>") || text.includes("accounts.google.com") || text.includes("<!DOCTYPE html>")) {
-      console.error("[v0] AppScript retourne une page HTML au lieu de JSON")
+  
       return NextResponse.json({
         success: false,
         error: "Le serveur AppScript n'est pas accessible. Verifiez que le script est deploye correctement.",
@@ -65,7 +64,7 @@ export async function POST(request: NextRequest) {
     try {
       data = JSON.parse(text)
     } catch (parseError) {
-      console.error("[v0] Erreur parsing JSON:", parseError, "Texte:", text.substring(0, 200))
+
       return NextResponse.json({
         success: false,
         error: "Reponse invalide du serveur",
@@ -73,10 +72,9 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    console.log("[v0] Reponse AppScript parsee:", JSON.stringify(data))
     return NextResponse.json(data)
   } catch (error) {
-    console.error("[v0] Erreur proxy POST:", error)
+
     return NextResponse.json(
       { success: false, error: error instanceof Error ? error.message : "Erreur serveur" },
       { status: 500 }
@@ -90,7 +88,7 @@ export async function GET(request: NextRequest) {
     const action = searchParams.get("action") || "getProfileData"
     const user = searchParams.get("user")
     
-    console.log("[v0] Proxy AppScript GET - Action:", action, "User:", user)
+
     
     // Construire l'URL avec les parametres
     const url = new URL(APPSCRIPT_URL)
@@ -104,7 +102,7 @@ export async function GET(request: NextRequest) {
       }
     })
     
-    console.log("[v0] URL AppScript GET:", url.toString())
+
     
     const response = await fetch(url.toString(), {
       method: "GET",
@@ -112,7 +110,6 @@ export async function GET(request: NextRequest) {
     })
     
     const text = await response.text()
-    console.log("[v0] Reponse brute GET:", text.substring(0, 500))
     
     if (text.includes("<!doctype html>") || text.includes("<!DOCTYPE html>")) {
       return NextResponse.json({
@@ -135,7 +132,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(data)
   } catch (error) {
-    console.error("[v0] Erreur proxy GET:", error)
+
     return NextResponse.json(
       { success: false, error: error instanceof Error ? error.message : "Erreur serveur" },
       { status: 500 }

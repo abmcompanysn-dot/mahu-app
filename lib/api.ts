@@ -146,8 +146,6 @@ export async function callAppScript<T = unknown>(
       payload.token = token
     }
 
-    console.log("[v0] Appel API:", action, payload)
-
     const response = await fetch(API_PROXY_URL, {
       method: "POST",
       headers: {
@@ -157,7 +155,6 @@ export async function callAppScript<T = unknown>(
     })
 
     const result = await response.json()
-    console.log("[v0] Reponse API:", action, result)
     return result as ApiResponse<T>
   } catch (error) {
     console.error("[v0] Erreur API:", error)
@@ -177,14 +174,11 @@ export async function callAppScriptGet<T = unknown>(
       url.searchParams.append(key, value)
     })
 
-    console.log("[v0] Appel API GET:", action, params)
-
     const response = await fetch(url.toString(), {
       method: "GET",
     })
 
     const result = await response.json()
-    console.log("[v0] Reponse API GET:", action, result)
     return result as T
   } catch (error) {
     console.error("[v0] Erreur API GET:", error)
