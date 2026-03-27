@@ -64,21 +64,24 @@ interface PhonePreviewProps {
 }
 
 export function PhonePreview({ profile, profileUrl }: PhonePreviewProps) {
-  // Support both AppScript format and legacy format
+  // Support both AppScript format and legacy format - NO demo values
   const displayName = profile?.Nom_Complet || 
-    (profile?.firstName && profile?.lastName ? `${profile.firstName} ${profile.lastName}` : "Jean Dupont")
+    (profile?.firstName && profile?.lastName ? `${profile.firstName} ${profile.lastName}` : "")
   
   const initials = displayName
-    .split(" ")
-    .map(n => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2) || "JD"
+    ? displayName
+        .split(" ")
+        .map(n => n[0])
+        .filter(Boolean)
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
+    : "?"
   
-  const title = profile?.Profession || profile?.title || "CEO & Fondateur"
-  const company = profile?.Compagnie || profile?.company || "Mahu Technologies"
-  const location = profile?.Location || profile?.location || "Paris, France"
-  const username = profileUrl || "jean-dupont"
+  const title = profile?.Profession || profile?.title || ""
+  const company = profile?.Compagnie || profile?.company || ""
+  const location = profile?.Location || profile?.location || ""
+  const username = profileUrl || ""
   const profilePicture = profile?.URL_Photo || profile?.profilePicture
   const coverImage = profile?.URL_Couverture || profile?.coverImage
   const accentColor = profile?.Couleur_Theme || "#007AFF"
@@ -93,16 +96,6 @@ export function PhonePreview({ profile, profileUrl }: PhonePreviewProps) {
     }
   } else if (profile?.socialLinks) {
     socialLinks = profile.socialLinks
-  }
-
-  // Default links if none
-  if (socialLinks.length === 0) {
-    socialLinks = [
-      { type: "linkedin", label: "LinkedIn", url: "#" },
-      { type: "email", label: "Email", url: "#" },
-      { type: "phone", label: "Telephone", url: "#" },
-      { type: "website", label: "Site web", url: "#" },
-    ]
   }
 
   return (
@@ -192,7 +185,12 @@ export function PhonePreview({ profile, profileUrl }: PhonePreviewProps) {
                 className="px-5 mt-5"
               >
                 <div className="grid grid-cols-2 gap-2">
-                  {socialLinks.slice(0, 4).map((link, index) => {
+                  {(socialLinks.length > 0 ? socialLinks : [
+                    { type: "linkedin", label: "LinkedIn", url: "#" },
+                    { type: "email", label: "Email", url: "#" },
+                    { type: "phone", label: "Telephone", url: "#" },
+                    { type: "website", label: "Site web", url: "#" },
+                  ]).slice(0, 4).map((link, index) => {
                     const IconComponent = socialIcons[link.type?.toLowerCase()] || socialIcons.default
                     const color = socialColors[link.type?.toLowerCase()] || socialColors.default
                     return (

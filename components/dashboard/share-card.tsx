@@ -16,7 +16,7 @@ interface ShareCardProps {
   username?: string
 }
 
-export function ShareCard({ options, username = "jean-dupont" }: ShareCardProps) {
+export function ShareCard({ options, username = "" }: ShareCardProps) {
   const [copiedLink, setCopiedLink] = useState(false)
   const [showQR, setShowQR] = useState(false)
 

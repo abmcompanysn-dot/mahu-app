@@ -40,7 +40,7 @@ interface RecentActivityProps {
 }
 
 export function RecentActivity({ activities }: RecentActivityProps) {
-  // Transform activities to display format
+  // Transform activities to display format - NO demo data
   const displayActivities = activities && activities.length > 0 
     ? activities.slice(0, 5).map((act, idx) => ({
         id: act.id || String(idx),
@@ -48,13 +48,32 @@ export function RecentActivity({ activities }: RecentActivityProps) {
         text: act.text || (act.source ? `Vue depuis ${act.source}` : "Activite"),
         time: act.time || act.date || act.timestamp || "Recemment",
       }))
-    : [
-        { id: "1", type: "view", text: "Quelqu'un a consulte votre profil", time: "Il y a 5 min" },
-        { id: "2", type: "download", text: "Contact enregistre via NFC", time: "Il y a 23 min" },
-        { id: "3", type: "click", text: "Clic sur votre lien LinkedIn", time: "Il y a 1h" },
-        { id: "4", type: "contact", text: "Nouveau contact ajoute a votre liste", time: "Il y a 2h" },
-        { id: "5", type: "view", text: "10 nouvelles vues de votre carte", time: "Il y a 3h" },
-      ]
+    : []
+  
+  // Show empty state if no activities
+  if (displayActivities.length === 0) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+        className="p-6 rounded-2xl bg-card/50 border border-border/50 backdrop-blur-sm"
+      >
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-foreground">Activite recente</h3>
+        </div>
+        <div className="text-center py-8">
+          <Eye className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
+          <p className="text-sm text-muted-foreground">
+            Aucune activite pour l&apos;instant
+          </p>
+          <p className="text-xs text-muted-foreground/70 mt-1">
+            Partagez votre carte pour voir vos premieres vues
+          </p>
+        </div>
+      </motion.div>
+    )
+  }
 
   return (
     <motion.div

@@ -103,14 +103,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const result = await api.getDashboardData(currentToken) as unknown as AppScriptDashboardData
       
-      console.log("[v0] Dashboard data received:", result)
-      
-      if (result.error) {
-        console.error("[v0] Dashboard error:", result.error)
-        return null
-      }
-      
-      if (result.profile) {
+      // Si on a un profil, c'est que ca a fonctionne (ignore result.error car AppScript peut le retourner)
+      if (result.user || result.profile) {
         setDashboardData(result)
         setUser(result.user)
         return result
@@ -135,7 +129,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true)
 
     const result = await api.login(email, password)
-    console.log("[v0] Login result:", result)
+
 
     if (result.success && result.token) {
       localStorage.setItem("mahu_token", result.token)

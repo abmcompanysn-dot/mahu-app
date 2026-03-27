@@ -88,19 +88,22 @@ export default function ContactsPage() {
     }
   }
 
-  const getContactType = (contact: string) => {
+  const getContactType = (contact: string | undefined | null) => {
+    if (!contact || typeof contact !== 'string') return 'other'
     if (contact.includes('@')) return 'email'
     if (contact.startsWith('+') || /^\d/.test(contact)) return 'phone'
     return 'other'
   }
 
-  const getInitials = (name: string) => {
+  const getInitials = (name: string | undefined | null) => {
+    if (!name || typeof name !== 'string') return '?'
     return name
       .split(' ')
       .map(n => n[0])
+      .filter(Boolean)
       .join('')
       .toUpperCase()
-      .slice(0, 2)
+      .slice(0, 2) || '?'
   }
 
   if (!isAuthenticated) {
