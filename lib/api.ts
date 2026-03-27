@@ -1,6 +1,40 @@
 // Configuration pour Google AppScript
 // URL de votre Web App Google AppScript
+// Note: Utilisez l'URL /exec (deploye) au lieu de /dev pour la production
 export const APPSCRIPT_URL = process.env.NEXT_PUBLIC_APPSCRIPT_URL || "https://script.google.com/macros/s/AKfycbwkdog99cVkYOENGz-JnGOFNEGUWZ5H3TC_BsPg4tyA/exec"
+
+// Types supplementaires pour la compatibilite
+export interface UserProfile {
+  firstName?: string
+  lastName?: string
+  title?: string
+  company?: string
+  bio?: string
+  location?: string
+  username?: string
+  profilePicture?: string
+  socialLinks?: Array<{ type: string; label: string; url: string }>
+}
+
+export interface UserStats {
+  totalViews?: number
+  viewsChange?: string
+  totalClicks?: number
+  clicksChange?: string
+  contactsGenerated?: number
+  contactsChange?: string
+  conversionRate?: string
+  conversionChange?: string
+  weeklyViews?: number
+}
+
+export interface Activity {
+  id: string
+  type: string
+  text: string
+  time: string
+  timestamp: string
+}
 
 // Types pour l'API
 export interface User {
@@ -227,4 +261,75 @@ export const api = {
   // Support
   contactSupport: (token: string | null, data: { email: string; sujet: string; message: string; telephone?: string }) =>
     token ? callAppScript("contactSupport", data, token) : callAppScript("contactSupport", data),
+}
+
+// Alias pour compatibilite avec les composants existants
+export const mahuApi = {
+  login: api.login,
+  register: api.register,
+  resetPassword: (email: string) => api.forgotPassword(email),
+  
+  getProfile: async (userId: string) => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('mahu_token') : null
+    if (!token) return { success: false, data: null }
+    const result = await api.getDashboardData(token)
+    if (result.success && result.profile) {
+      const profile = result.profile
+      return {
+        success: true,
+        data: {
+          firstName: profile.Nom_Complet?.split(' ')[0] || '',
+          lastName: profile.Nom_Complet?.split(' ').slice(1).join(' ') || '',
+          title: profile.Profession,
+          company: profile.Compagnie,
+          bio: '',
+          location: profile.Location,
+          username: result.profileUrl,
+          profilePicture: profile.URL_Photo,
+          socialLinks: JSON.parse(profile.Liens_Sociaux_JSON || '[]'),
+        } as UserProfile
+      }
+    }
+    return { success: false, data: null }
+  },
+  
+  getStats: async (userId: string) => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('mahu_token') : null
+    if (!token) return { success: false, data: null }
+    const result = await api.getDashboardData(token)
+    if (result.success && result.stats) {
+      return {
+        success: true,
+        data: {
+          totalViews: result.stats.views || 0,
+          viewsChange: result.stats.viewsTrend || '+0%',
+          totalClicks: 0,
+          clicksChange: '+0%',
+          contactsGenerated: result.stats.leads || 0,
+          contactsChange: result.stats.leadsTrend || '+0%',
+          conversionRate: '0%',
+          conversionChange: '+0%',
+          weeklyViews: result.stats.views || 0,
+        } as UserStats
+      }
+    }
+    return { success: false, data: null }
+  },
+  
+  getActivities: async (userId: string, limit: number = 5) => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('mahu_token') : null
+    if (!token) return { success: false, data: [] }
+    const result = await api.getDashboardData(token)
+    if (result.success && result.recentActivity) {
+      const activities: Activity[] = result.recentActivity.slice(0, limit).map((act, idx) => ({
+        id: String(idx),
+        type: 'view',
+        text: `Vue depuis ${act.source}`,
+        time: act.date,
+        timestamp: act.date,
+      }))
+      return { success: true, data: activities }
+    }
+    return { success: false, data: [] }
+  },
 }

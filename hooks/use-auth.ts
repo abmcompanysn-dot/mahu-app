@@ -4,12 +4,21 @@ import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { api, type DashboardData, type Profile } from "@/lib/api"
 
+interface UserData {
+  id: string
+  email: string
+  firstName?: string
+  lastName?: string
+  username?: string
+}
+
 interface AuthState {
   token: string | null
   role: string | null
   isLoading: boolean
   isAuthenticated: boolean
   dashboardData: DashboardData | null
+  user: UserData | null
 }
 
 export function useAuth() {
@@ -20,6 +29,7 @@ export function useAuth() {
     isLoading: true,
     isAuthenticated: false,
     dashboardData: null,
+    user: null,
   })
 
   // Charger le token depuis localStorage au demarrage
@@ -36,6 +46,7 @@ export function useAuth() {
             isLoading: false,
             isAuthenticated: true,
             dashboardData: null,
+            user: null,
           })
         } else {
           setState({
@@ -44,6 +55,7 @@ export function useAuth() {
             isLoading: false,
             isAuthenticated: false,
             dashboardData: null,
+            user: null,
           })
         }
       } catch {
@@ -53,6 +65,7 @@ export function useAuth() {
           isLoading: false,
           isAuthenticated: false,
           dashboardData: null,
+          user: null,
         })
       }
     }
@@ -76,6 +89,7 @@ export function useAuth() {
         isLoading: false,
         isAuthenticated: true,
         dashboardData: null,
+        user: { id: result.token, email },
       })
       
       return { success: true, newUser: result.newUser }
@@ -101,6 +115,7 @@ export function useAuth() {
         isLoading: false,
         isAuthenticated: true,
         dashboardData: null,
+        user: { id: result.token, email },
       })
       
       return { success: true }
@@ -138,6 +153,7 @@ export function useAuth() {
       isLoading: false,
       isAuthenticated: false,
       dashboardData: null,
+      user: null,
     })
     
     router.push("/login")
