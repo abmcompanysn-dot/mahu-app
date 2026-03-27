@@ -1,4 +1,4 @@
-// Configuration pour Google AppScript - v3 (uses proxy)
+// Configuration pour Google AppScript - v4 (uses proxy, no CORS issues)
 // Utilise le proxy API Next.js pour eviter les erreurs CORS
 const API_PROXY_URL = "/api/appscript"
 

@@ -1,5 +1,6 @@
 "use client"
 
+// v4 - Fixed hydration issue
 import { motion } from "framer-motion"
 import { Linkedin, Mail, Phone, Globe, MapPin, Instagram, Twitter, Facebook, Youtube, Github, Link as LinkIcon } from "lucide-react"
 import type { UserProfile } from "@/lib/api"
@@ -59,6 +60,7 @@ export function PhonePreview({ profile }: PhonePreviewProps) {
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.5 }}
       className="relative"
+      suppressHydrationWarning
     >
       {/* Phone Frame */}
       <div className="relative mx-auto w-full max-w-[280px]">
