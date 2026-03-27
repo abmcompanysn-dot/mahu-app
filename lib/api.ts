@@ -1,9 +1,6 @@
-// Configuration pour Google AppScript - v4 (uses proxy, no CORS issues)
-// Utilise le proxy API Next.js pour eviter les erreurs CORS
+// Configuration pour Google AppScript - v5 (production ready)
+// Toutes les requetes passent par le proxy /api/appscript pour eviter CORS
 const API_PROXY_URL = "/api/appscript"
-
-// URL directe pour reference (utilisee cote serveur dans le proxy)
-export const APPSCRIPT_URL = "https://script.google.com/macros/s/AKfycbwkdog99cVkYOENGz-JnGOFNEGUWZ5H3TC_BsPg4tyA/exec"
 
 // Types supplementaires pour la compatibilite
 export interface UserProfile {
