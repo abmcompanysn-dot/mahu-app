@@ -1,9 +1,8 @@
 "use client"
 
-// v5 - Fixed hydration issue, deterministic QR code
+// v6 - Supports both Profile and UserProfile types
 import { motion } from "framer-motion"
-import { Linkedin, Mail, Phone, Globe, MapPin, Instagram, Twitter, Facebook, Youtube, Github, Link as LinkIcon } from "lucide-react"
-import type { UserProfile } from "@/lib/api"
+import { Linkedin, Mail, Phone, Globe, MapPin, Instagram, Twitter, Facebook, Youtube, Github, MessageCircle, Link as LinkIcon } from "lucide-react"
 
 const socialIcons: Record<string, React.ComponentType<{ className?: string; style?: React.CSSProperties }>> = {
   linkedin: Linkedin,
@@ -15,6 +14,7 @@ const socialIcons: Record<string, React.ComponentType<{ className?: string; styl
   facebook: Facebook,
   youtube: Youtube,
   github: Github,
+  whatsapp: MessageCircle,
   default: LinkIcon,
 }
 
@@ -28,31 +28,82 @@ const socialColors: Record<string, string> = {
   facebook: "#1877F2",
   youtube: "#FF0000",
   github: "#333333",
+  whatsapp: "#25D366",
   default: "#6B7280",
 }
 
-interface PhonePreviewProps {
-  profile?: UserProfile | null
+interface SocialLink {
+  type: string
+  url: string
+  label?: string
 }
 
-export function PhonePreview({ profile }: PhonePreviewProps) {
-  const displayName = profile ? `${profile.firstName || ""} ${profile.lastName || ""}`.trim() : "Jean Dupont"
-  const initials = profile 
-    ? `${profile.firstName?.[0] || ""}${profile.lastName?.[0] || ""}`.toUpperCase()
-    : "JD"
-  const title = profile?.title || "CEO & Fondateur"
-  const company = profile?.company || "Mahu Technologies"
-  const bio = profile?.bio || "Passione par l'innovation et le networking digital."
-  const location = profile?.location || "Paris, France"
-  const username = profile?.username || "jean-dupont"
-  const profilePicture = profile?.profilePicture
+interface ProfileData {
+  Nom_Complet?: string
+  Profession?: string
+  Compagnie?: string
+  Location?: string
+  URL_Photo?: string
+  URL_Couverture?: string
+  Couleur_Theme?: string
+  Liens_Sociaux_JSON?: string
+  // Legacy format support
+  firstName?: string
+  lastName?: string
+  title?: string
+  company?: string
+  location?: string
+  profilePicture?: string
+  coverImage?: string
+  socialLinks?: SocialLink[]
+}
 
-  const socialLinks = profile?.socialLinks || [
-    { type: "linkedin", label: "LinkedIn", url: "#" },
-    { type: "email", label: "Email", url: "#" },
-    { type: "phone", label: "Telephone", url: "#" },
-    { type: "website", label: "Site web", url: "#" },
-  ]
+interface PhonePreviewProps {
+  profile?: ProfileData | null
+  profileUrl?: string
+}
+
+export function PhonePreview({ profile, profileUrl }: PhonePreviewProps) {
+  // Support both AppScript format and legacy format
+  const displayName = profile?.Nom_Complet || 
+    (profile?.firstName && profile?.lastName ? `${profile.firstName} ${profile.lastName}` : "Jean Dupont")
+  
+  const initials = displayName
+    .split(" ")
+    .map(n => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2) || "JD"
+  
+  const title = profile?.Profession || profile?.title || "CEO & Fondateur"
+  const company = profile?.Compagnie || profile?.company || "Mahu Technologies"
+  const location = profile?.Location || profile?.location || "Paris, France"
+  const username = profileUrl || "jean-dupont"
+  const profilePicture = profile?.URL_Photo || profile?.profilePicture
+  const coverImage = profile?.URL_Couverture || profile?.coverImage
+  const accentColor = profile?.Couleur_Theme || "#007AFF"
+
+  // Parse social links
+  let socialLinks: SocialLink[] = []
+  if (profile?.Liens_Sociaux_JSON) {
+    try {
+      socialLinks = JSON.parse(profile.Liens_Sociaux_JSON)
+    } catch {
+      socialLinks = []
+    }
+  } else if (profile?.socialLinks) {
+    socialLinks = profile.socialLinks
+  }
+
+  // Default links if none
+  if (socialLinks.length === 0) {
+    socialLinks = [
+      { type: "linkedin", label: "LinkedIn", url: "#" },
+      { type: "email", label: "Email", url: "#" },
+      { type: "phone", label: "Telephone", url: "#" },
+      { type: "website", label: "Site web", url: "#" },
+    ]
+  }
 
   return (
     <motion.div
@@ -74,8 +125,18 @@ export function PhonePreview({ profile }: PhonePreviewProps) {
             {/* Screen content */}
             <div className="relative h-[520px] bg-background overflow-hidden">
               {/* Cover Image */}
-              <div className="relative h-32 bg-gradient-to-br from-primary/30 via-primary/20 to-primary/10">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(0,122,255,0.3),transparent_50%)]" />
+              <div 
+                className="relative h-32 bg-cover bg-center"
+                style={{ 
+                  backgroundImage: coverImage 
+                    ? `url(${coverImage})` 
+                    : `linear-gradient(135deg, ${accentColor}40, ${accentColor}15)`,
+                }}
+              >
+                <div 
+                  className="absolute inset-0"
+                  style={{ background: `radial-gradient(circle at 50% 120%, ${accentColor}30, transparent 50%)` }}
+                />
               </div>
 
               {/* Profile Section */}
@@ -85,12 +146,15 @@ export function PhonePreview({ profile }: PhonePreviewProps) {
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ delay: 0.3, type: "spring" }}
-                  className="w-20 h-20 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 border-4 border-background flex items-center justify-center mx-auto overflow-hidden"
+                  className="w-20 h-20 rounded-full border-4 border-background flex items-center justify-center mx-auto overflow-hidden"
+                  style={{ 
+                    backgroundColor: profilePicture ? 'transparent' : `${accentColor}20`,
+                  }}
                 >
                   {profilePicture ? (
                     <img src={profilePicture} alt={displayName} className="w-full h-full object-cover" />
                   ) : (
-                    <span className="text-2xl font-bold text-primary">{initials}</span>
+                    <span className="text-2xl font-bold" style={{ color: accentColor }}>{initials}</span>
                   )}
                 </motion.div>
 
@@ -103,18 +167,8 @@ export function PhonePreview({ profile }: PhonePreviewProps) {
                 >
                   <h3 className="text-lg font-bold text-foreground">{displayName}</h3>
                   <p className="text-sm text-muted-foreground">{title}</p>
-                  <p className="text-xs text-primary mt-1">{company}</p>
+                  <p className="text-xs mt-1" style={{ color: accentColor }}>{company}</p>
                 </motion.div>
-
-                {/* Bio */}
-                <motion.p
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.5 }}
-                  className="text-xs text-muted-foreground text-center mt-3 leading-relaxed line-clamp-2"
-                >
-                  {bio}
-                </motion.p>
 
                 {/* Location */}
                 {location && (
@@ -139,8 +193,8 @@ export function PhonePreview({ profile }: PhonePreviewProps) {
               >
                 <div className="grid grid-cols-2 gap-2">
                   {socialLinks.slice(0, 4).map((link, index) => {
-                    const IconComponent = socialIcons[link.type] || socialIcons.default
-                    const color = socialColors[link.type] || socialColors.default
+                    const IconComponent = socialIcons[link.type?.toLowerCase()] || socialIcons.default
+                    const color = socialColors[link.type?.toLowerCase()] || socialColors.default
                     return (
                       <motion.button
                         key={link.type + index}
@@ -152,7 +206,9 @@ export function PhonePreview({ profile }: PhonePreviewProps) {
                         className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-muted/50 border border-border/50 hover:border-primary/30 transition-all"
                       >
                         <IconComponent className="w-4 h-4" style={{ color }} />
-                        <span className="text-xs font-medium text-foreground truncate">{link.label}</span>
+                        <span className="text-xs font-medium text-foreground truncate">
+                          {link.label || link.type}
+                        </span>
                       </motion.button>
                     )
                   })}
@@ -166,7 +222,10 @@ export function PhonePreview({ profile }: PhonePreviewProps) {
                 transition={{ delay: 0.9 }}
                 className="px-5 mt-4"
               >
-                <button className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors">
+                <button 
+                  className="w-full py-3 rounded-xl text-white font-medium text-sm transition-colors"
+                  style={{ backgroundColor: accentColor }}
+                >
                   Enregistrer le contact
                 </button>
               </motion.div>
@@ -188,7 +247,7 @@ export function PhonePreview({ profile }: PhonePreviewProps) {
                   </div>
                   <div className="text-left">
                     <p className="text-xs font-medium text-foreground">Scanner pour sauvegarder</p>
-                    <p className="text-xs text-muted-foreground">mahu.cards/{username}</p>
+                    <p className="text-xs text-muted-foreground">mahu.cards/p/{username}</p>
                   </div>
                 </div>
               </motion.div>
@@ -200,13 +259,11 @@ export function PhonePreview({ profile }: PhonePreviewProps) {
         </div>
 
         {/* Reflection effect */}
-        <div className="absolute -inset-4 bg-gradient-to-b from-primary/5 via-transparent to-transparent rounded-[55px] -z-10 blur-xl" />
+        <div 
+          className="absolute -inset-4 rounded-[55px] -z-10 blur-xl opacity-30"
+          style={{ background: `linear-gradient(to bottom, ${accentColor}20, transparent)` }}
+        />
       </div>
-
-      {/* Label */}
-      <p className="text-center text-sm text-muted-foreground mt-4">
-        Apercu de votre carte
-      </p>
     </motion.div>
   )
 }

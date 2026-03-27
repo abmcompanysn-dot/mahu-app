@@ -187,7 +187,7 @@ export default function DashboardPage() {
       {/* Phone Preview Sidebar */}
       <div className="lg:col-span-1">
         <div className="sticky top-24">
-          <PhonePreview profile={phoneProfile} />
+          <PhonePreview profile={phoneProfile} profileUrl={profileUrl} />
         </div>
       </div>
     </div>

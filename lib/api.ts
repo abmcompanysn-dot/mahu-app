@@ -213,7 +213,10 @@ export const api = {
     callAppScript("saveProfile", data, token),
   
   saveProfileImage: (token: string, data: { imageBase64: string; type: 'photo' | 'cover' }) =>
-    callAppScript("saveProfileImage", data, token),
+    callAppScript("saveProfileImage", { 
+      imageType: data.type === 'photo' ? 'picture' : 'cover',
+      imageUrl: data.imageBase64
+    }, token),
   
   getPublicProfile: (profileUrl: string) =>
     callAppScriptGet<Profile & { error?: string }>("getProfileData", { user: profileUrl }),

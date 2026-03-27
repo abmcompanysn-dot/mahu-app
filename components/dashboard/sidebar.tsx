@@ -15,6 +15,7 @@ import {
   X
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/hooks/use-auth"
 
 interface SidebarProps {
   collapsed: boolean
@@ -38,6 +39,11 @@ export function DashboardSidebar({
   onMobileOpenChange
 }: SidebarProps) {
   const pathname = usePathname()
+  const { logout } = useAuth()
+
+  const handleLogout = () => {
+    logout()
+  }
 
   const SidebarContent = () => (
     <>
@@ -121,7 +127,7 @@ export function DashboardSidebar({
 
       {/* Footer */}
       <div className="p-4 border-t border-border/50">
-        <Link href="/">
+        <button onClick={handleLogout} className="w-full">
           <motion.div
             whileHover={{ x: 4 }}
             whileTap={{ scale: 0.98 }}
@@ -141,7 +147,7 @@ export function DashboardSidebar({
               )}
             </AnimatePresence>
           </motion.div>
-        </Link>
+        </button>
         
         {/* Collapse button - desktop only */}
         <button

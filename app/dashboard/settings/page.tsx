@@ -1,13 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { 
-  Bell, Shield, Globe, Palette, 
+  Bell, Shield, Globe, Palette, User,
   CreditCard, Download, Trash2, 
-  ChevronRight, Moon, Sun, Loader2
+  ChevronRight, Moon, Sun, Loader2, Check, LogOut
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useAuth } from "@/hooks/use-auth"
 
 const settingsSections = [
   {
@@ -55,6 +56,8 @@ const settingsSections = [
 ]
 
 export default function SettingsPage() {
+  const { dashboardData, logout } = useAuth()
+  
   const [toggles, setToggles] = useState<Record<string, boolean>>({
     email_notif: true,
     push_notif: true,
@@ -63,6 +66,14 @@ export default function SettingsPage() {
   })
   const [theme, setTheme] = useState<"dark" | "light">("dark")
   const [saving, setSaving] = useState(false)
+  const [saveSuccess, setSaveSuccess] = useState(false)
+
+  const profile = dashboardData?.profile
+  const user = dashboardData?.user
+  
+  const displayName = profile?.Nom_Complet || user?.Email?.split("@")[0] || "Utilisateur"
+  const email = user?.Email || ""
+  const initials = displayName.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
 
   const handleToggle = (id: string) => {
     setToggles((prev) => ({ ...prev, [id]: !prev[id] }))
@@ -70,8 +81,14 @@ export default function SettingsPage() {
 
   const handleSave = async () => {
     setSaving(true)
-    await new Promise((resolve) => setTimeout(resolve, 1500))
+    await new Promise((resolve) => setTimeout(resolve, 1000))
     setSaving(false)
+    setSaveSuccess(true)
+    setTimeout(() => setSaveSuccess(false), 3000)
+  }
+
+  const handleLogout = () => {
+    logout()
   }
 
   return (
@@ -87,9 +104,39 @@ export default function SettingsPage() {
           <p className="text-muted-foreground">Gerez vos preferences et votre compte</p>
         </div>
         <Button onClick={handleSave} disabled={saving} className="bg-primary hover:bg-primary/90">
-          {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-          Sauvegarder
+          {saving ? (
+            <Loader2 className="w-4 h-4 animate-spin mr-2" />
+          ) : saveSuccess ? (
+            <Check className="w-4 h-4 mr-2" />
+          ) : null}
+          {saveSuccess ? "Sauvegarde !" : "Sauvegarder"}
         </Button>
+      </motion.div>
+
+      {/* User Info Card */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.05 }}
+        className="rounded-2xl bg-card/50 border border-border/50 backdrop-blur-sm overflow-hidden"
+      >
+        <div className="flex items-center gap-4 p-6">
+          <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center">
+            <span className="text-xl font-bold text-primary">{initials}</span>
+          </div>
+          <div className="flex-1">
+            <h3 className="font-semibold text-foreground text-lg">{displayName}</h3>
+            <p className="text-muted-foreground">{email}</p>
+          </div>
+          <Button 
+            variant="outline" 
+            onClick={handleLogout}
+            className="border-destructive/50 text-destructive hover:bg-destructive/10"
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            Deconnexion
+          </Button>
+        </div>
       </motion.div>
 
       {/* Settings Sections */}
@@ -98,7 +145,7 @@ export default function SettingsPage() {
           key={section.title}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: sectionIndex * 0.1 }}
+          transition={{ delay: (sectionIndex + 1) * 0.1 }}
           className="rounded-2xl bg-card/50 border border-border/50 backdrop-blur-sm overflow-hidden"
         >
           {/* Section Header */}
