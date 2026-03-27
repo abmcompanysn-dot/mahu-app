@@ -1,5 +1,6 @@
-// Configuration pour Google AppScript - v5 (production ready)
+// Configuration pour Google AppScript - v6 (production ready, no cache)
 // Toutes les requetes passent par le proxy /api/appscript pour eviter CORS
+// Ne jamais appeler APPSCRIPT_URL directement depuis le client
 const API_PROXY_URL = "/api/appscript"
 
 // Types supplementaires pour la compatibilite

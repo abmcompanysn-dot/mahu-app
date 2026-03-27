@@ -1,6 +1,6 @@
 "use client"
 
-// v4 - Fixed hydration issue
+// v5 - Fixed hydration issue, deterministic QR code
 import { motion } from "framer-motion"
 import { Linkedin, Mail, Phone, Globe, MapPin, Instagram, Twitter, Facebook, Youtube, Github, Link as LinkIcon } from "lucide-react"
 import type { UserProfile } from "@/lib/api"

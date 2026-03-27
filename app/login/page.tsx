@@ -29,11 +29,8 @@ export default function LoginPage() {
       if (result.success) {
         setSuccess(true)
         setTimeout(() => {
-          if (result.newUser) {
-            router.push("/onboarding")
-          } else {
-            router.push("/dashboard")
-          }
+          // Toujours rediriger vers le dashboard apres connexion
+          router.push("/dashboard")
         }, 1000)
       } else {
         setError(result.error || "Email ou mot de passe incorrect")
