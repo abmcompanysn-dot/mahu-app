@@ -8,6 +8,7 @@ const iconMap: Record<string, typeof Eye> = {
   download: Download,
   click: MousePointer,
   contact: UserPlus,
+  lead: UserPlus,
   Lien: Eye,
   QR: MousePointer,
   NFC: Download,
@@ -18,14 +19,20 @@ const colorMap: Record<string, { text: string; bg: string }> = {
   download: { text: "text-emerald-500", bg: "bg-emerald-500/10" },
   click: { text: "text-amber-500", bg: "bg-amber-500/10" },
   contact: { text: "text-cyan-500", bg: "bg-cyan-500/10" },
+  lead: { text: "text-cyan-500", bg: "bg-cyan-500/10" },
   Lien: { text: "text-primary", bg: "bg-primary/10" },
   QR: { text: "text-amber-500", bg: "bg-amber-500/10" },
   NFC: { text: "text-emerald-500", bg: "bg-emerald-500/10" },
 }
 
 interface ActivityItem {
-  date: string
-  source: string
+  id?: string
+  type?: string
+  text?: string
+  time?: string
+  timestamp?: string
+  date?: string
+  source?: string
 }
 
 interface RecentActivityProps {
@@ -33,13 +40,13 @@ interface RecentActivityProps {
 }
 
 export function RecentActivity({ activities }: RecentActivityProps) {
-  // Use provided activities or default demo data
+  // Transform activities to display format
   const displayActivities = activities && activities.length > 0 
     ? activities.slice(0, 5).map((act, idx) => ({
-        id: String(idx),
-        type: act.source,
-        text: `Vue depuis ${act.source}`,
-        time: act.date,
+        id: act.id || String(idx),
+        type: act.type || act.source || "view",
+        text: act.text || (act.source ? `Vue depuis ${act.source}` : "Activite"),
+        time: act.time || act.date || act.timestamp || "Recemment",
       }))
     : [
         { id: "1", type: "view", text: "Quelqu'un a consulte votre profil", time: "Il y a 5 min" },
