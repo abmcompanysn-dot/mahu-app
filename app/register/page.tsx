@@ -2,18 +2,16 @@
 
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { ArrowLeft, Loader2, CheckCircle2, Eye, EyeOff, Mail, Lock, User } from "lucide-react"
+import { ArrowLeft, Loader2, CheckCircle2, Eye, EyeOff, Mail, Lock } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-
-// TODO: Remplacer par l'URL de votre Google AppScript
-const APPSCRIPT_URL = "VOTRE_URL_APPSCRIPT_ICI"
+import { useAuth } from "@/hooks/use-auth"
 
 export default function RegisterPage() {
   const router = useRouter()
+  const { register } = useAuth()
   const [formData, setFormData] = useState({
-    name: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -50,37 +48,21 @@ export default function RegisterPage() {
     setError("")
 
     try {
-      const response = await fetch(APPSCRIPT_URL, {
-        method: "POST",
-        mode: "no-cors",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          action: "register",
-          name: formData.name.trim(),
-          email: formData.email.toLowerCase().trim(),
-          password: formData.password,
-        }),
-      })
+      const result = await register(
+        formData.email.toLowerCase().trim(),
+        formData.password
+      )
 
-      const data = await response.json().catch(() => null)
-
-      if (data?.success) {
+      if (result.success) {
         setSuccess(true)
         setTimeout(() => {
-          router.push("/login")
-        }, 2000)
+          router.push("/onboarding")
+        }, 1500)
       } else {
-        setError(data?.message || "Erreur lors de l'inscription")
+        setError(result.error || "Erreur lors de l'inscription")
       }
     } catch {
-      // Mode dev - inscription simulee
-      console.log("[v0] Mode dev - inscription simulee")
-      setSuccess(true)
-      setTimeout(() => {
-        router.push("/login")
-      }, 2000)
+      setError("Erreur de connexion au serveur")
     }
 
     setLoading(false)
@@ -138,7 +120,7 @@ export default function RegisterPage() {
                   <CheckCircle2 className="w-10 h-10 text-primary" />
                 </motion.div>
                 <h2 className="text-2xl font-bold text-foreground mb-2">Compte cree !</h2>
-                <p className="text-muted-foreground">Redirection vers la page de connexion...</p>
+                <p className="text-muted-foreground">Configuration de votre profil...</p>
               </motion.div>
             ) : (
               <motion.div
@@ -153,26 +135,6 @@ export default function RegisterPage() {
                 </p>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
-                  {/* Name Field */}
-                  <div>
-                    <label className="block text-sm font-medium text-muted-foreground mb-2">
-                      Nom complet
-                    </label>
-                    <div className="relative">
-                      <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                      <input
-                        type="text"
-                        name="name"
-                        required
-                        value={formData.name}
-                        onChange={handleChange}
-                        className="w-full pl-12 pr-4 py-3.5 rounded-xl bg-muted/30 border border-border/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
-                        placeholder="Jean Dupont"
-                        autoFocus
-                      />
-                    </div>
-                  </div>
-
                   {/* Email Field */}
                   <div>
                     <label className="block text-sm font-medium text-muted-foreground mb-2">
@@ -188,6 +150,7 @@ export default function RegisterPage() {
                         onChange={handleChange}
                         className="w-full pl-12 pr-4 py-3.5 rounded-xl bg-muted/30 border border-border/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
                         placeholder="email@exemple.com"
+                        autoFocus
                         autoComplete="email"
                       />
                     </div>

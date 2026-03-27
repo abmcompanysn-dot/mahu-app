@@ -6,12 +6,11 @@ import { ArrowLeft, Loader2, CheckCircle2, Eye, EyeOff, Mail, Lock } from "lucid
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-
-// TODO: Remplacer par l'URL de votre Google AppScript
-const APPSCRIPT_URL = "VOTRE_URL_APPSCRIPT_ICI"
+import { useAuth } from "@/hooks/use-auth"
 
 export default function LoginPage() {
   const router = useRouter()
+  const { login } = useAuth()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -25,49 +24,22 @@ export default function LoginPage() {
     setError("")
 
     try {
-      const response = await fetch(APPSCRIPT_URL, {
-        method: "POST",
-        mode: "no-cors",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          action: "login",
-          email: email.toLowerCase().trim(),
-          password: password,
-        }),
-      })
+      const result = await login(email.toLowerCase().trim(), password)
 
-      // Avec no-cors, on ne peut pas lire la reponse directement
-      // On va utiliser une approche differente avec redirect
-      const data = await response.json().catch(() => null)
-
-      if (data?.success) {
-        // Stocker les infos utilisateur
-        localStorage.setItem("mahu_user", JSON.stringify(data.user))
-        localStorage.setItem("mahu_token", data.token || "authenticated")
-        
+      if (result.success) {
         setSuccess(true)
         setTimeout(() => {
-          router.push("/dashboard")
+          if (result.newUser) {
+            router.push("/onboarding")
+          } else {
+            router.push("/dashboard")
+          }
         }, 1000)
       } else {
-        setError(data?.message || "Email ou mot de passe incorrect")
+        setError(result.error || "Email ou mot de passe incorrect")
       }
     } catch {
-      // Pour le dev/test, on autorise la connexion
-      // A SUPPRIMER EN PRODUCTION
-      console.log("[v0] Mode dev - connexion simulee")
-      localStorage.setItem("mahu_user", JSON.stringify({ 
-        email, 
-        name: email.split("@")[0],
-        id: Date.now().toString()
-      }))
-      localStorage.setItem("mahu_token", "dev_token")
-      setSuccess(true)
-      setTimeout(() => {
-        router.push("/dashboard")
-      }, 1000)
+      setError("Erreur de connexion au serveur")
     }
 
     setLoading(false)

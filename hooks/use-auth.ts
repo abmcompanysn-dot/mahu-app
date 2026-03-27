@@ -2,53 +2,62 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { api, type User } from "@/lib/api"
+import { api, type DashboardData, type Profile } from "@/lib/api"
 
 interface AuthState {
-  user: User | null
+  token: string | null
+  role: string | null
   isLoading: boolean
   isAuthenticated: boolean
+  dashboardData: DashboardData | null
 }
 
 export function useAuth() {
   const router = useRouter()
   const [state, setState] = useState<AuthState>({
-    user: null,
+    token: null,
+    role: null,
     isLoading: true,
     isAuthenticated: false,
+    dashboardData: null,
   })
 
-  // Charger l'utilisateur depuis localStorage au demarrage
+  // Charger le token depuis localStorage au demarrage
   useEffect(() => {
-    const loadUser = () => {
+    const loadAuth = () => {
       try {
-        const userStr = localStorage.getItem("mahu_user")
         const token = localStorage.getItem("mahu_token")
+        const role = localStorage.getItem("mahu_role")
         
-        if (userStr && token) {
-          const user = JSON.parse(userStr) as User
+        if (token) {
           setState({
-            user,
+            token,
+            role,
             isLoading: false,
             isAuthenticated: true,
+            dashboardData: null,
           })
         } else {
           setState({
-            user: null,
+            token: null,
+            role: null,
             isLoading: false,
             isAuthenticated: false,
+            dashboardData: null,
           })
         }
       } catch {
         setState({
-          user: null,
+          token: null,
+          role: null,
           isLoading: false,
           isAuthenticated: false,
+          dashboardData: null,
         })
       }
     }
 
-    loadUser()
+    loadAuth()
   }, [])
 
   // Login
@@ -57,78 +66,148 @@ export function useAuth() {
 
     const result = await api.login(email, password)
 
-    if (result.success && result.data) {
-      const { user, token } = result.data
-      localStorage.setItem("mahu_user", JSON.stringify(user))
-      localStorage.setItem("mahu_token", token)
+    if (result.success && result.token) {
+      localStorage.setItem("mahu_token", result.token)
+      localStorage.setItem("mahu_role", result.role || "Entreprise")
       
       setState({
-        user,
+        token: result.token,
+        role: result.role || "Entreprise",
         isLoading: false,
         isAuthenticated: true,
+        dashboardData: null,
+      })
+      
+      return { success: true, newUser: result.newUser }
+    }
+
+    setState((s) => ({ ...s, isLoading: false }))
+    return { success: false, error: result.error || "Email ou mot de passe incorrect" }
+  }, [])
+
+  // Register
+  const register = useCallback(async (email: string, password: string) => {
+    setState((s) => ({ ...s, isLoading: true }))
+
+    const result = await api.register(email, password)
+
+    if (result.success && result.token) {
+      localStorage.setItem("mahu_token", result.token)
+      localStorage.setItem("mahu_role", "Entreprise")
+      
+      setState({
+        token: result.token,
+        role: "Entreprise",
+        isLoading: false,
+        isAuthenticated: true,
+        dashboardData: null,
       })
       
       return { success: true }
     }
 
     setState((s) => ({ ...s, isLoading: false }))
-    return { success: false, error: result.error || "Erreur de connexion" }
+    return { success: false, error: result.error || "Erreur lors de l'inscription" }
   }, [])
 
-  // Register
-  const register = useCallback(async (name: string, email: string, password: string) => {
-    setState((s) => ({ ...s, isLoading: true }))
+  // Forgot Password
+  const forgotPassword = useCallback(async (email: string) => {
+    const result = await api.forgotPassword(email)
+    return result
+  }, [])
 
-    const result = await api.register(name, email, password)
-
-    setState((s) => ({ ...s, isLoading: false }))
-    
-    if (result.success) {
-      return { success: true }
-    }
-
-    return { success: false, error: result.error || "Erreur lors de l'inscription" }
+  // Reset Password
+  const resetPassword = useCallback(async (token: string, newPassword: string) => {
+    const result = await api.resetPassword(token, newPassword)
+    return result
   }, [])
 
   // Logout
   const logout = useCallback(() => {
-    localStorage.removeItem("mahu_user")
+    const token = localStorage.getItem("mahu_token")
+    if (token) {
+      api.logout(token)
+    }
+    
     localStorage.removeItem("mahu_token")
+    localStorage.removeItem("mahu_role")
     
     setState({
-      user: null,
+      token: null,
+      role: null,
       isLoading: false,
       isAuthenticated: false,
+      dashboardData: null,
     })
     
     router.push("/login")
   }, [router])
 
-  // Update user
-  const updateUser = useCallback((updates: Partial<User>) => {
-    setState((s) => {
-      if (!s.user) return s
+  // Fetch Dashboard Data
+  const fetchDashboardData = useCallback(async () => {
+    const token = state.token || localStorage.getItem("mahu_token")
+    if (!token) return null
+
+    const result = await api.getDashboardData(token)
+    
+    if (result.success && result.profile) {
+      const dashboardData: DashboardData = {
+        profile: result.profile,
+        profileUrl: result.profileUrl || "",
+        stats: result.stats || { views: 0, viewsTrend: "+0%", leads: 0, leadsTrend: "+0%", shares: 0 },
+        recentActivity: result.recentActivity || [],
+        leads: result.leads || [],
+        documents: result.documents || [],
+        employees: result.employees,
+        enterpriseInfo: result.enterpriseInfo,
+      }
       
-      const updatedUser = { ...s.user, ...updates }
-      localStorage.setItem("mahu_user", JSON.stringify(updatedUser))
-      
-      return { ...s, user: updatedUser }
-    })
-  }, [])
+      setState((s) => ({ ...s, dashboardData }))
+      return dashboardData
+    }
+    
+    return null
+  }, [state.token])
+
+  // Save Profile
+  const saveProfile = useCallback(async (data: Partial<Profile>) => {
+    const token = state.token || localStorage.getItem("mahu_token")
+    if (!token) return { success: false, error: "Non authentifie" }
+
+    const result = await api.saveProfile(token, data)
+    
+    if (result.success) {
+      // Refresh dashboard data
+      await fetchDashboardData()
+    }
+    
+    return result
+  }, [state.token, fetchDashboardData])
 
   // Require auth - redirect to login if not authenticated
   const requireAuth = useCallback(() => {
     if (!state.isLoading && !state.isAuthenticated) {
       router.push("/login")
+      return false
     }
+    return state.isAuthenticated
   }, [state.isLoading, state.isAuthenticated, router])
+
+  // Get token
+  const getToken = useCallback(() => {
+    return state.token || localStorage.getItem("mahu_token")
+  }, [state.token])
 
   return {
     ...state,
     login,
     register,
+    forgotPassword,
+    resetPassword,
     logout,
-    updateUser,
+    fetchDashboardData,
+    saveProfile,
     requireAuth,
+    getToken,
   }
 }
