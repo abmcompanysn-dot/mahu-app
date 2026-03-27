@@ -1,7 +1,9 @@
-// Configuration pour Google AppScript
-// URL de votre Web App Google AppScript
-// Note: Utilisez l'URL /exec (deploye) au lieu de /dev pour la production
-export const APPSCRIPT_URL = process.env.NEXT_PUBLIC_APPSCRIPT_URL || "https://script.google.com/macros/s/AKfycbwkdog99cVkYOENGz-JnGOFNEGUWZ5H3TC_BsPg4tyA/exec"
+// Configuration pour Google AppScript - v2
+// Utilise le proxy API Next.js pour eviter les erreurs CORS
+const API_PROXY_URL = "/api/appscript"
+
+// URL directe pour reference (utilisee cote serveur dans le proxy)
+export const APPSCRIPT_URL = "https://script.google.com/macros/s/AKfycbwkdog99cVkYOENGz-JnGOFNEGUWZ5H3TC_BsPg4tyA/exec"
 
 // Types supplementaires pour la compatibilite
 export interface UserProfile {
@@ -130,31 +132,34 @@ export interface ApiResponse<T = unknown> {
   data?: T
 }
 
-// Fonction helper pour appeler l'API AppScript via FormData (comme le code original)
+// Fonction helper pour appeler l'API AppScript via le proxy Next.js
 export async function callAppScript<T = unknown>(
   action: string,
   data: Record<string, unknown> = {},
   token?: string
 ): Promise<ApiResponse<T>> {
   try {
-    const formData = new FormData()
-    formData.append('action', action)
+    const payload: Record<string, unknown> = {
+      action,
+      ...data,
+    }
     
     if (token) {
-      formData.append('token', token)
-    }
-    
-    // Pour les donnees complexes, on les met dans payload
-    if (Object.keys(data).length > 0) {
-      formData.append('payload', JSON.stringify(data))
+      payload.token = token
     }
 
-    const response = await fetch(APPSCRIPT_URL, {
+    console.log("[v0] Appel API:", action, payload)
+
+    const response = await fetch(API_PROXY_URL, {
       method: "POST",
-      body: formData,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
     })
 
     const result = await response.json()
+    console.log("[v0] Reponse API:", action, result)
     return result as ApiResponse<T>
   } catch (error) {
     console.error("[v0] Erreur API:", error)
@@ -162,23 +167,26 @@ export async function callAppScript<T = unknown>(
   }
 }
 
-// Fonction pour les requetes GET (getProfileData)
+// Fonction pour les requetes GET (getProfileData) via le proxy
 export async function callAppScriptGet<T = unknown>(
   action: string,
   params: Record<string, string> = {}
 ): Promise<T> {
   try {
-    const url = new URL(APPSCRIPT_URL)
+    const url = new URL(API_PROXY_URL, window.location.origin)
     url.searchParams.append('action', action)
     Object.entries(params).forEach(([key, value]) => {
       url.searchParams.append(key, value)
     })
+
+    console.log("[v0] Appel API GET:", action, params)
 
     const response = await fetch(url.toString(), {
       method: "GET",
     })
 
     const result = await response.json()
+    console.log("[v0] Reponse API GET:", action, result)
     return result as T
   } catch (error) {
     console.error("[v0] Erreur API GET:", error)
