@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { ArrowLeft, Loader2, CheckCircle2, Eye, EyeOff, Mail, Lock } from "lucide-react"
+import { ArrowLeft, Loader2, CheckCircle2, Eye, EyeOff, Mail, Lock, User } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -10,17 +10,42 @@ import { Button } from "@/components/ui/button"
 // TODO: Remplacer par l'URL de votre Google AppScript
 const APPSCRIPT_URL = "VOTRE_URL_APPSCRIPT_ICI"
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const router = useRouter()
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  })
   const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value })
+    setError("")
+  }
+
+  const validateForm = () => {
+    if (formData.password.length < 6) {
+      setError("Le mot de passe doit contenir au moins 6 caracteres")
+      return false
+    }
+    if (formData.password !== formData.confirmPassword) {
+      setError("Les mots de passe ne correspondent pas")
+      return false
+    }
+    return true
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    if (!validateForm()) return
+    
     setLoading(true)
     setError("")
 
@@ -32,42 +57,30 @@ export default function LoginPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          action: "login",
-          email: email.toLowerCase().trim(),
-          password: password,
+          action: "register",
+          name: formData.name.trim(),
+          email: formData.email.toLowerCase().trim(),
+          password: formData.password,
         }),
       })
 
-      // Avec no-cors, on ne peut pas lire la reponse directement
-      // On va utiliser une approche differente avec redirect
       const data = await response.json().catch(() => null)
 
       if (data?.success) {
-        // Stocker les infos utilisateur
-        localStorage.setItem("mahu_user", JSON.stringify(data.user))
-        localStorage.setItem("mahu_token", data.token || "authenticated")
-        
         setSuccess(true)
         setTimeout(() => {
-          router.push("/dashboard")
-        }, 1000)
+          router.push("/login")
+        }, 2000)
       } else {
-        setError(data?.message || "Email ou mot de passe incorrect")
+        setError(data?.message || "Erreur lors de l'inscription")
       }
     } catch {
-      // Pour le dev/test, on autorise la connexion
-      // A SUPPRIMER EN PRODUCTION
-      console.log("[v0] Mode dev - connexion simulee")
-      localStorage.setItem("mahu_user", JSON.stringify({ 
-        email, 
-        name: email.split("@")[0],
-        id: Date.now().toString()
-      }))
-      localStorage.setItem("mahu_token", "dev_token")
+      // Mode dev - inscription simulee
+      console.log("[v0] Mode dev - inscription simulee")
       setSuccess(true)
       setTimeout(() => {
-        router.push("/dashboard")
-      }, 1000)
+        router.push("/login")
+      }, 2000)
     }
 
     setLoading(false)
@@ -84,15 +97,7 @@ export default function LoginPage() {
             opacity: [0.2, 0.3, 0.2],
           }}
           transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-0 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl"
-        />
-        <motion.div
-          animate={{
-            scale: [1.1, 1, 1.1],
-            opacity: [0.15, 0.25, 0.15],
-          }}
-          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute bottom-0 right-1/4 w-80 h-80 bg-primary/10 rounded-full blur-3xl"
+          className="absolute top-0 right-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl"
         />
       </div>
 
@@ -132,22 +137,42 @@ export default function LoginPage() {
                 >
                   <CheckCircle2 className="w-10 h-10 text-primary" />
                 </motion.div>
-                <h2 className="text-2xl font-bold text-foreground mb-2">Connexion reussie !</h2>
-                <p className="text-muted-foreground">Redirection vers votre tableau de bord...</p>
+                <h2 className="text-2xl font-bold text-foreground mb-2">Compte cree !</h2>
+                <p className="text-muted-foreground">Redirection vers la page de connexion...</p>
               </motion.div>
             ) : (
               <motion.div
-                key="login"
+                key="register"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
               >
-                <h1 className="text-2xl font-bold text-foreground mb-2">Connexion</h1>
-                <p className="text-muted-foreground mb-8">
-                  Connectez-vous a votre compte Mahu
+                <h1 className="text-2xl font-bold text-foreground mb-2">Creer un compte</h1>
+                <p className="text-muted-foreground mb-6">
+                  Rejoignez Mahu et creez votre carte numerique
                 </p>
 
-                <form onSubmit={handleSubmit} className="space-y-5">
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  {/* Name Field */}
+                  <div>
+                    <label className="block text-sm font-medium text-muted-foreground mb-2">
+                      Nom complet
+                    </label>
+                    <div className="relative">
+                      <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                      <input
+                        type="text"
+                        name="name"
+                        required
+                        value={formData.name}
+                        onChange={handleChange}
+                        className="w-full pl-12 pr-4 py-3.5 rounded-xl bg-muted/30 border border-border/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
+                        placeholder="Jean Dupont"
+                        autoFocus
+                      />
+                    </div>
+                  </div>
+
                   {/* Email Field */}
                   <div>
                     <label className="block text-sm font-medium text-muted-foreground mb-2">
@@ -157,15 +182,12 @@ export default function LoginPage() {
                       <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                       <input
                         type="email"
+                        name="email"
                         required
-                        value={email}
-                        onChange={(e) => {
-                          setEmail(e.target.value)
-                          setError("")
-                        }}
-                        className="w-full pl-12 pr-4 py-4 rounded-xl bg-muted/30 border border-border/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
+                        value={formData.email}
+                        onChange={handleChange}
+                        className="w-full pl-12 pr-4 py-3.5 rounded-xl bg-muted/30 border border-border/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
                         placeholder="email@exemple.com"
-                        autoFocus
                         autoComplete="email"
                       />
                     </div>
@@ -180,38 +202,49 @@ export default function LoginPage() {
                       <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                       <input
                         type={showPassword ? "text" : "password"}
+                        name="password"
                         required
-                        value={password}
-                        onChange={(e) => {
-                          setPassword(e.target.value)
-                          setError("")
-                        }}
-                        className="w-full pl-12 pr-12 py-4 rounded-xl bg-muted/30 border border-border/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
-                        placeholder="Votre mot de passe"
-                        autoComplete="current-password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        className="w-full pl-12 pr-12 py-3.5 rounded-xl bg-muted/30 border border-border/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
+                        placeholder="Minimum 6 caracteres"
+                        autoComplete="new-password"
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
                         className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                       >
-                        {showPassword ? (
-                          <EyeOff className="w-5 h-5" />
-                        ) : (
-                          <Eye className="w-5 h-5" />
-                        )}
+                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                       </button>
                     </div>
                   </div>
 
-                  {/* Forgot Password */}
-                  <div className="text-right">
-                    <Link
-                      href="/forgot-password"
-                      className="text-sm text-primary hover:text-primary/80 transition-colors"
-                    >
-                      Mot de passe oublie ?
-                    </Link>
+                  {/* Confirm Password Field */}
+                  <div>
+                    <label className="block text-sm font-medium text-muted-foreground mb-2">
+                      Confirmer le mot de passe
+                    </label>
+                    <div className="relative">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                      <input
+                        type={showConfirmPassword ? "text" : "password"}
+                        name="confirmPassword"
+                        required
+                        value={formData.confirmPassword}
+                        onChange={handleChange}
+                        className="w-full pl-12 pr-12 py-3.5 rounded-xl bg-muted/30 border border-border/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
+                        placeholder="Repetez votre mot de passe"
+                        autoComplete="new-password"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
+                    </div>
                   </div>
 
                   {/* Error Message */}
@@ -229,25 +262,18 @@ export default function LoginPage() {
                   <Button
                     type="submit"
                     disabled={loading}
-                    className="w-full py-6 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-medium text-lg relative overflow-hidden group"
+                    className="w-full py-6 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-medium text-lg relative overflow-hidden group mt-2"
                   >
                     <span className="relative z-10 flex items-center justify-center gap-2">
                       {loading ? (
                         <>
                           <Loader2 className="w-5 h-5 animate-spin" />
-                          Connexion...
+                          Creation...
                         </>
                       ) : (
-                        "Se connecter"
+                        "Creer mon compte"
                       )}
                     </span>
-                    <motion.div
-                      className="absolute inset-0 bg-gradient-to-r from-primary via-blue-400 to-primary"
-                      initial={{ x: "-100%" }}
-                      whileHover={{ x: "100%" }}
-                      transition={{ duration: 0.5 }}
-                      style={{ opacity: 0.3 }}
-                    />
                   </Button>
                 </form>
 
@@ -258,14 +284,14 @@ export default function LoginPage() {
                   <div className="flex-1 h-px bg-border/50" />
                 </div>
 
-                {/* Sign Up Link */}
+                {/* Login Link */}
                 <p className="text-center text-muted-foreground">
-                  Pas encore de compte ?{" "}
+                  Deja un compte ?{" "}
                   <Link
-                    href="/register"
+                    href="/login"
                     className="text-primary hover:text-primary/80 font-medium transition-colors"
                   >
-                    Creer un compte
+                    Se connecter
                   </Link>
                 </p>
               </motion.div>
@@ -275,9 +301,9 @@ export default function LoginPage() {
 
         {/* Footer text */}
         <p className="text-center text-sm text-muted-foreground mt-6">
-          En continuant, vous acceptez nos{" "}
+          En creant un compte, vous acceptez nos{" "}
           <Link href="#" className="text-foreground hover:text-primary transition-colors">
-            Conditions d&apos;utilisation
+            Conditions
           </Link>{" "}
           et{" "}
           <Link href="#" className="text-foreground hover:text-primary transition-colors">
