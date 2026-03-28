@@ -135,14 +135,11 @@ export default function OnboardingPage() {
           <div className="flex items-center justify-between mb-4">
             {steps.map((step, index) => (
               <div key={step.id} className="flex items-center">
-                <motion.div
-                  initial={false}
-                  animate={{
-                    backgroundColor: currentStep >= step.id ? "var(--primary)" : "transparent",
-                    borderColor: currentStep >= step.id ? "var(--primary)" : "var(--border)",
-                  }}
-                  className={`w-10 h-10 rounded-full border-2 flex items-center justify-center transition-colors ${
-                    currentStep >= step.id ? "text-primary-foreground" : "text-muted-foreground"
+                <div
+                  className={`w-10 h-10 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
+                    currentStep >= step.id 
+                      ? "bg-primary border-primary text-primary-foreground" 
+                      : "bg-transparent border-border text-muted-foreground"
                   }`}
                 >
                   {currentStep > step.id ? (
@@ -150,7 +147,7 @@ export default function OnboardingPage() {
                   ) : (
                     <step.icon className="w-5 h-5" />
                   )}
-                </motion.div>
+                </div>
                 {index < steps.length - 1 && (
                   <div className="hidden sm:block w-12 lg:w-20 h-0.5 mx-2">
                     <motion.div
