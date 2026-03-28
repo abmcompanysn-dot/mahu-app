@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
+import Script from 'next/script'
 import { AuthProvider } from '@/contexts/auth-context'
 import './globals.css'
 
@@ -43,8 +44,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr" className="dark" suppressHydrationWarning>
-      <head>
-        <script
+      <body className={`${inter.variable} font-sans antialiased bg-background text-foreground`}>
+        <Script
+          id="theme-script"
+          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
@@ -60,8 +63,6 @@ export default function RootLayout({
             `,
           }}
         />
-      </head>
-      <body className={`${inter.variable} font-sans antialiased bg-background text-foreground`}>
         <AuthProvider>
           {children}
         </AuthProvider>
