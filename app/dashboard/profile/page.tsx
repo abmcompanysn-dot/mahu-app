@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button"
 import { PhonePreview } from "@/components/dashboard/phone-preview"
 import { useAuth } from "@/hooks/use-auth"
 import { api } from "@/lib/api"
+import { uploadToCloudinary } from "@/lib/cloudinary"
 
 const tabs = [
   { id: "images", label: "Images du profil", icon: Camera },
@@ -142,26 +143,35 @@ export default function ProfilePage() {
     else setUploadingCover(true)
 
     try {
-      // Convert file to base64
-      const reader = new FileReader()
-      reader.onload = async () => {
-        const base64 = reader.result as string
-        
-        const result = await api.saveProfileImage(token, {
-          imageBase64: base64,
-          type: type === 'photo' ? 'photo' : 'cover'
-        })
-        
-        if (result.success) {
-          // Refresh dashboard data to get new image URL
-          fetchDashboardData()
-        }
-        
+      // Upload to Cloudinary first
+      const cloudinaryResult = await uploadToCloudinary(file)
+      
+      if (!cloudinaryResult.success || !cloudinaryResult.url) {
+        console.error("Erreur Cloudinary:", cloudinaryResult.error)
         if (type === 'photo') setUploadingPhoto(false)
         else setUploadingCover(false)
+        return
       }
-      reader.readAsDataURL(file)
-    } catch {
+
+      // Send the Cloudinary URL to AppScript to save in the sheet
+      const result = await api.saveProfileImage(token, {
+        imageBase64: cloudinaryResult.url, // C'est l'URL Cloudinary, pas base64
+        type: type
+      })
+      
+      if (result.success) {
+        // Update local state with new URL
+        if (type === 'photo') {
+          setFormData(prev => ({ ...prev, URL_Photo: cloudinaryResult.url! }))
+        } else {
+          setFormData(prev => ({ ...prev, URL_Couverture: cloudinaryResult.url! }))
+        }
+        // Refresh dashboard data
+        fetchDashboardData()
+      }
+    } catch (error) {
+      console.error("Erreur upload:", error)
+    } finally {
       if (type === 'photo') setUploadingPhoto(false)
       else setUploadingCover(false)
     }
