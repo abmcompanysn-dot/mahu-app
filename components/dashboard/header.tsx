@@ -1,14 +1,46 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Menu, Bell, Search } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Menu, Bell, Search, Moon, Sun } from "lucide-react"
+import { useAuth } from "@/hooks/use-auth"
+import { useState, useEffect } from "react"
 
 interface HeaderProps {
   onMenuClick: () => void
 }
 
 export function DashboardHeader({ onMenuClick }: HeaderProps) {
+  const { dashboardData } = useAuth()
+  const [isDark, setIsDark] = useState(true)
+
+  // Get user data from dashboard
+  const userName = dashboardData?.profile?.Nom_Complet || dashboardData?.user?.Nom_Complet || ""
+  const userEmail = dashboardData?.user?.Email || ""
+  
+  // Get initials
+  const initials = userName
+    ? userName
+        .split(" ")
+        .map((n: string) => n[0])
+        .filter(Boolean)
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
+    : "?"
+
+  useEffect(() => {
+    // Check initial theme
+    const isDarkMode = document.documentElement.classList.contains("dark")
+    setIsDark(isDarkMode)
+  }, [])
+
+  const toggleTheme = () => {
+    const newIsDark = !isDark
+    setIsDark(newIsDark)
+    document.documentElement.classList.toggle("dark", newIsDark)
+    localStorage.setItem("theme", newIsDark ? "dark" : "light")
+  }
+
   return (
     <motion.header
       initial={{ opacity: 0, y: -20 }}
@@ -37,7 +69,21 @@ export function DashboardHeader({ onMenuClick }: HeaderProps) {
         </div>
 
         {/* Right side */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4">
+          {/* Theme toggle */}
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={toggleTheme}
+            className="p-2 rounded-xl hover:bg-muted/50 transition-colors"
+          >
+            {isDark ? (
+              <Sun className="w-5 h-5 text-muted-foreground" />
+            ) : (
+              <Moon className="w-5 h-5 text-muted-foreground" />
+            )}
+          </motion.button>
+
           {/* Notifications */}
           <motion.button
             whileHover={{ scale: 1.05 }}
@@ -54,11 +100,11 @@ export function DashboardHeader({ onMenuClick }: HeaderProps) {
             className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-muted/50 transition-colors cursor-pointer"
           >
             <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center">
-              <span className="text-sm font-semibold text-primary">JD</span>
+              <span className="text-sm font-semibold text-primary">{initials}</span>
             </div>
             <div className="hidden md:block text-left">
-              <p className="text-sm font-medium text-foreground">Jean Dupont</p>
-              <p className="text-xs text-muted-foreground">jean@mahu.cards</p>
+              <p className="text-sm font-medium text-foreground">{userName || "Utilisateur"}</p>
+              <p className="text-xs text-muted-foreground truncate max-w-[150px]">{userEmail}</p>
             </div>
           </motion.div>
         </div>
