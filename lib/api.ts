@@ -264,6 +264,38 @@ export const api = {
   // Support
   contactSupport: (token: string | null, data: { email: string; sujet: string; message: string; telephone?: string }) =>
     token ? callAppScript("contactSupport", data, token) : callAppScript("contactSupport", data),
+  
+  // Affiliate Program
+  getAffiliateData: (token: string) =>
+    callAppScript<{
+      stats: {
+        totalReferrals: number
+        activeReferrals: number
+        totalEarnings: number
+        pendingEarnings: number
+        paidEarnings: number
+        conversionRate: number
+        referralCode: string
+        referralLink: string
+      }
+      referrals: Array<{
+        id: string
+        email: string
+        date: string
+        status: "pending" | "active" | "paid"
+        commission: number
+      }>
+    }>("getAffiliateData", {}, token),
+  
+  requestWithdrawal: (token: string, data: { amount: number; paydunyaPhone: string; method: string }) =>
+    callAppScript("requestWithdrawal", data, token),
+  
+  // PayDunya Integration
+  initPayment: (token: string, data: { amount: number; description: string; returnUrl: string }) =>
+    callAppScript<{ paymentUrl: string; token: string }>("initPayDunyaPayment", data, token),
+  
+  verifyPayment: (token: string, paymentToken: string) =>
+    callAppScript("verifyPayDunyaPayment", { paymentToken }, token),
 }
 
 // Alias pour compatibilite avec les composants existants
