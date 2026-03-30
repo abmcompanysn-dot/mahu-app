@@ -3,7 +3,7 @@
 import { motion } from "framer-motion"
 import { Menu, Bell, Search, Moon, Sun } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
-import { useTheme } from "@/contexts/theme-context"
+import { useState, useEffect } from "react"
 
 interface HeaderProps {
   onMenuClick: () => void
@@ -11,7 +11,7 @@ interface HeaderProps {
 
 export function DashboardHeader({ onMenuClick }: HeaderProps) {
   const { dashboardData } = useAuth()
-  const { theme, toggleTheme } = useTheme()
+  const [isDark, setIsDark] = useState(true)
 
   // Get user data from dashboard
   const userName = dashboardData?.profile?.Nom_Complet || dashboardData?.user?.Nom_Complet || ""
@@ -27,6 +27,19 @@ export function DashboardHeader({ onMenuClick }: HeaderProps) {
         .toUpperCase()
         .slice(0, 2)
     : "?"
+
+  useEffect(() => {
+    // Check initial theme
+    const isDarkMode = document.documentElement.classList.contains("dark")
+    setIsDark(isDarkMode)
+  }, [])
+
+  const toggleTheme = () => {
+    const newIsDark = !isDark
+    setIsDark(newIsDark)
+    document.documentElement.classList.toggle("dark", newIsDark)
+    localStorage.setItem("theme", newIsDark ? "dark" : "light")
+  }
 
   return (
     <motion.header
@@ -64,7 +77,7 @@ export function DashboardHeader({ onMenuClick }: HeaderProps) {
             onClick={toggleTheme}
             className="p-2 rounded-xl hover:bg-muted/50 transition-colors"
           >
-            {theme === "dark" ? (
+            {isDark ? (
               <Sun className="w-5 h-5 text-muted-foreground" />
             ) : (
               <Moon className="w-5 h-5 text-muted-foreground" />
