@@ -1,0 +1,239 @@
+model_list:
+  # Palier gratuit
+  - model_name: llama3-70b
+    litellm_params:
+      model: groq/llama-3.3-70b-versatile
+      api_key: os.environ/GROQ_API_KEY
+
+  # Palier premium
+  - model_name: gpt-4o-mini
+    litellm_params:
+      model: openai/gpt-4o-mini
+      api_key: os.environ/OPENAI_API_KEY
+  - model_name: claude-haiku
+    litellm_params:
+      model: anthropic/claude-3-5-haiku-latest
+      api_key: os.environ/ANTHROPIC_API_KEY
+  # Qwen (Alibaba Cloud Model Studio) - la cle est scopee a un espace de
+  # travail specifique, donc on parle en OpenAI-compatible avec un api_base
+  # explicite plutot que le provider "dashscope/" (qui viserait le host
+  # DashScope public generique, pas cet espace de travail).
+  - model_name: qwen-plus
+    litellm_params:
+      model: openai/qwen-plus
+      api_base: os.environ/DASHSCOPE_API_BASE
+      api_key: os.environ/DASHSCOPE_API_KEY
+  - model_name: qwen-vl-ocr
+    litellm_params:
+      model: openai/qwen-vl-ocr-2025-11-20
+      api_base: os.environ/DASHSCOPE_API_BASE
+      api_key: os.environ/DASHSCOPE_API_KEY
+
+  # Palier pro
+  - model_name: gpt-4o
+    litellm_params:
+      model: openai/gpt-4o
+      api_key: os.environ/OPENAI_API_KEY
+  - model_name: claude-sonnet
+    litellm_params:
+      model: anthropic/claude-sonnet-4-5
+      api_key: os.environ/ANTHROPIC_API_KEY
+  - model_name: qwen-max
+    litellm_params:
+      model: openai/qwen-max
+      api_base: os.environ/DASHSCOPE_API_BASE
+      api_key: os.environ/DASHSCOPE_API_KEY
+  - model_name: qwen3-max
+    litellm_params:
+      model: openai/qwen3-max
+      api_base: os.environ/DASHSCOPE_API_BASE
+      api_key: os.environ/DASHSCOPE_API_KEY
+  - model_name: qwen3.7-plus
+    litellm_params:
+      model: openai/qwen3.7-plus
+      api_base: os.environ/DASHSCOPE_API_BASE
+      api_key: os.environ/DASHSCOPE_API_KEY
+  - model_name: qwen3.5-122b-a10b
+    litellm_params:
+      model: openai/qwen3.5-122b-a10b
+      api_base: os.environ/DASHSCOPE_API_BASE
+      api_key: os.environ/DASHSCOPE_API_KEY
+  - model_name: qwen-mt-flash
+    litellm_params:
+      model: openai/qwen-mt-flash
+      api_base: os.environ/DASHSCOPE_API_BASE
+      api_key: os.environ/DASHSCOPE_API_KEY
+  - model_name: qwen3-vl-235b-thinking
+    litellm_params:
+      model: openai/qwen3-vl-235b-a22b-thinking
+      api_base: os.environ/DASHSCOPE_API_BASE
+      api_key: os.environ/DASHSCOPE_API_KEY
+  - model_name: claude-opus
+    litellm_params:
+      model: anthropic/claude-opus-5
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+  # Generation d'image (texte -> image), tous paliers - voir generateImage
+  # dans ai.controller.ts. Cout en credits plus eleve qu'un message texte.
+  - model_name: image-gen
+    litellm_params:
+      model: openai/gpt-image-1
+      api_key: os.environ/OPENAI_API_KEY
+
+  # ==================================================================
+  # Qwen (Alibaba) - declares disponibles au niveau du proxy LiteLLM,
+  # mais SANS fonctionnalite app associee pour l'instant (pas d'UI, pas
+  # de route backend, pas de gating de credits dans aiplans.go). Voir la
+  # discussion avec l'utilisateur : chacune de ces categories est un
+  # chantier a part (audio temps reel, edition/generation image et
+  # video avec polling, recherche vectorielle) qui reste a scoper.
+  # ==================================================================
+
+  # Variantes/snapshots texte et vision supplementaires
+  - model_name: qwen-plus-2025-07-28
+    litellm_params:
+      model: openai/qwen-plus-2025-07-28
+      api_base: os.environ/DASHSCOPE_API_BASE
+      api_key: os.environ/DASHSCOPE_API_KEY
+  - model_name: qwen3.5-plus-2026-02-15
+    litellm_params:
+      model: openai/qwen3.5-plus-2026-02-15
+      api_base: os.environ/DASHSCOPE_API_BASE
+      api_key: os.environ/DASHSCOPE_API_KEY
+  - model_name: qwen3-vl-32b-thinking
+    litellm_params:
+      model: openai/qwen3-vl-32b-thinking
+      api_base: os.environ/DASHSCOPE_API_BASE
+      api_key: os.environ/DASHSCOPE_API_KEY
+
+  # Edition / generation d'image et video (job asynchrone chez Alibaba -
+  # necessiterait un flux "soumettre + interroger le statut", absent de l'app)
+  - model_name: qwen-image-edit-plus
+    litellm_params:
+      model: openai/qwen-image-edit-plus
+      api_base: os.environ/DASHSCOPE_API_BASE
+      api_key: os.environ/DASHSCOPE_API_KEY
+  - model_name: qwen-image-edit
+    litellm_params:
+      model: openai/qwen-image-edit
+      api_base: os.environ/DASHSCOPE_API_BASE
+      api_key: os.environ/DASHSCOPE_API_KEY
+  - model_name: wan2.1-vace-plus
+    litellm_params:
+      model: openai/wan2.1-vace-plus
+      api_base: os.environ/DASHSCOPE_API_BASE
+      api_key: os.environ/DASHSCOPE_API_KEY
+  - model_name: wan2.7-videoedit
+    litellm_params:
+      model: openai/wan2.7-videoedit
+      api_base: os.environ/DASHSCOPE_API_BASE
+      api_key: os.environ/DASHSCOPE_API_KEY
+  - model_name: wan2.1-kf2v-plus
+    litellm_params:
+      model: openai/wan2.1-kf2v-plus
+      api_base: os.environ/DASHSCOPE_API_BASE
+      api_key: os.environ/DASHSCOPE_API_KEY
+  - model_name: wan2.7-i2v
+    litellm_params:
+      model: openai/wan2.7-i2v
+      api_base: os.environ/DASHSCOPE_API_BASE
+      api_key: os.environ/DASHSCOPE_API_KEY
+  - model_name: wan2.6-image
+    litellm_params:
+      model: openai/wan2.6-image
+      api_base: os.environ/DASHSCOPE_API_BASE
+      api_key: os.environ/DASHSCOPE_API_KEY
+  - model_name: wan2.6-t2v
+    litellm_params:
+      model: openai/wan2.6-t2v
+      api_base: os.environ/DASHSCOPE_API_BASE
+      api_key: os.environ/DASHSCOPE_API_KEY
+  - model_name: happyhorse-1.1-i2v
+    litellm_params:
+      model: openai/happyhorse-1.1-i2v
+      api_base: os.environ/DASHSCOPE_API_BASE
+      api_key: os.environ/DASHSCOPE_API_KEY
+
+  # Audio temps reel / omni (necessiterait un flux WebSocket, absent de l'app)
+  - model_name: qwen3.5-omni-plus
+    litellm_params:
+      model: openai/qwen3.5-omni-plus
+      api_base: os.environ/DASHSCOPE_API_BASE
+      api_key: os.environ/DASHSCOPE_API_KEY
+  - model_name: qwen3-omni-flash
+    litellm_params:
+      model: openai/qwen3-omni-flash
+      api_base: os.environ/DASHSCOPE_API_BASE
+      api_key: os.environ/DASHSCOPE_API_KEY
+  - model_name: qwen3-omni-flash-realtime
+    litellm_params:
+      model: openai/qwen3-omni-flash-realtime
+      api_base: os.environ/DASHSCOPE_API_BASE
+      api_key: os.environ/DASHSCOPE_API_KEY
+  - model_name: qwen-omni-turbo
+    litellm_params:
+      model: openai/qwen-omni-turbo
+      api_base: os.environ/DASHSCOPE_API_BASE
+      api_key: os.environ/DASHSCOPE_API_KEY
+  - model_name: qwen-omni-turbo-realtime
+    litellm_params:
+      model: openai/qwen-omni-turbo-realtime
+      api_base: os.environ/DASHSCOPE_API_BASE
+      api_key: os.environ/DASHSCOPE_API_KEY
+
+  # Voix (TTS) et reconnaissance vocale (ASR) - pas d'UI d'enregistrement/lecture audio dans l'app
+  - model_name: qwen3-tts-flash-realtime
+    litellm_params:
+      model: openai/qwen3-tts-flash-realtime
+      api_base: os.environ/DASHSCOPE_API_BASE
+      api_key: os.environ/DASHSCOPE_API_KEY
+  - model_name: qwen-voice-enrollment
+    litellm_params:
+      model: openai/qwen-voice-enrollment
+      api_base: os.environ/DASHSCOPE_API_BASE
+      api_key: os.environ/DASHSCOPE_API_KEY
+  - model_name: fun-asr
+    litellm_params:
+      model: openai/fun-asr-2025-08-25
+      api_base: os.environ/DASHSCOPE_API_BASE
+      api_key: os.environ/DASHSCOPE_API_KEY
+  - model_name: fun-asr-mtl
+    litellm_params:
+      model: openai/fun-asr-mtl
+      api_base: os.environ/DASHSCOPE_API_BASE
+      api_key: os.environ/DASHSCOPE_API_KEY
+  - model_name: fun-asr-realtime
+    litellm_params:
+      model: openai/fun-asr-realtime-2025-11-07
+      api_base: os.environ/DASHSCOPE_API_BASE
+      api_key: os.environ/DASHSCOPE_API_KEY
+
+  # Embeddings et rerank - pas de fonctionnalite de recherche/RAG dans l'app aujourd'hui
+  - model_name: text-embedding-v4
+    litellm_params:
+      model: openai/text-embedding-v4
+      api_base: os.environ/DASHSCOPE_API_BASE
+      api_key: os.environ/DASHSCOPE_API_KEY
+  - model_name: text-embedding-v3
+    litellm_params:
+      model: openai/text-embedding-v3
+      api_base: os.environ/DASHSCOPE_API_BASE
+      api_key: os.environ/DASHSCOPE_API_KEY
+  - model_name: tongyi-embedding-vision-plus
+    litellm_params:
+      model: openai/tongyi-embedding-vision-plus
+      api_base: os.environ/DASHSCOPE_API_BASE
+      api_key: os.environ/DASHSCOPE_API_KEY
+  - model_name: tongyi-embedding-vision-flash
+    litellm_params:
+      model: openai/tongyi-embedding-vision-flash
+      api_base: os.environ/DASHSCOPE_API_BASE
+      api_key: os.environ/DASHSCOPE_API_KEY
+  - model_name: qwen3-rerank
+    litellm_params:
+      model: openai/qwen3-rerank
+      api_base: os.environ/DASHSCOPE_API_BASE
+      api_key: os.environ/DASHSCOPE_API_KEY
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY

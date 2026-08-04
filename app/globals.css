@@ -1,5 +1,6 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
+@plugin '@tailwindcss/typography';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -122,5 +123,23 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  /* Halo "l'IA reflechit" : respiration + intensification du halo bleu/violet. */
+  @keyframes ai-thinking-pulse {
+    0%, 100% {
+      transform: scale(1);
+      filter: drop-shadow(0 0 10px rgba(0, 122, 255, 0.45)) drop-shadow(0 0 22px rgba(198, 120, 221, 0.3));
+    }
+    50% {
+      transform: scale(1.06);
+      filter: drop-shadow(0 0 24px rgba(0, 122, 255, 0.85)) drop-shadow(0 0 40px rgba(198, 120, 221, 0.65));
+    }
+  }
+
+  .ai-thinking {
+    animation: ai-thinking-pulse 1.5s ease-in-out infinite;
   }
 }

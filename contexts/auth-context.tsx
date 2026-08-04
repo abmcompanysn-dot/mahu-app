@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import { api } from "@/lib/api"
+import { signInWithGooglePopup, signInWithFacebookPopup } from "@/lib/firebase"
 
 // Types bases sur la reponse AppScript
 export interface AppScriptUser {
@@ -59,6 +60,8 @@ interface AuthContextValue {
   user: AppScriptUser | null
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string; newUser?: boolean }>
   register: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
+  socialLogin: (provider: "google" | "facebook") => Promise<{ success: boolean; error?: string; newUser?: boolean }>
+  hydrateFromToken: (token: string, role: string) => void
   logout: () => void
   fetchDashboardData: () => Promise<AppScriptDashboardData | null>
 }
@@ -169,6 +172,56 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { success: false, error: result.error || "Erreur lors de l'inscription" }
   }, [])
 
+  // Social login (Google / Facebook via Firebase)
+  const socialLogin = useCallback(async (provider: "google" | "facebook") => {
+    setIsLoading(true)
+
+    try {
+      const credential = provider === "google"
+        ? await signInWithGooglePopup()
+        : await signInWithFacebookPopup()
+
+      const idToken = await credential.user.getIdToken()
+
+      const response = await fetch("/api/backend/api/auth/social", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken }),
+      })
+      const result = await response.json()
+
+      if (result.success && result.token) {
+        localStorage.setItem("mahu_token", result.token)
+        localStorage.setItem("mahu_role", result.role || "Entreprise")
+
+        setToken(result.token)
+        setRole(result.role || "Entreprise")
+        setIsAuthenticated(true)
+        setIsLoading(false)
+
+        return { success: true, newUser: result.newUser }
+      }
+
+      setIsLoading(false)
+      return { success: false, error: result.error || "Erreur de connexion" }
+    } catch (error) {
+      setIsLoading(false)
+      const message = error instanceof Error ? error.message : "Erreur de connexion"
+      return { success: false, error: message }
+    }
+  }, [])
+
+  // Hydrate the session from a token obtained outside the usual login flows
+  // (e.g. the biometric card verification on app/c/[cardCode]).
+  const hydrateFromToken = useCallback((newToken: string, newRole: string) => {
+    localStorage.setItem("mahu_token", newToken)
+    localStorage.setItem("mahu_role", newRole)
+
+    setToken(newToken)
+    setRole(newRole)
+    setIsAuthenticated(true)
+  }, [])
+
   // Logout
   const logout = useCallback(() => {
     const currentToken = localStorage.getItem("mahu_token")
@@ -198,6 +251,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       login,
       register,
+      socialLogin,
+      hydrateFromToken,
       logout,
       fetchDashboardData,
     }}>

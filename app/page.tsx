@@ -4,6 +4,7 @@ import { Header } from "@/components/landing/header"
 import { Hero } from "@/components/landing/hero"
 import { PhoneShowcase } from "@/components/landing/phone-showcase"
 import { CardShowcase } from "@/components/landing/card-showcase"
+import { AiShowcase } from "@/components/landing/ai-showcase"
 import { AboutSection } from "@/components/landing/about-section"
 import { TechnologySection } from "@/components/landing/technology-section"
 import { FeaturesSection } from "@/components/landing/features-section"
@@ -22,6 +23,7 @@ export default function Home() {
       <Hero />
       <PhoneShowcase />
       <CardShowcase />
+      <AiShowcase />
       <AboutSection />
       <TechnologySection />
       <FeaturesSection />

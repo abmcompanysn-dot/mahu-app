@@ -3,15 +3,16 @@
 import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { 
-  LayoutDashboard, 
-  User, 
-  Users, 
-  Building2, 
-  Settings, 
+import {
+  LayoutDashboard,
+  User,
+  Users,
+  Building2,
+  Settings,
   LogOut,
   ChevronLeft,
   ChevronRight,
+  Sparkles,
   X
 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -27,6 +28,7 @@ interface SidebarProps {
 const navItems = [
   { icon: LayoutDashboard, label: "Tableau de bord", href: "/dashboard" },
   { icon: User, label: "Mon Profil", href: "/dashboard/profile" },
+  { icon: Sparkles, label: "AI MAHU", href: "/ai", badge: "Nouveau" },
   { icon: Users, label: "Mes Contacts", href: "/dashboard/contacts" },
   { icon: Building2, label: "Entreprise", href: "/dashboard/enterprise", badge: "Pro" },
   { icon: Settings, label: "Parametres", href: "/dashboard/settings" },

@@ -24,6 +24,15 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
+## Mode IA
+
+AI MAHU (`/ai`) est une experience de chat plein ecran independante du dashboard (style ChatGPT/Claude), avec abonnements Gratuit/Premium/Pro payes via PayDunya (`/dashboard/abonnement`) et une carte de connexion biometrique (`/ai/carte`).
+
+- Le backend Node (`backend/`) appelle un service [LiteLLM](https://github.com/BerriAI/litellm) interne (`docker-compose.yml`, jamais expose publiquement) qui route vers les fournisseurs IA configures dans `litellm/config.yaml`.
+- Les modeles disponibles par palier sont definis dans `backend/src/config/aiPlans.ts`.
+- Toutes les cles (fournisseurs IA + PayDunya) sont lues depuis `backend/.env` - voir `backend/.env.example` pour la liste complete. Rien n'est jamais expose au navigateur.
+- Pour tester en local : renseigner `backend/.env`, lancer `docker compose up -d mongo redis litellm`, puis `npm run dev` dans `backend/` et `pnpm dev` a la racine.
+
 ## Learn More
 
 To learn more, take a look at the following resources:

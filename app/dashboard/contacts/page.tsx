@@ -2,14 +2,15 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { 
-  Search, Filter, Download, Plus, 
-  Mail, Phone, Loader2,
+import {
+  Search, Filter, Download, Plus,
+  Mail, Phone, Loader2, Send, X,
   Trash2, Edit2, Eye, Users
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/hooks/use-auth"
 import { api } from "@/lib/api"
+import { gmailApi } from "@/lib/connectors-api"
 
 interface Contact {
   id: string
@@ -26,8 +27,40 @@ export default function ContactsPage() {
   const [selectedContacts, setSelectedContacts] = useState<string[]>([])
   const [showFilters, setShowFilters] = useState(false)
   const [exporting, setExporting] = useState(false)
+  const [gmailConnected, setGmailConnected] = useState(false)
+  const [composeFor, setComposeFor] = useState<Contact | null>(null)
+  const [composeSubject, setComposeSubject] = useState("")
+  const [composeBody, setComposeBody] = useState("")
+  const [sendingEmail, setSendingEmail] = useState(false)
+  const [sendError, setSendError] = useState<string | null>(null)
 
   const contacts: Contact[] = dashboardData?.prospects || []
+
+  useEffect(() => {
+    if (!token) return
+    gmailApi.getStatus(token).then((status) => setGmailConnected(status.connected)).catch(() => {})
+  }, [token])
+
+  const openCompose = (contact: Contact) => {
+    setComposeFor(contact)
+    setComposeSubject("")
+    setComposeBody(`Bonjour ${contact.nom},\n\n`)
+    setSendError(null)
+  }
+
+  const handleSendEmail = async () => {
+    if (!token || !composeFor || !composeSubject.trim() || !composeBody.trim()) return
+    setSendingEmail(true)
+    setSendError(null)
+    try {
+      await gmailApi.sendEmail(token, composeFor.contact, composeSubject, composeBody)
+      setComposeFor(null)
+    } catch (err) {
+      setSendError(err instanceof Error ? err.message : "Erreur d'envoi")
+    } finally {
+      setSendingEmail(false)
+    }
+  }
 
   const filteredContacts = contacts.filter(
     (contact) =>
@@ -317,6 +350,17 @@ export default function ContactsPage() {
                               <Mail className="w-4 h-4" />
                             </motion.a>
                           )}
+                          {contactType === 'email' && gmailConnected && (
+                            <motion.button
+                              onClick={() => openCompose(contact)}
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              className="p-2 rounded-lg hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
+                              title="Envoyer via Gmail"
+                            >
+                              <Send className="w-4 h-4" />
+                            </motion.button>
+                          )}
                           {contactType === 'phone' && (
                             <motion.a
                               href={`tel:${contact.contact}`}
@@ -352,6 +396,63 @@ export default function ContactsPage() {
           )}
         </motion.div>
       )}
+
+      {/* Compose Gmail */}
+      <AnimatePresence>
+        {composeFor && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+            onClick={() => setComposeFor(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-lg rounded-2xl bg-card border border-border/50 p-6 space-y-4"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-semibold text-foreground">Envoyer via Gmail</h3>
+                  <p className="text-sm text-muted-foreground">A : {composeFor.contact}</p>
+                </div>
+                <button onClick={() => setComposeFor(null)} className="text-muted-foreground hover:text-foreground">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <input
+                type="text"
+                value={composeSubject}
+                onChange={(e) => setComposeSubject(e.target.value)}
+                placeholder="Objet"
+                className="w-full px-4 py-3 rounded-xl bg-muted/30 border border-border/50 text-foreground focus:outline-none focus:border-primary/50"
+              />
+              <textarea
+                value={composeBody}
+                onChange={(e) => setComposeBody(e.target.value)}
+                rows={6}
+                className="w-full px-4 py-3 rounded-xl bg-muted/30 border border-border/50 text-foreground resize-none focus:outline-none focus:border-primary/50"
+              />
+              {sendError && <p className="text-sm text-destructive">{sendError}</p>}
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setComposeFor(null)} className="border-border/50">
+                  Annuler
+                </Button>
+                <Button
+                  onClick={handleSendEmail}
+                  disabled={sendingEmail || !composeSubject.trim() || !composeBody.trim()}
+                >
+                  {sendingEmail ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Send className="w-4 h-4 mr-2" />}
+                  Envoyer
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

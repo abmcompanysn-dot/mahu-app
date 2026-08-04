@@ -7,6 +7,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/hooks/use-auth"
+import { SocialLoginButtons } from "@/components/auth/social-login-buttons"
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -66,6 +67,17 @@ export default function RegisterPage() {
     }
 
     setLoading(false)
+  }
+
+  const handleSocialSuccess = (newUser?: boolean) => {
+    setSuccess(true)
+    setTimeout(() => {
+      router.push(newUser ? "/onboarding" : "/dashboard")
+    }, 1500)
+  }
+
+  const handleSocialError = (message: string) => {
+    setError(message)
   }
 
   return (
@@ -247,6 +259,8 @@ export default function RegisterPage() {
                   <div className="flex-1 h-px bg-border/50" />
                 </div>
 
+                <SocialLoginButtons onSuccess={handleSocialSuccess} onError={handleSocialError} />
+
                 {/* Login Link */}
                 <p className="text-center text-muted-foreground">
                   Deja un compte ?{" "}
@@ -265,11 +279,11 @@ export default function RegisterPage() {
         {/* Footer text */}
         <p className="text-center text-sm text-muted-foreground mt-6">
           En creant un compte, vous acceptez nos{" "}
-          <Link href="#" className="text-foreground hover:text-primary transition-colors">
+          <Link href="/conditions-utilisation" className="text-foreground hover:text-primary transition-colors">
             Conditions
           </Link>{" "}
           et{" "}
-          <Link href="#" className="text-foreground hover:text-primary transition-colors">
+          <Link href="/confidentialite" className="text-foreground hover:text-primary transition-colors">
             Politique de confidentialite
           </Link>
         </p>

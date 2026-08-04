@@ -1,0 +1,8 @@
+.env
+.localdev
+/server
+/seedadmin
+/seedtestuser
+/out
+/dist
+*.exe

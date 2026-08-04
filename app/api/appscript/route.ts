@@ -1,141 +1,71 @@
 import { NextRequest, NextResponse } from "next/server"
 
-// URL de votre Web App Google AppScript DEPLOYEE
-const APPSCRIPT_URL = "https://script.google.com/macros/s/AKfycbzUcADa5RmJRqTk4rWO1Hw6dXLanAly1iWM-iA2CyTNJRETDVecAp32hEXi-pl-isWJew/exec"
-
-// Mode demo desactive - utilise le vrai backend AppScript
-const DEMO_MODE = false
+// Ce proxy pointait auparavant directement sur le Web App Google Apps
+// Script. Toute la logique metier a ete migree vers le backend Go/Mongo
+// (voir backend/internal/handlers/legacy_*.go) qui expose la meme action
+// "action + token + payload" sur /api/legacy - lib/api.ts n'a donc besoin
+// d'aucun changement, seul ce fichier a change de destination.
+const BACKEND_URL = process.env.BACKEND_URL || "http://127.0.0.1:4000"
+const SERVICE_API_KEY = process.env.BACKEND_API_KEY || ""
 
 export async function POST(request: NextRequest) {
+  if (!SERVICE_API_KEY) {
+    return NextResponse.json(
+      { success: false, error: "BACKEND_API_KEY n'est pas configure sur le serveur Next.js" },
+      { status: 500 },
+    )
+  }
+
   try {
-    const body = await request.json()
-    const action = body.action
-    
+    const body = await request.text()
 
-    
-    // Construire les parametres pour AppScript
-    // AppScript attend les donnees dans e.parameter, donc on utilise URLSearchParams
-    const formData = new URLSearchParams()
-    formData.append('action', action)
-    
-    // Ajouter le token si present
-    if (body.token) {
-      formData.append('token', body.token)
-    }
-    
-    // Construire le payload avec toutes les autres donnees
-    const payload: Record<string, unknown> = {}
-    for (const [key, value] of Object.entries(body)) {
-      if (key !== 'action' && key !== 'token') {
-        payload[key] = value
-      }
-    }
-    
-    // Ajouter le payload en JSON si non vide
-    if (Object.keys(payload).length > 0) {
-      formData.append('payload', JSON.stringify(payload))
-    }
-
-
-
-    const response = await fetch(APPSCRIPT_URL, {
+    const response = await fetch(new URL("/api/legacy", BACKEND_URL), {
       method: "POST",
       headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
+        "Content-Type": "application/json",
+        "x-api-key": SERVICE_API_KEY,
       },
-      body: formData.toString(),
-      redirect: "follow", // Important pour suivre les redirections Google
+      body,
+      cache: "no-store",
     })
 
-    const text = await response.text()
-    
-    // Verifier si c'est une page de connexion Google (erreur)
-    if (text.includes("<!doctype html>") || text.includes("accounts.google.com") || text.includes("<!DOCTYPE html>")) {
-  
-      return NextResponse.json({
-        success: false,
-        error: "Le serveur AppScript n'est pas accessible. Verifiez que le script est deploye correctement.",
-        debug: text.substring(0, 200)
-      })
-    }
-    
-    // Parser la reponse JSON
-    let data
-    try {
-      data = JSON.parse(text)
-    } catch (parseError) {
-
-      return NextResponse.json({
-        success: false,
-        error: "Reponse invalide du serveur",
-        raw: text.substring(0, 200)
-      })
-    }
-
-    return NextResponse.json(data)
+    const data = await response.json().catch(() => null)
+    return NextResponse.json(data, { status: response.status })
   } catch (error) {
-
     return NextResponse.json(
-      { success: false, error: error instanceof Error ? error.message : "Erreur serveur" },
-      { status: 500 }
+      { success: false, error: error instanceof Error ? error.message : "Backend injoignable" },
+      { status: 502 },
     )
   }
 }
 
 export async function GET(request: NextRequest) {
+  if (!SERVICE_API_KEY) {
+    return NextResponse.json(
+      { success: false, error: "BACKEND_API_KEY n'est pas configure sur le serveur Next.js" },
+      { status: 500 },
+    )
+  }
+
   try {
     const { searchParams } = new URL(request.url)
-    const action = searchParams.get("action") || "getProfileData"
-    const user = searchParams.get("user")
-    
-
-    
-    // Construire l'URL avec les parametres
-    const url = new URL(APPSCRIPT_URL)
-    url.searchParams.set("action", action)
-    if (user) url.searchParams.set("user", user)
-    
-    // Copier tous les autres parametres
+    const url = new URL("/api/legacy", BACKEND_URL)
     searchParams.forEach((value, key) => {
-      if (key !== "action" && key !== "user") {
-        url.searchParams.set(key, value)
-      }
+      url.searchParams.set(key, value)
     })
-    
 
-    
-    const response = await fetch(url.toString(), {
+    const response = await fetch(url, {
       method: "GET",
-      redirect: "follow",
+      headers: { "x-api-key": SERVICE_API_KEY },
+      cache: "no-store",
     })
-    
-    const text = await response.text()
-    
-    if (text.includes("<!doctype html>") || text.includes("<!DOCTYPE html>")) {
-      return NextResponse.json({
-        success: false,
-        error: "Le serveur AppScript n'est pas accessible",
-        debug: text.substring(0, 200)
-      })
-    }
-    
-    let data
-    try {
-      data = JSON.parse(text)
-    } catch {
-      return NextResponse.json({
-        success: false,
-        error: "Reponse invalide du serveur",
-        raw: text.substring(0, 200)
-      })
-    }
 
-    return NextResponse.json(data)
+    const data = await response.json().catch(() => null)
+    return NextResponse.json(data, { status: response.status })
   } catch (error) {
-
     return NextResponse.json(
-      { success: false, error: error instanceof Error ? error.message : "Erreur serveur" },
-      { status: 500 }
+      { success: false, error: error instanceof Error ? error.message : "Backend injoignable" },
+      { status: 502 },
     )
   }
 }
