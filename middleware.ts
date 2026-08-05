@@ -8,6 +8,11 @@ import type { NextRequest } from "next/server"
 // serveur - voir la note de deploiement donnee a l'utilisateur.
 const ADMIN_HOST = "fea5773d6a.mahu.cards"
 
+// Sur ai.mahu.cards, le mode IA est l'experience d'accueil : la racine ("/")
+// affiche directement /ai, mais le reste du site (dashboard, profils publics,
+// pages legales) reste joignable normalement sur ce meme sous-domaine.
+const AI_HOST = "ai.mahu.cards"
+
 function isDevHost(hostname: string): boolean {
   return hostname === "localhost" || hostname === "127.0.0.1" || hostname.endsWith(".local")
 }
@@ -37,6 +42,10 @@ export function middleware(request: NextRequest) {
   // Sur tout autre domaine, l'espace admin n'existe pas.
   if (isAdminPath) {
     return new NextResponse("Not found", { status: 404 })
+  }
+
+  if (hostname === AI_HOST && pathname === "/") {
+    return NextResponse.rewrite(new URL("/ai", request.url))
   }
 
   return NextResponse.next()

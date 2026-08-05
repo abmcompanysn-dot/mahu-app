@@ -39,6 +39,7 @@ export interface Payment {
   _id: string
   userId: { _id: string; email: string; name: string } | string
   plan: "premium" | "pro"
+  provider?: "paydunya" | "pawapay"
   amountXof: number
   confirmedAt: string
 }
