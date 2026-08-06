@@ -11,6 +11,7 @@ import {
   ImagePlus,
   Lightbulb,
   Loader2,
+  Menu,
   Mic,
   MicOff,
   Paperclip,
@@ -124,6 +125,7 @@ export default function AiPage() {
   const [pendingImage, setPendingImage] = useState<string | null>(null)
   const [imageGenMode, setImageGenMode] = useState(false)
   const [imageProvider, setImageProvider] = useState<"qwen" | "openai">("qwen")
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const [editImageMode, setEditImageMode] = useState(false)
   const [videoMode, setVideoMode] = useState(false)
   const [videoJobId, setVideoJobId] = useState<string | null>(null)
@@ -539,14 +541,50 @@ export default function AiPage() {
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-4 h-full">
-          {/* Sidebar interne, esprit Claude : nouvelle conversation + discussions */}
-          <div className="rounded-2xl bg-card/50 border border-border/50 backdrop-blur-sm p-3 flex flex-col overflow-hidden">
-            <div className="flex items-center gap-2 px-1 pb-3 text-sm font-medium text-primary">
+        <div className="flex flex-col h-full lg:grid lg:grid-cols-[280px_1fr] gap-4">
+          {/* Barre mobile : ouvre la sidebar en tiroir, esprit ChatGPT - la
+              sidebar elle-meme reste hors du flux normal sur mobile (fixed),
+              seul ce bouton occupe de la place en haut de l'ecran. */}
+          <div className="flex items-center gap-2 lg:hidden">
+            <Button variant="outline" size="icon" className="border-border/50" onClick={() => setSidebarOpen(true)}>
+              <Menu className="w-4 h-4" />
+            </Button>
+            <div className="flex items-center gap-2 text-sm font-medium text-primary">
               <Sparkles className="w-4 h-4" />
               AI MAHU
             </div>
-            <Button onClick={startNewConversation} className="mb-3 justify-start" variant="outline">
+          </div>
+
+          {/* Overlay tiroir mobile - au-dessus du contenu, ferme au clic en dehors */}
+          {sidebarOpen && (
+            <div className="fixed inset-0 z-40 bg-black/50 lg:hidden" onClick={() => setSidebarOpen(false)} />
+          )}
+
+          {/* Sidebar interne, esprit Claude : nouvelle conversation + discussions.
+              Fixed + hors ecran par defaut sur mobile, en tiroir quand sidebarOpen ;
+              simple colonne statique a partir de lg. */}
+          <div
+            className={`fixed inset-y-0 left-0 z-50 w-72 p-3 transition-transform lg:static lg:z-auto lg:w-auto lg:translate-x-0 rounded-r-2xl lg:rounded-2xl bg-card border border-border/50 backdrop-blur-sm flex flex-col overflow-hidden ${
+              sidebarOpen ? "translate-x-0" : "-translate-x-full"
+            }`}
+          >
+            <div className="flex items-center justify-between gap-2 px-1 pb-3">
+              <div className="flex items-center gap-2 text-sm font-medium text-primary">
+                <Sparkles className="w-4 h-4" />
+                AI MAHU
+              </div>
+              <button className="lg:hidden text-muted-foreground hover:text-foreground" onClick={() => setSidebarOpen(false)}>
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <Button
+              onClick={() => {
+                startNewConversation()
+                setSidebarOpen(false)
+              }}
+              className="mb-3 justify-start"
+              variant="outline"
+            >
               <Plus className="w-4 h-4 mr-2" />
               Nouvelle conversation
             </Button>
@@ -555,7 +593,10 @@ export default function AiPage() {
               {conversations.map((conversation) => (
                 <button
                   key={conversation._id}
-                  onClick={() => openConversation(conversation)}
+                  onClick={() => {
+                    openConversation(conversation)
+                    setSidebarOpen(false)
+                  }}
                   className={`w-full text-left px-3 py-2 rounded-lg text-sm flex items-center justify-between gap-2 group transition-colors ${
                     activeConversation?._id === conversation._id
                       ? "bg-primary/10 text-foreground"
@@ -600,7 +641,7 @@ export default function AiPage() {
 
           {/* Zone principale */}
           {!activeConversation && messages.length === 0 ? (
-            <div className="rounded-2xl bg-card/50 border border-border/50 backdrop-blur-sm overflow-y-auto p-6 md:p-10">
+            <div className="flex-1 min-h-0 rounded-2xl bg-card/50 border border-border/50 backdrop-blur-sm overflow-y-auto p-6 md:p-10">
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-5xl mx-auto">
                 <Link
                   href="/ai/carte"
@@ -675,7 +716,7 @@ export default function AiPage() {
               </motion.div>
             </div>
           ) : (
-            <div className="rounded-2xl bg-card/50 border border-border/50 backdrop-blur-sm flex flex-col overflow-hidden">
+            <div className="flex-1 min-h-0 rounded-2xl bg-card/50 border border-border/50 backdrop-blur-sm flex flex-col overflow-hidden">
               {activeConversation && (
                 <div className="px-4 py-2 border-b border-border/50 text-xs text-muted-foreground">
                   Modele : {MODEL_LABELS[activeConversation.modelName] || activeConversation.modelName}
