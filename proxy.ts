@@ -17,8 +17,12 @@ function isDevHost(hostname: string): boolean {
   return hostname === "localhost" || hostname === "127.0.0.1" || hostname.endsWith(".local")
 }
 
-export function middleware(request: NextRequest) {
-  const hostname = request.nextUrl.hostname
+export function proxy(request: NextRequest) {
+  // request.nextUrl.hostname is unreliable when self-hosted behind a
+  // reverse proxy (Caddy/Cloudflare Tunnel here) - it reflects the address
+  // Next.js's own server is bound to, not the client's Host header. Read
+  // the real Host header directly instead (strip the port, if any).
+  const hostname = (request.headers.get("host") || request.nextUrl.hostname).split(":")[0]
   const { pathname } = request.nextUrl
 
   // En local (npm run dev), pas de sous-domaine dedie disponible : /admin
@@ -34,7 +38,9 @@ export function middleware(request: NextRequest) {
   if (hostname === ADMIN_HOST) {
     if (isInternal) return NextResponse.next()
     if (!isAdminPath) {
-      return NextResponse.redirect(new URL("/admin/login", request.url))
+      // Built from the known-good external host, not request.url (which
+      // carries the same unreliable localhost-based origin as nextUrl).
+      return NextResponse.redirect(new URL("/admin/login", `https://${ADMIN_HOST}`))
     }
     return NextResponse.next()
   }
@@ -45,7 +51,11 @@ export function middleware(request: NextRequest) {
   }
 
   if (hostname === AI_HOST && pathname === "/") {
-    return NextResponse.rewrite(new URL("/ai", request.url))
+    // A redirect, not a rewrite: self-hosted Next.js serves the statically
+    // cached "/" HTML regardless of an x-middleware-rewrite target when both
+    // routes are fully static (confirmed via x-nextjs-cache: HIT even with
+    // the rewrite header present) - a real client round-trip avoids that.
+    return NextResponse.redirect(new URL("/ai", `https://${AI_HOST}`))
   }
 
   return NextResponse.next()
