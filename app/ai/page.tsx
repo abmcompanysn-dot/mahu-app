@@ -17,6 +17,7 @@ import {
   Paperclip,
   Plus,
   ScanFace,
+  Search,
   Send,
   Sparkles,
   Trash2,
@@ -126,6 +127,7 @@ export default function AiPage() {
   const [imageGenMode, setImageGenMode] = useState(false)
   const [imageProvider, setImageProvider] = useState<"qwen" | "openai">("qwen")
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [conversationSearch, setConversationSearch] = useState("")
   const [editImageMode, setEditImageMode] = useState(false)
   const [videoMode, setVideoMode] = useState(false)
   const [videoJobId, setVideoJobId] = useState<string | null>(null)
@@ -337,7 +339,7 @@ export default function AiPage() {
   const selectedModelSupportsVision = VISION_MODELS.has(selectedModel)
 
   const composer = (
-    <div className="border border-border/50 bg-card/50 backdrop-blur-sm rounded-2xl p-3 flex flex-col gap-2">
+    <div className="border border-border/50 bg-card/50 backdrop-blur-sm rounded-3xl p-4 shadow-lg shadow-black/5 flex flex-col gap-2 focus-within:border-primary/40 transition-colors">
       {imageGenMode && (
         <div className="flex items-center gap-2 text-xs text-primary flex-wrap">
           <div className="flex items-center gap-1.5">
@@ -418,7 +420,7 @@ export default function AiPage() {
                 : "Ecris ton message a AI MAHU..."
         }
         rows={2}
-        className="w-full resize-none bg-transparent text-foreground placeholder:text-muted-foreground outline-none px-1"
+        className="w-full resize-none bg-transparent text-foreground text-base placeholder:text-muted-foreground/70 outline-none px-1"
       />
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
@@ -588,9 +590,20 @@ export default function AiPage() {
               <Plus className="w-4 h-4 mr-2" />
               Nouvelle conversation
             </Button>
+            <div className="relative mb-3">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+              <input
+                value={conversationSearch}
+                onChange={(e) => setConversationSearch(e.target.value)}
+                placeholder="Rechercher dans les discussions"
+                className="w-full pl-8 pr-2 py-1.5 rounded-lg bg-muted/30 border border-border/50 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/40 transition-colors"
+              />
+            </div>
             <p className="px-2 pb-1 text-xs font-medium text-muted-foreground uppercase tracking-wide">Discussions</p>
             <div className="flex-1 overflow-y-auto space-y-1">
-              {conversations.map((conversation) => (
+              {conversations
+                .filter((conversation) => conversation.title.toLowerCase().includes(conversationSearch.toLowerCase()))
+                .map((conversation) => (
                 <button
                   key={conversation._id}
                   onClick={() => {
@@ -657,7 +670,7 @@ export default function AiPage() {
                   <div>
                     <AiLogo size="md" className="mb-4" />
                     <p className="text-xs font-medium tracking-widest text-primary uppercase mb-3">made by mahu</p>
-                    <h1 className="text-6xl md:text-7xl font-bold text-foreground mb-4 tracking-tight leading-[0.95]">
+                    <h1 className="ai-hero-gradient-text text-6xl md:text-7xl font-bold mb-4 tracking-tight leading-[0.95]">
                       AI FOR
                       <br />
                       ALL
