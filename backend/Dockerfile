@@ -1,11 +1,13 @@
 FROM golang:1.23-alpine AS build
 WORKDIR /app
-COPY go.mod ./
+COPY go.mod go.sum ./
+# go.sum is committed now, so this only fetches exactly what's imported -
+# unlike `go mod tidy`, it never walks dependencies' own test-only imports
+# (which pulled in unrelated grpc test packages and made this build fragile
+# on this VPS's flaky network).
+RUN go mod download
 COPY cmd ./cmd
 COPY internal ./internal
-# No go.sum is committed (this repo has no local Go toolchain to generate one) -
-# go mod tidy resolves and locks versions during the build itself.
-RUN go mod tidy
 RUN CGO_ENABLED=0 go build -o /out/server ./cmd/server
 RUN CGO_ENABLED=0 go build -o /out/seedadmin ./cmd/seedadmin
 RUN CGO_ENABLED=0 go build -o /out/seedtestuser ./cmd/seedtestuser
