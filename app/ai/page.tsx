@@ -123,6 +123,7 @@ export default function AiPage() {
   const [input, setInput] = useState("")
   const [pendingImage, setPendingImage] = useState<string | null>(null)
   const [imageGenMode, setImageGenMode] = useState(false)
+  const [imageProvider, setImageProvider] = useState<"qwen" | "openai">("qwen")
   const [editImageMode, setEditImageMode] = useState(false)
   const [videoMode, setVideoMode] = useState(false)
   const [videoJobId, setVideoJobId] = useState<string | null>(null)
@@ -290,7 +291,7 @@ export default function AiPage() {
         const result = editingImage && imageToSend
           ? await aiApi.editImage(token, conversation._id, content, imageToSend)
           : generatingImage
-            ? await aiApi.generateImage(token, conversation._id, content)
+            ? await aiApi.generateImage(token, conversation._id, content, imageProvider)
             : await aiApi.sendMessage(token, conversation._id, content || "(image jointe)", imageToSend ?? undefined)
         setMessages((prev) => [...prev.filter((m) => !m._id.startsWith("temp-")), result.userMessage, result.assistantMessage])
         setModelsInfo((prev) => (prev ? { ...prev, creditBalance: result.creditBalance } : prev))
@@ -300,7 +301,7 @@ export default function AiPage() {
         setSending(false)
       }
     },
-    [token, input, pendingImage, imageGenMode, editImageMode, activeConversation, modelsInfo, selectedModel],
+    [token, input, pendingImage, imageGenMode, editImageMode, imageProvider, activeConversation, modelsInfo, selectedModel],
   )
 
   const handleSubmitVideo = useCallback(async () => {
@@ -336,9 +337,35 @@ export default function AiPage() {
   const composer = (
     <div className="border border-border/50 bg-card/50 backdrop-blur-sm rounded-2xl p-3 flex flex-col gap-2">
       {imageGenMode && (
-        <div className="flex items-center gap-1.5 text-xs text-primary">
-          <ImagePlus className="w-3.5 h-3.5" />
-          Mode generation d&apos;image active (20 credits par image)
+        <div className="flex items-center gap-2 text-xs text-primary flex-wrap">
+          <div className="flex items-center gap-1.5">
+            <ImagePlus className="w-3.5 h-3.5" />
+            Mode generation d&apos;image active (20 credits par image)
+          </div>
+          <div className="flex items-center gap-1 ml-auto">
+            <button
+              type="button"
+              onClick={() => setImageProvider("qwen")}
+              className={`px-2 py-0.5 rounded-full border text-[11px] transition-colors ${
+                imageProvider === "qwen"
+                  ? "bg-primary/15 border-primary/50 text-primary"
+                  : "border-border/50 text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Qwen
+            </button>
+            <button
+              type="button"
+              onClick={() => setImageProvider("openai")}
+              className={`px-2 py-0.5 rounded-full border text-[11px] transition-colors ${
+                imageProvider === "openai"
+                  ? "bg-primary/15 border-primary/50 text-primary"
+                  : "border-border/50 text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              ChatGPT
+            </button>
+          </div>
         </div>
       )}
       {editImageMode && (

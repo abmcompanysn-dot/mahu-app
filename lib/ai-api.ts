@@ -72,11 +72,11 @@ export const aiApi = {
       { method: "POST", body: JSON.stringify({ content, imageDataUrl }) },
     ),
 
-  generateImage: (token: string, conversationId: string, prompt: string) =>
+  generateImage: (token: string, conversationId: string, prompt: string, provider: "qwen" | "openai" = "qwen") =>
     request<{ userMessage: AiMessage; assistantMessage: AiMessage; creditBalance: number; modelUsed: string }>(
       `${AI_BASE_URL}/conversations/${conversationId}/generate-image`,
       token,
-      { method: "POST", body: JSON.stringify({ prompt }) },
+      { method: "POST", body: JSON.stringify({ prompt, provider }) },
     ),
 
   editImage: (token: string, conversationId: string, prompt: string, imageDataUrl: string) =>
