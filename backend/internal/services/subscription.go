@@ -16,6 +16,11 @@ import (
 
 const oneDay = 24 * time.Hour
 
+// One-time bonus on account creation (bigger than the free plan's daily
+// refill) so a brand new user can try image, video, and audio generation at
+// least once before falling back to the plan's normal daily credits.
+const welcomeCreditBonus = 100
+
 // GetOrCreateSubscription loads the caller's subscription, creating a default
 // "gratuit" one on first use, and refills daily credits once
 // CreditsRenewAt has elapsed.
@@ -30,7 +35,7 @@ func GetOrCreateSubscription(ctx context.Context, userID primitive.ObjectID) (*m
 			ID:             primitive.NewObjectID(),
 			UserID:         userID,
 			Plan:           config.DefaultAiPlan,
-			CreditBalance:  config.AIPlans[config.DefaultAiPlan].DailyCredits,
+			CreditBalance:  welcomeCreditBonus,
 			CreditsRenewAt: now,
 			CreatedAt:      now,
 			UpdatedAt:      now,
