@@ -6,7 +6,7 @@ import type { NextRequest } from "next/server"
 // un simple 404, comme si elles n'existaient pas. Meme deploiement Next.js,
 // juste un deuxieme enregistrement DNS (CNAME/A) pointant vers le meme
 // serveur - voir la note de deploiement donnee a l'utilisateur.
-const ADMIN_HOST = "fea5773d6a.mahu.cards"
+const ADMIN_HOST = "mahu.mahu.cards"
 
 // Sur ai.mahu.cards, le mode IA est l'experience d'accueil : la racine ("/")
 // affiche directement /ai, mais le reste du site (dashboard, profils publics,
