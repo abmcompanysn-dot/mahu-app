@@ -420,7 +420,7 @@ export default function ProfilePage() {
                   <label className="block text-sm font-medium text-muted-foreground mb-2">URL personnalisee</label>
                   <div className="flex">
                     <span className="px-4 py-3 rounded-l-xl bg-muted/50 border border-r-0 border-border/50 text-muted-foreground text-sm">
-                      mahu.cards/p/
+                      ai.mahu.cards/p/
                     </span>
                     <input
                       type="text"

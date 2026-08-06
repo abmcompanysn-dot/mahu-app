@@ -245,7 +245,7 @@ export function PhonePreview({ profile, profileUrl }: PhonePreviewProps) {
                   </div>
                   <div className="text-left">
                     <p className="text-xs font-medium text-foreground">Scanner pour sauvegarder</p>
-                    <p className="text-xs text-muted-foreground">mahu.cards/p/{username}</p>
+                    <p className="text-xs text-muted-foreground">ai.mahu.cards/p/{username}</p>
                   </div>
                 </div>
               </motion.div>
