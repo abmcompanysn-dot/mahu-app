@@ -100,6 +100,11 @@ func (d *Deps) SocialLogin(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	if user.Disabled {
+		httpx.WriteJSON(w, http.StatusForbidden, map[string]any{"success": false, "error": "Ce compte a ete desactive"})
+		return
+	}
+
 	token, err := authutil.SignUserToken(d.Env.JWTSecret, user.ID.Hex(), user.Email, user.Role)
 	if err != nil {
 		httpx.WriteJSON(w, http.StatusInternalServerError, map[string]any{"success": false, "error": "Erreur serveur"})

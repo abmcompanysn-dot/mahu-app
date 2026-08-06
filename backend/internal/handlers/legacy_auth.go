@@ -151,6 +151,10 @@ func (d *Deps) legacyLoginUser(ctx context.Context, email, password string) (map
 		return map[string]any{"success": false, "error": "Email ou mot de passe incorrect."}, nil
 	}
 
+	if user.Disabled {
+		return map[string]any{"success": false, "error": "Ce compte a ete desactive."}, nil
+	}
+
 	if upgraded {
 		_, _ = db.Collection(models.UsersCollection).UpdateOne(ctx, bson.M{"_id": user.ID},
 			bson.M{"$set": bson.M{"passwordHash": newStored, "updatedAt": time.Now()}})

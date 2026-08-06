@@ -69,6 +69,7 @@ func main() {
 	protected := http.NewServeMux()
 
 	protected.HandleFunc("POST /api/auth/login", deps.AdminLogin)
+	protected.HandleFunc("POST /api/auth/login/verify-2fa", deps.Verify2FA)
 	protected.HandleFunc("POST /api/auth/social", deps.SocialLogin)
 	protected.HandleFunc("POST /api/auth/face-verify", deps.FaceVerify)
 	protected.HandleFunc("GET /api/auth/card-info/{cardCode}", func(w http.ResponseWriter, r *http.Request) {
@@ -81,6 +82,16 @@ func main() {
 	protected.Handle("GET /api/admin/payments", adminOnly(http.HandlerFunc(deps.GetPayments)))
 	protected.Handle("GET /api/admin/announcements", adminOnly(http.HandlerFunc(deps.ListAnnouncements)))
 	protected.Handle("POST /api/admin/announcements", adminOnly(http.HandlerFunc(deps.CreateAnnouncement)))
+	protected.Handle("GET /api/admin/users", adminOnly(http.HandlerFunc(deps.ListUsers)))
+	protected.Handle("PATCH /api/admin/users/{id}/plan", adminOnly(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		deps.UpdateUserPlan(w, r, r.PathValue("id"))
+	})))
+	protected.Handle("PATCH /api/admin/users/{id}/disable", adminOnly(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		deps.SetUserDisabled(w, r, r.PathValue("id"))
+	})))
+	protected.Handle("POST /api/admin/2fa/setup", adminOnly(http.HandlerFunc(deps.Setup2FA)))
+	protected.Handle("POST /api/admin/2fa/confirm", adminOnly(http.HandlerFunc(deps.Confirm2FA)))
+	protected.Handle("POST /api/admin/2fa/disable", adminOnly(http.HandlerFunc(deps.Disable2FA)))
 
 	userOnly := middleware.RequireUserAuth(env.JWTSecret)
 	protected.Handle("GET /api/ai/models", userOnly(http.HandlerFunc(deps.ListModels)))

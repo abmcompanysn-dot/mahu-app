@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 
@@ -10,10 +11,12 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
+	"mahu-backend/internal/config"
 	"mahu-backend/internal/db"
 	"mahu-backend/internal/httpx"
 	"mahu-backend/internal/middleware"
 	"mahu-backend/internal/models"
+	"mahu-backend/internal/services"
 )
 
 const statsCacheKey = "admin:stats"
@@ -26,11 +29,11 @@ type planCounts struct {
 }
 
 type adminStats struct {
-	AdminCount             int64      `json:"adminCount"`
-	AnnouncementCount      int64      `json:"announcementCount"`
-	ActiveAnnouncementCount int64     `json:"activeAnnouncementCount"`
-	UserCount              int64      `json:"userCount"`
-	Plans                  planCounts `json:"plans"`
+	AdminCount              int64      `json:"adminCount"`
+	AnnouncementCount       int64      `json:"announcementCount"`
+	ActiveAnnouncementCount int64      `json:"activeAnnouncementCount"`
+	UserCount               int64      `json:"userCount"`
+	Plans                   planCounts `json:"plans"`
 }
 
 func (d *Deps) GetStats(w http.ResponseWriter, r *http.Request) {
@@ -372,4 +375,146 @@ func (d *Deps) CreateAnnouncement(w http.ResponseWriter, r *http.Request) {
 	_ = db.InvalidateCache(ctx, statsCacheKey)
 
 	httpx.WriteJSON(w, http.StatusCreated, map[string]any{"announcement": announcement})
+}
+
+const usersPageSize = 50
+
+type userWithPlan struct {
+	models.User `bson:",inline"`
+	Plan        string `json:"plan"`
+}
+
+// ListUsers searches by email/name (case-insensitive substring) and attaches
+// each user's current plan from their subscription, for the admin users
+// table - not paginated beyond usersPageSize, matching GetPayments' scope.
+func (d *Deps) ListUsers(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	filter := bson.M{}
+	if search := strings.TrimSpace(r.URL.Query().Get("search")); search != "" {
+		pattern := primitive.Regex{Pattern: regexp.QuoteMeta(search), Options: "i"}
+		filter["$or"] = bson.A{
+			bson.M{"email": pattern},
+			bson.M{"name": pattern},
+		}
+	}
+
+	cursor, err := db.Collection(models.UsersCollection).Find(ctx, filter,
+		options.Find().SetSort(bson.D{{Key: "createdAt", Value: -1}}).SetLimit(usersPageSize))
+	if err != nil {
+		httpx.WriteError(w, http.StatusInternalServerError, "Erreur serveur")
+		return
+	}
+	var users []models.User
+	if err := cursor.All(ctx, &users); err != nil {
+		httpx.WriteError(w, http.StatusInternalServerError, "Erreur serveur")
+		return
+	}
+
+	userIDs := make([]primitive.ObjectID, 0, len(users))
+	for _, u := range users {
+		userIDs = append(userIDs, u.ID)
+	}
+
+	plansByUserID := map[primitive.ObjectID]string{}
+	if len(userIDs) > 0 {
+		subCursor, err := db.Collection(models.SubscriptionsCollection).Find(ctx, bson.M{"userId": bson.M{"$in": userIDs}})
+		if err != nil {
+			httpx.WriteError(w, http.StatusInternalServerError, "Erreur serveur")
+			return
+		}
+		var subs []models.Subscription
+		if err := subCursor.All(ctx, &subs); err != nil {
+			httpx.WriteError(w, http.StatusInternalServerError, "Erreur serveur")
+			return
+		}
+		for _, s := range subs {
+			plansByUserID[s.UserID] = s.Plan
+		}
+	}
+
+	result := make([]userWithPlan, 0, len(users))
+	for _, u := range users {
+		plan := plansByUserID[u.ID]
+		if plan == "" {
+			plan = config.DefaultAiPlan
+		}
+		result = append(result, userWithPlan{User: u, Plan: plan})
+	}
+
+	httpx.WriteJSON(w, http.StatusOK, map[string]any{"users": result})
+}
+
+type updateUserPlanRequest struct {
+	Plan string `json:"plan"`
+}
+
+func (d *Deps) UpdateUserPlan(w http.ResponseWriter, r *http.Request, userIDHex string) {
+	var req updateUserPlanRequest
+	if err := httpx.DecodeJSON(r, &req); err != nil {
+		httpx.WriteError(w, http.StatusBadRequest, "Invalid payload")
+		return
+	}
+	if _, ok := config.AIPlans[req.Plan]; !ok {
+		httpx.WriteError(w, http.StatusBadRequest, "Plan invalide")
+		return
+	}
+
+	userID, err := primitive.ObjectIDFromHex(userIDHex)
+	if err != nil {
+		httpx.WriteError(w, http.StatusBadRequest, "Invalid user id")
+		return
+	}
+
+	ctx := r.Context()
+	sub, err := services.GetOrCreateSubscription(ctx, userID)
+	if err != nil {
+		httpx.WriteError(w, http.StatusInternalServerError, "Erreur serveur")
+		return
+	}
+
+	_, err = db.Collection(models.SubscriptionsCollection).UpdateOne(ctx, bson.M{"_id": sub.ID}, bson.M{"$set": bson.M{
+		"plan":      req.Plan,
+		"updatedAt": time.Now(),
+	}})
+	if err != nil {
+		httpx.WriteError(w, http.StatusInternalServerError, "Erreur serveur")
+		return
+	}
+
+	httpx.WriteJSON(w, http.StatusOK, map[string]any{"success": true})
+}
+
+type setUserDisabledRequest struct {
+	Disabled bool `json:"disabled"`
+}
+
+func (d *Deps) SetUserDisabled(w http.ResponseWriter, r *http.Request, userIDHex string) {
+	var req setUserDisabledRequest
+	if err := httpx.DecodeJSON(r, &req); err != nil {
+		httpx.WriteError(w, http.StatusBadRequest, "Invalid payload")
+		return
+	}
+
+	userID, err := primitive.ObjectIDFromHex(userIDHex)
+	if err != nil {
+		httpx.WriteError(w, http.StatusBadRequest, "Invalid user id")
+		return
+	}
+
+	ctx := r.Context()
+	res, err := db.Collection(models.UsersCollection).UpdateOne(ctx, bson.M{"_id": userID}, bson.M{"$set": bson.M{
+		"disabled":  req.Disabled,
+		"updatedAt": time.Now(),
+	}})
+	if err != nil {
+		httpx.WriteError(w, http.StatusInternalServerError, "Erreur serveur")
+		return
+	}
+	if res.MatchedCount == 0 {
+		httpx.WriteError(w, http.StatusNotFound, "Utilisateur introuvable")
+		return
+	}
+
+	httpx.WriteJSON(w, http.StatusOK, map[string]any{"success": true})
 }

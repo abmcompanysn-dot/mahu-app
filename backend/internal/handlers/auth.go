@@ -49,6 +49,19 @@ func (d *Deps) AdminLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if admin.TOTPEnabled {
+		pendingToken, err := authutil.SignAdminPendingToken(d.Env.JWTSecret, admin.ID.Hex(), admin.Email)
+		if err != nil {
+			httpx.WriteError(w, http.StatusInternalServerError, "Erreur serveur")
+			return
+		}
+		httpx.WriteJSON(w, http.StatusOK, map[string]any{
+			"twoFactorRequired": true,
+			"pendingToken":      pendingToken,
+		})
+		return
+	}
+
 	token, err := authutil.SignAdminToken(d.Env.JWTSecret, admin.ID.Hex(), admin.Email, admin.Role)
 	if err != nil {
 		httpx.WriteError(w, http.StatusInternalServerError, "Erreur serveur")

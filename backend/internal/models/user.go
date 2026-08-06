@@ -23,15 +23,19 @@ type User struct {
 
 	// Legacy (email/password) account fields, migrated from the AppScript
 	// "Utilisateurs" sheet. PasswordHash is empty for social-auth-only users.
-	PasswordHash          string     `bson:"passwordHash,omitempty" json:"-"`
-	EnterpriseID          string     `bson:"enterpriseId,omitempty" json:"enterpriseId,omitempty"`
-	ProfileURL            string     `bson:"profileUrl,omitempty" json:"profileUrl,omitempty"`
-	ProfileURL2           string     `bson:"profileUrl2,omitempty" json:"profileUrl2,omitempty"`
-	ProfileURL3           string     `bson:"profileUrl3,omitempty" json:"profileUrl3,omitempty"`
-	NfcCardIDs            []string   `bson:"nfcCardIds,omitempty" json:"nfcCardIds,omitempty"`
-	OnboardingStatus      string     `bson:"onboardingStatus,omitempty" json:"onboardingStatus,omitempty"`
-	ResetToken            string     `bson:"resetToken,omitempty" json:"-"`
-	ResetTokenExpiration  *time.Time `bson:"resetTokenExpiration,omitempty" json:"-"`
+	PasswordHash         string     `bson:"passwordHash,omitempty" json:"-"`
+	EnterpriseID         string     `bson:"enterpriseId,omitempty" json:"enterpriseId,omitempty"`
+	ProfileURL           string     `bson:"profileUrl,omitempty" json:"profileUrl,omitempty"`
+	ProfileURL2          string     `bson:"profileUrl2,omitempty" json:"profileUrl2,omitempty"`
+	ProfileURL3          string     `bson:"profileUrl3,omitempty" json:"profileUrl3,omitempty"`
+	NfcCardIDs           []string   `bson:"nfcCardIds,omitempty" json:"nfcCardIds,omitempty"`
+	OnboardingStatus     string     `bson:"onboardingStatus,omitempty" json:"onboardingStatus,omitempty"`
+	ResetToken           string     `bson:"resetToken,omitempty" json:"-"`
+	ResetTokenExpiration *time.Time `bson:"resetTokenExpiration,omitempty" json:"-"`
+
+	// Disabled accounts are rejected at login (all paths - password, social,
+	// biometric) but keep their data, unlike a delete.
+	Disabled bool `bson:"disabled,omitempty" json:"disabled,omitempty"`
 
 	CreatedAt time.Time `bson:"createdAt" json:"createdAt"`
 	UpdatedAt time.Time `bson:"updatedAt" json:"updatedAt"`

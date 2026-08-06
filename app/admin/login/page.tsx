@@ -2,15 +2,16 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Loader2, Lock, Mail, ShieldCheck } from "lucide-react"
+import { KeyRound, Loader2, Lock, Mail, ShieldCheck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useAdminAuth } from "@/contexts/admin-auth-context"
 
 export default function AdminLoginPage() {
   const router = useRouter()
-  const { login } = useAdminAuth()
+  const { login, verify2fa, twoFactorPending } = useAdminAuth()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [code, setCode] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
@@ -20,12 +21,62 @@ export default function AdminLoginPage() {
     setError("")
 
     const result = await login(email.toLowerCase().trim(), password)
-    if (result.success) {
+    if (result.success && !result.twoFactorRequired) {
       router.push("/admin")
-    } else {
+    } else if (!result.success) {
       setError(result.error || "Identifiants incorrects")
     }
     setLoading(false)
+  }
+
+  const handleVerify2fa = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError("")
+
+    const result = await verify2fa(code)
+    if (result.success) {
+      router.push("/admin")
+    } else {
+      setError(result.error || "Code invalide")
+    }
+    setLoading(false)
+  }
+
+  if (twoFactorPending) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 bg-background">
+        <div className="w-full max-w-sm rounded-3xl bg-card/50 border border-border/50 backdrop-blur-xl p-8 shadow-2xl">
+          <div className="flex flex-col items-center mb-8">
+            <KeyRound className="w-10 h-10 text-primary mb-3" />
+            <h1 className="text-xl font-bold text-foreground">Code de verification</h1>
+            <p className="text-sm text-muted-foreground text-center mt-2">
+              Entrez le code a 6 chiffres de votre application d&apos;authentification
+            </p>
+          </div>
+
+          <form onSubmit={handleVerify2fa} className="space-y-4">
+            <input
+              type="text"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              required
+              maxLength={6}
+              value={code}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+              placeholder="000000"
+              className="w-full text-center text-2xl tracking-[0.5em] py-3 rounded-xl bg-muted/30 border border-border/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
+            />
+
+            {error && <p className="text-sm text-destructive text-center">{error}</p>}
+
+            <Button type="submit" disabled={loading || code.length !== 6} className="w-full py-6 rounded-xl">
+              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Verifier"}
+            </Button>
+          </form>
+        </div>
+      </div>
+    )
   }
 
   return (

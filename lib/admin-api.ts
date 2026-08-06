@@ -1,6 +1,8 @@
 // Client pour l'espace admin, via le meme proxy /api/backend que le reste
 // (voir app/api/backend/[...path]/route.ts). Le token admin est distinct du
 // token utilisateur normal (type "admin" cote backend, cle localStorage separee).
+import { callAppScript, type ApiResponse } from "@/lib/api"
+
 const AUTH_BASE_URL = "/api/backend/api/auth"
 const ADMIN_BASE_URL = "/api/backend/api/admin"
 
@@ -58,6 +60,32 @@ export interface Announcement {
   createdAt: string
 }
 
+export interface AdminUserRow {
+  _id: string
+  email: string
+  name: string
+  role: string
+  disabled?: boolean
+  plan: "gratuit" | "premium" | "pro"
+  createdAt: string
+}
+
+// Champs tels que renvoyes par adminGetCardsData (contrat legacy AppScript,
+// voir backend/internal/handlers/legacy_admin.go:126) - garde les memes cles.
+export interface PhysicalCard {
+  Code_Carte: string
+  Email_Proprietaire?: string
+  Date_Activation?: string
+  Statut: string
+  Date_Vente?: string
+  Vendeur?: string
+  Commentaire?: string
+  Tag_URL: string
+}
+
+type ApiCardsResponse = ApiResponse & { cards: PhysicalCard[]; isSuper: boolean }
+type ApiBatchResponse = ApiResponse & { batchId: string }
+
 async function request<T>(url: string, token: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(url, {
     ...options,
@@ -87,8 +115,78 @@ export const adminApi = {
     if (!response.ok) {
       return { success: false as const, error: data.error || "Identifiants incorrects" }
     }
+    if (data.twoFactorRequired) {
+      return { success: true as const, twoFactorRequired: true as const, pendingToken: data.pendingToken as string }
+    }
+    return {
+      success: true as const,
+      twoFactorRequired: false as const,
+      token: data.token as string,
+      admin: data.admin as AdminInfo,
+    }
+  },
+
+  verify2fa: async (pendingToken: string, code: string) => {
+    const response = await fetch(`${AUTH_BASE_URL}/login/verify-2fa`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pendingToken, code }),
+    })
+    const data = await response.json()
+    if (!response.ok) {
+      return { success: false as const, error: data.error || "Code invalide" }
+    }
     return { success: true as const, token: data.token as string, admin: data.admin as AdminInfo }
   },
+
+  setup2fa: (token: string) => request<{ secret: string; otpauthUrl: string }>(`${ADMIN_BASE_URL}/2fa/setup`, token, { method: "POST" }),
+
+  confirm2fa: (token: string, code: string) =>
+    request<{ success: boolean }>(`${ADMIN_BASE_URL}/2fa/confirm`, token, {
+      method: "POST",
+      body: JSON.stringify({ code }),
+    }),
+
+  disable2fa: (token: string) => request<{ success: boolean }>(`${ADMIN_BASE_URL}/2fa/disable`, token, { method: "POST" }),
+
+  listUsers: (token: string, search = "") =>
+    request<{ users: AdminUserRow[] }>(`${ADMIN_BASE_URL}/users?search=${encodeURIComponent(search)}`, token),
+
+  updateUserPlan: (token: string, userId: string, plan: string) =>
+    request<{ success: boolean }>(`${ADMIN_BASE_URL}/users/${userId}/plan`, token, {
+      method: "PATCH",
+      body: JSON.stringify({ plan }),
+    }),
+
+  setUserDisabled: (token: string, userId: string, disabled: boolean) =>
+    request<{ success: boolean }>(`${ADMIN_BASE_URL}/users/${userId}/disable`, token, {
+      method: "PATCH",
+      body: JSON.stringify({ disabled }),
+    }),
+
+  // Cartes/revendeurs : actions legacy existantes (backend/internal/handlers/legacy_admin.go),
+  // pontees pour accepter le token admin - voir checkStaffAccess cote backend. callAppScript
+  // ne type pas les champs additionnels du contrat legacy - caste au retour.
+  getCardsData: async (token: string) => {
+    const res = await callAppScript("adminGetCardsData", {}, token)
+    return res as ApiCardsResponse
+  },
+
+  generateCardCodes: async (token: string, quantity: number, prefix?: string) => {
+    const res = await callAppScript("adminGenerateCardCodes", { quantity, prefix }, token)
+    return res as ApiBatchResponse
+  },
+
+  assignCardLot: (token: string, codes: string, resellerEmail: string) =>
+    callAppScript("adminAssignCardLot", { codes, resellerEmail }, token),
+
+  createReseller: (token: string, data: { email: string; password: string; name: string; phone?: string }) =>
+    callAppScript("adminCreateReseller", data, token),
+
+  deactivateCard: (token: string, code: string) => callAppScript("adminDeactivateCard", { code }, token),
+
+  broadcastMessage: (token: string, subject: string, title: string, message: string) =>
+    callAppScript("adminBroadcastMessage", { subject, title, message }, token),
 
   getStats: (token: string) => request<AdminStats>(`${ADMIN_BASE_URL}/stats`, token),
 

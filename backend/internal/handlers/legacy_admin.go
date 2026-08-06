@@ -27,7 +27,7 @@ func (d *Deps) checkStaffAccess(user *models.User) (staffPerms, error) {
 	if user == nil {
 		return staffPerms{}, errors.New("Authentification requise.")
 	}
-	isSuper := d.Env.IsSuperAdmin(user.Email)
+	isSuper := d.Env.IsSuperAdmin(user.Email) || user.Role == models.RoleAdmin
 	isReseller := user.Role == models.RoleEntreprise || user.Role == models.RoleRevendeur
 	if !isSuper && !isReseller {
 		return staffPerms{}, errors.New("Acces refuse. Espace reserve au staff.")

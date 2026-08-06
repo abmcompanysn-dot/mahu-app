@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 
+	"mahu-backend/internal/authutil"
 	"mahu-backend/internal/httpx"
 	"mahu-backend/internal/models"
 )
@@ -45,6 +46,16 @@ func (d *Deps) LegacyPost(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	user, _ := d.legacyUser(ctx, token)
+	if user == nil {
+		// Not a legacy user session - check whether it's an admin panel
+		// session instead, so the new admin frontend can drive these same
+		// staff actions (card/reseller management) without a separate
+		// re-implementation. Synthesized, not persisted: an authenticated
+		// AdminUser is already fully trusted (it's what gates /api/admin/*).
+		if claims, err := authutil.VerifyAdminToken(d.Env.JWTSecret, token); err == nil {
+			user = &models.User{Email: claims.Email, Role: models.RoleAdmin}
+		}
+	}
 	userEmail := "anonyme"
 	if user != nil {
 		userEmail = user.Email
@@ -79,4 +90,3 @@ func (d *Deps) LegacyPost(w http.ResponseWriter, r *http.Request) {
 	d.logAction(ctx, action, models.LogStatusSuccess, "Action executee avec succes.", userEmail)
 	httpx.WriteJSON(w, http.StatusOK, result)
 }
-

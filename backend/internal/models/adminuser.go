@@ -14,6 +14,8 @@ type AdminUser struct {
 	PasswordHash string             `bson:"passwordHash" json:"-"`
 	Name         string             `bson:"name" json:"name"`
 	Role         string             `bson:"role" json:"role"`
+	TOTPSecret   string             `bson:"totpSecret,omitempty" json:"-"`
+	TOTPEnabled  bool               `bson:"totpEnabled" json:"totpEnabled"`
 	CreatedAt    time.Time          `bson:"createdAt" json:"createdAt"`
 	UpdatedAt    time.Time          `bson:"updatedAt" json:"updatedAt"`
 }

@@ -40,6 +40,40 @@ func SignAdminToken(secret, sub, email, role string) (string, error) {
 	return token.SignedString([]byte(secret))
 }
 
+// SignAdminPendingToken issues a short-lived token proving password
+// verification succeeded, used only to carry the admin through the second
+// (TOTP code) step of login. VerifyAdminToken rejects it outright since its
+// Type is "admin_pending", not "admin" - it can never be used against
+// RequireAdminAuth.
+func SignAdminPendingToken(secret, sub, email string) (string, error) {
+	now := time.Now()
+	claims := AdminClaims{
+		Type:  "admin_pending",
+		Email: email,
+		RegisteredClaims: jwt.RegisteredClaims{
+			Subject:   sub,
+			IssuedAt:  jwt.NewNumericDate(now),
+			ExpiresAt: jwt.NewNumericDate(now.Add(5 * time.Minute)),
+		},
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString([]byte(secret))
+}
+
+func VerifyAdminPendingToken(secret, tokenString string) (*AdminClaims, error) {
+	claims := &AdminClaims{}
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(t *jwt.Token) (any, error) {
+		return []byte(secret), nil
+	})
+	if err != nil || !token.Valid {
+		return nil, errors.New("invalid or expired token")
+	}
+	if claims.Type != "admin_pending" {
+		return nil, errors.New("not a pending admin token")
+	}
+	return claims, nil
+}
+
 func SignUserToken(secret, sub, email, role string) (string, error) {
 	now := time.Now()
 	claims := UserClaims{
