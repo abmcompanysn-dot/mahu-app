@@ -7,6 +7,7 @@ import {
   Check,
   Copy,
   CreditCard,
+  Download,
   FileText,
   ImagePlus,
   Lightbulb,
@@ -83,6 +84,45 @@ function CopyButton({ text }: { text: string }) {
     >
       {copied ? <Check className="w-3.5 h-3.5 text-primary" /> : <Copy className="w-3.5 h-3.5" />}
     </button>
+  )
+}
+
+function ImageActions({ imageUrl }: { imageUrl: string }) {
+  const [copied, setCopied] = useState(false)
+
+  const copyImage = async () => {
+    try {
+      const response = await fetch(imageUrl)
+      const blob = await response.blob()
+      await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })])
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    } catch {
+      // Copie image non supportee (Safari partiel, contexte non securise...) - ignore silencieusement.
+    }
+  }
+
+  return (
+    <>
+      <a
+        href={imageUrl}
+        download
+        target="_blank"
+        rel="noopener noreferrer"
+        className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
+        title="Telecharger"
+      >
+        <Download className="w-3.5 h-3.5" />
+      </a>
+      <button
+        type="button"
+        onClick={copyImage}
+        className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
+        title="Copier l'image"
+      >
+        {copied ? <Check className="w-3.5 h-3.5 text-primary" /> : <Copy className="w-3.5 h-3.5" />}
+      </button>
+    </>
   )
 }
 
@@ -180,29 +220,44 @@ export default function AiPage() {
   // Idem pour la generation d'image Qwen : le job resout en base directement
   // (message assistant cree cote serveur), on rafraichit juste les messages
   // de la conversation une fois SUCCEEDED pour recuperer l'image reelle.
+  const checkImageJob = useCallback(async () => {
+    if (!token || !imageJobId) return
+    try {
+      const job = await aiApi.getImageJob(token, imageJobId)
+      setImageJobStatus(job.status)
+      if (job.status === "SUCCEEDED" && activeConversation) {
+        const { messages: refreshed } = await aiApi.listMessages(token, activeConversation._id)
+        setMessages(refreshed)
+        setImageJobId(null)
+        setImageJobStatus(null)
+      } else if (job.status === "FAILED") {
+        setError(job.error || "Erreur de generation d'image")
+        setMessages((prev) => prev.filter((m) => m._id !== "temp-generating-image"))
+        setImageJobId(null)
+        setImageJobStatus(null)
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur de suivi de la generation")
+    }
+  }, [token, imageJobId, activeConversation])
+
   useEffect(() => {
     if (!token || !imageJobId || imageJobStatus === "SUCCEEDED" || imageJobStatus === "FAILED") return
-    const interval = setInterval(async () => {
-      try {
-        const job = await aiApi.getImageJob(token, imageJobId)
-        setImageJobStatus(job.status)
-        if (job.status === "SUCCEEDED" && activeConversation) {
-          const { messages: refreshed } = await aiApi.listMessages(token, activeConversation._id)
-          setMessages(refreshed)
-          setImageJobId(null)
-          setImageJobStatus(null)
-        } else if (job.status === "FAILED") {
-          setError(job.error || "Erreur de generation d'image")
-          setMessages((prev) => prev.filter((m) => m._id !== "temp-generating-image"))
-          setImageJobId(null)
-          setImageJobStatus(null)
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Erreur de suivi de la generation")
-      }
-    }, 4000)
+    const interval = setInterval(checkImageJob, 4000)
     return () => clearInterval(interval)
-  }, [token, imageJobId, imageJobStatus, activeConversation])
+  }, [token, imageJobId, imageJobStatus, checkImageJob])
+
+  // Les mobiles suspendent souvent les setInterval en arriere-plan (ecran
+  // verrouille, onglet non actif) pendant les 1-3 minutes que prend Qwen -
+  // sans ca, on revient sur l'app avec le message "generation en cours..."
+  // fige indefiniment meme si le job a reussi cote serveur entre temps.
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible") checkImageJob()
+    }
+    document.addEventListener("visibilitychange", onVisible)
+    return () => document.removeEventListener("visibilitychange", onVisible)
+  }, [checkImageJob])
 
   // Dictee vocale via la Web Speech API (voir types/speech-recognition.d.ts).
   // Certains navigateurs (Safari desktop notamment) ne la supportent pas : on
@@ -813,6 +868,7 @@ export default function AiPage() {
                       <div className="flex items-center gap-2">
                         <CopyButton text={message.content} />
                         {message.role === "assistant" && <ListenButton token={token} text={message.content} />}
+                        {message.imageDataUrl && <ImageActions imageUrl={message.imageDataUrl} />}
                       </div>
                     </div>
                     {message.role === "user" && (
