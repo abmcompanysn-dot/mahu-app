@@ -18,7 +18,7 @@ const footerLinks = {
   resources: {
     title: "Blog & Guides",
     links: [
-      { label: "Guide NFC", href: "#" },
+      { label: "Documentation", href: "/documentation" },
       { label: "Cas d'usage", href: "#" },
       { label: "Tutoriels", href: "#" },
     ],
@@ -26,10 +26,10 @@ const footerLinks = {
   info: {
     title: "Informations",
     links: [
-      { label: "Contact", href: "#" },
+      { label: "Contact", href: "mailto:contact@mahu.cards" },
       { label: "FAQ", href: "#" },
-      { label: "Conditions d'utilisation", href: "#" },
-      { label: "Politique de confidentialite", href: "#" },
+      { label: "Conditions d'utilisation", href: "/conditions-utilisation" },
+      { label: "Politique de confidentialite", href: "/confidentialite" },
       { label: "Livraison", href: "#" },
     ],
   },
