@@ -625,7 +625,7 @@ export default function AiPage() {
   )
 
   const videoPanel = videoJobId && (
-    <div className="mt-3 rounded-xl border border-border/50 bg-card/50 p-3 text-sm">
+    <div className="mb-3 rounded-xl border border-border/50 bg-card/50 p-3 text-sm">
       {videoError ? (
         <p className="text-destructive">Erreur : {videoError}</p>
       ) : videoStatus === "SUCCEEDED" && videoUrl ? (
@@ -815,8 +815,8 @@ export default function AiPage() {
                   </div>
                 </div>
 
-                {composer}
                 {videoPanel}
+                {composer}
                 <div className="flex flex-wrap items-center gap-2 mt-4">
                   {QUICK_SUGGESTIONS.map((suggestion) => (
                     <button
@@ -842,11 +842,7 @@ export default function AiPage() {
               <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
                 {messages.map((message) => (
                   <div key={message._id} className={`flex gap-3 group ${message.role === "user" ? "justify-end" : "justify-start"}`}>
-                    {message.role === "assistant" && (
-                      <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-                        <Bot className="w-4 h-4 text-primary" />
-                      </div>
-                    )}
+                    {message.role === "assistant" && <AiLogo size="sm" />}
                     <div className={`max-w-[75%] flex flex-col gap-1 ${message.role === "user" ? "items-end" : "items-start"}`}>
                       {message.imageDataUrl && (
                         // eslint-disable-next-line @next/next/no-img-element
@@ -881,13 +877,18 @@ export default function AiPage() {
                 {sending && (
                   <div className="flex gap-3 justify-start">
                     <AiLogo animated size="sm" />
-                    <div className="rounded-2xl px-4 py-2 bg-muted/40 flex items-center">
+                    <div className="rounded-2xl px-4 py-2 bg-muted/40 flex items-center gap-2">
                       <span className="text-sm text-muted-foreground">
                         {editImageMode
                           ? "AI MAHU modifie l'image..."
                           : imageGenMode
                             ? "AI MAHU genere l'image..."
                             : "AI MAHU reflechit..."}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-primary/70 animate-bounce [animation-delay:-0.3s]" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-primary/70 animate-bounce [animation-delay:-0.15s]" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-primary/70 animate-bounce" />
                       </span>
                     </div>
                   </div>
@@ -897,8 +898,8 @@ export default function AiPage() {
               {error && <p className="px-4 text-sm text-destructive">{error}</p>}
 
               <div className="p-4 border-t border-border/50">
-                {composer}
                 {videoPanel}
+                {composer}
               </div>
             </div>
           )}
