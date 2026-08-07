@@ -471,11 +471,11 @@ export default function AiPage() {
         rows={2}
         className="w-full resize-none bg-transparent text-foreground text-base placeholder:text-muted-foreground/70 outline-none px-1"
       />
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex items-center gap-1.5 flex-wrap">
           <Select value={selectedModel} onValueChange={setSelectedModel} disabled={imageGenMode || editImageMode || videoMode}>
-            <SelectTrigger size="sm" className="border-border/50 bg-background/50">
-              <SelectValue placeholder="Modele" />
+            <SelectTrigger size="sm" className="border-border/50 bg-background/50 max-w-32.5 sm:max-w-none">
+              <SelectValue placeholder="Modele" className="truncate" />
             </SelectTrigger>
             <SelectContent>
               {modelsInfo?.models.map((model) => (
@@ -542,7 +542,7 @@ export default function AiPage() {
             <Video className="w-4 h-4" />
           </Button>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0 ml-auto">
           {SpeechRecognitionCtor && (
             <Button
               type="button"
