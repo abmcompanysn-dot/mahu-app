@@ -126,6 +126,8 @@ export default function AiPage() {
   const [pendingImage, setPendingImage] = useState<string | null>(null)
   const [imageGenMode, setImageGenMode] = useState(false)
   const [imageProvider, setImageProvider] = useState<"qwen" | "openai">("qwen")
+  const [imageJobId, setImageJobId] = useState<string | null>(null)
+  const [imageJobStatus, setImageJobStatus] = useState<string | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [conversationSearch, setConversationSearch] = useState("")
   const [editImageMode, setEditImageMode] = useState(false)
@@ -174,6 +176,33 @@ export default function AiPage() {
     }, 4000)
     return () => clearInterval(interval)
   }, [token, videoJobId, videoStatus])
+
+  // Idem pour la generation d'image Qwen : le job resout en base directement
+  // (message assistant cree cote serveur), on rafraichit juste les messages
+  // de la conversation une fois SUCCEEDED pour recuperer l'image reelle.
+  useEffect(() => {
+    if (!token || !imageJobId || imageJobStatus === "SUCCEEDED" || imageJobStatus === "FAILED") return
+    const interval = setInterval(async () => {
+      try {
+        const job = await aiApi.getImageJob(token, imageJobId)
+        setImageJobStatus(job.status)
+        if (job.status === "SUCCEEDED" && activeConversation) {
+          const { messages: refreshed } = await aiApi.listMessages(token, activeConversation._id)
+          setMessages(refreshed)
+          setImageJobId(null)
+          setImageJobStatus(null)
+        } else if (job.status === "FAILED") {
+          setError(job.error || "Erreur de generation d'image")
+          setMessages((prev) => prev.filter((m) => m._id !== "temp-generating-image"))
+          setImageJobId(null)
+          setImageJobStatus(null)
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Erreur de suivi de la generation")
+      }
+    }, 4000)
+    return () => clearInterval(interval)
+  }, [token, imageJobId, imageJobStatus, activeConversation])
 
   // Dictee vocale via la Web Speech API (voir types/speech-recognition.d.ts).
   // Certains navigateurs (Safari desktop notamment) ne la supportent pas : on
@@ -292,10 +321,30 @@ export default function AiPage() {
       ])
 
       try {
+        if (generatingImage && imageProvider === "qwen") {
+          // Qwen prend 1-3 minutes - submit+poll comme la video, pas de reponse immediate.
+          const result = await aiApi.submitImageJob(token, conversation._id, content)
+          setMessages((prev) => [
+            ...prev.filter((m) => !m._id.startsWith("temp-")),
+            result.userMessage,
+            {
+              _id: "temp-generating-image",
+              conversationId: conversation._id,
+              role: "assistant",
+              content: "Generation de l'image en cours (1 a 3 minutes)...",
+              modelName: "wan2.6-image",
+              createdAt: new Date().toISOString(),
+            },
+          ])
+          setImageJobId(result.jobId)
+          setImageJobStatus(result.status)
+          return
+        }
+
         const result = editingImage && imageToSend
           ? await aiApi.editImage(token, conversation._id, content, imageToSend)
           : generatingImage
-            ? await aiApi.generateImage(token, conversation._id, content, imageProvider)
+            ? await aiApi.generateImage(token, conversation._id, content)
             : await aiApi.sendMessage(token, conversation._id, content || "(image jointe)", imageToSend ?? undefined)
         setMessages((prev) => [...prev.filter((m) => !m._id.startsWith("temp-")), result.userMessage, result.assistantMessage])
         setModelsInfo((prev) => (prev ? { ...prev, creditBalance: result.creditBalance } : prev))

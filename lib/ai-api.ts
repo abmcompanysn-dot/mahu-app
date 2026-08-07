@@ -72,12 +72,25 @@ export const aiApi = {
       { method: "POST", body: JSON.stringify({ content, imageDataUrl }) },
     ),
 
-  generateImage: (token: string, conversationId: string, prompt: string, provider: "qwen" | "openai" = "qwen") =>
+  // OpenAI (gpt-image-1) : reponse synchrone en quelques secondes.
+  generateImage: (token: string, conversationId: string, prompt: string) =>
     request<{ userMessage: AiMessage; assistantMessage: AiMessage; creditBalance: number; modelUsed: string }>(
       `${AI_BASE_URL}/conversations/${conversationId}/generate-image`,
       token,
-      { method: "POST", body: JSON.stringify({ prompt, provider }) },
+      { method: "POST", body: JSON.stringify({ prompt }) },
     ),
+
+  // Qwen (Alibaba wan2.6-image) : 1-3 minutes, donc submit+poll comme la
+  // video plutot qu'un appel synchrone (qui timeout sur le tunnel Cloudflare).
+  submitImageJob: (token: string, conversationId: string, prompt: string) =>
+    request<{ jobId: string; userMessage: AiMessage; status: string }>(
+      `${AI_BASE_URL}/conversations/${conversationId}/generate-image-job`,
+      token,
+      { method: "POST", body: JSON.stringify({ prompt }) },
+    ),
+
+  getImageJob: (token: string, jobId: string) =>
+    request<{ status: string; imageDataUrl?: string; error?: string }>(`${AI_BASE_URL}/generate-image-job/${jobId}`, token),
 
   editImage: (token: string, conversationId: string, prompt: string, imageDataUrl: string) =>
     request<{ userMessage: AiMessage; assistantMessage: AiMessage; creditBalance: number; modelUsed: string }>(

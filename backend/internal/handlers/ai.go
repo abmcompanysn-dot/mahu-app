@@ -385,13 +385,17 @@ func (d *Deps) SendMessage(w http.ResponseWriter, r *http.Request, conversationI
 	})
 }
 
-const imageGenModel = "image-gen"     // OpenAI gpt-image-1, via LiteLLM
-const qwenImageModel = "wan2.6-image" // Alibaba DashScope, native async task API
+const imageGenModel = "image-gen" // OpenAI gpt-image-1, via LiteLLM
 const imageGenCreditCost = 20
 
+// Qwen (Alibaba) image generation lives in ai_image_qwen.go as a submit+poll
+// job pair, not here - DashScope's wan2.6-image takes 1-3 minutes, far past
+// what a single synchronous request can survive behind Cloudflare Tunnel
+// (~100s edge timeout). This handler stays OpenAI-only, which responds in
+// a few seconds.
+
 type generateImageRequest struct {
-	Prompt   string `json:"prompt"`
-	Provider string `json:"provider"`
+	Prompt string `json:"prompt"`
 }
 
 type litellmImageResponse struct {
@@ -399,21 +403,6 @@ type litellmImageResponse struct {
 		B64JSON string `json:"b64_json"`
 		URL     string `json:"url"`
 	} `json:"data"`
-}
-
-// dashscopeImageTaskResponse mirrors ai_video.go's dashscopeTaskResponse but
-// for text2image/image-synthesis, whose result shape is a list of images
-// rather than a single video_url - NEW, UNVERIFIED against the live key.
-type dashscopeImageTaskResponse struct {
-	Output struct {
-		TaskID     string `json:"task_id"`
-		TaskStatus string `json:"task_status"`
-		Results    []struct {
-			URL string `json:"url"`
-		} `json:"results"`
-		Message string `json:"message"`
-	} `json:"output"`
-	Message string `json:"message"`
 }
 
 func (d *Deps) generateImageOpenAI(prompt string) (string, error) {
@@ -453,84 +442,11 @@ func (d *Deps) generateImageOpenAI(prompt string) (string, error) {
 	return imageDataURL, nil
 }
 
-// generateImageQwen submits to Alibaba's native task API (same pattern as
-// SubmitVideoJob in ai_video.go) then polls internally within this single
-// request - unlike video, image synthesis is fast enough (single-digit
-// seconds typically) that a bounded poll loop here avoids needing a whole
-// separate job+poll API/UI just for this provider.
-func (d *Deps) generateImageQwen(prompt string) (string, error) {
-	reqBody, _ := json.Marshal(map[string]any{
-		"model": qwenImageModel,
-		"input": map[string]any{"prompt": prompt},
-	})
-	dsReq, _ := http.NewRequest("POST", d.Env.DashscopeNativeBase()+"/services/aigc/text2image/image-synthesis", bytes.NewReader(reqBody))
-	dsReq.Header.Set("Content-Type", "application/json")
-	dsReq.Header.Set("Authorization", "Bearer "+d.Env.DashscopeAPIKey)
-	dsReq.Header.Set("X-DashScope-Async", "enable")
-
-	dsResp, err := http.DefaultClient.Do(dsReq)
-	if err != nil {
-		return "", errors.New("Alibaba Cloud injoignable")
-	}
-	defer dsResp.Body.Close()
-
-	var task dashscopeImageTaskResponse
-	if err := json.NewDecoder(dsResp.Body).Decode(&task); err != nil {
-		return "", errors.New("Reponse invalide du provider")
-	}
-	if dsResp.StatusCode < 200 || dsResp.StatusCode >= 300 || task.Output.TaskID == "" {
-		msg := task.Message
-		if msg == "" {
-			msg = "Echec de soumission de la generation d'image"
-		}
-		return "", errors.New(msg)
-	}
-
-	const pollAttempts = 15
-	const pollInterval = 2 * time.Second
-	for attempt := 0; attempt < pollAttempts; attempt++ {
-		time.Sleep(pollInterval)
-
-		pollReq, _ := http.NewRequest("GET", d.Env.DashscopeNativeBase()+"/tasks/"+task.Output.TaskID, nil)
-		pollReq.Header.Set("Authorization", "Bearer "+d.Env.DashscopeAPIKey)
-
-		pollResp, err := http.DefaultClient.Do(pollReq)
-		if err != nil {
-			continue
-		}
-		var polled dashscopeImageTaskResponse
-		decodeErr := json.NewDecoder(pollResp.Body).Decode(&polled)
-		pollResp.Body.Close()
-		if decodeErr != nil {
-			continue
-		}
-
-		switch polled.Output.TaskStatus {
-		case "SUCCEEDED":
-			if len(polled.Output.Results) == 0 || polled.Output.Results[0].URL == "" {
-				return "", errors.New("Aucune image retournee")
-			}
-			return polled.Output.Results[0].URL, nil
-		case "FAILED":
-			msg := polled.Output.Message
-			if msg == "" {
-				msg = "Echec de la generation d'image"
-			}
-			return "", errors.New(msg)
-		}
-	}
-	return "", errors.New("Generation d'image trop longue, reessayez")
-}
-
 func (d *Deps) GenerateImage(w http.ResponseWriter, r *http.Request, conversationID string) {
 	var req generateImageRequest
 	if err := httpx.DecodeJSON(r, &req); err != nil || len(req.Prompt) == 0 || len(req.Prompt) > 2000 {
 		httpx.WriteError(w, http.StatusBadRequest, "Invalid payload")
 		return
-	}
-	provider := req.Provider
-	if provider != "openai" {
-		provider = "qwen"
 	}
 
 	userID, ok := currentUserID(w, r)
@@ -551,13 +467,8 @@ func (d *Deps) GenerateImage(w http.ResponseWriter, r *http.Request, conversatio
 		return
 	}
 
-	if provider == "openai" {
-		if d.Env.LiteLLMMasterKey == "" {
-			httpx.WriteError(w, http.StatusServiceUnavailable, "AI mode is not configured yet")
-			return
-		}
-	} else if d.Env.DashscopeAPIKey == "" || d.Env.DashscopeAPIBase == "" {
-		httpx.WriteError(w, http.StatusServiceUnavailable, "La generation d'image n'est pas configuree")
+	if d.Env.LiteLLMMasterKey == "" {
+		httpx.WriteError(w, http.StatusServiceUnavailable, "AI mode is not configured yet")
 		return
 	}
 
@@ -571,18 +482,13 @@ func (d *Deps) GenerateImage(w http.ResponseWriter, r *http.Request, conversatio
 		return
 	}
 
-	modelUsed := qwenImageModel
-	if provider == "openai" {
-		modelUsed = imageGenModel
-	}
-
 	now := time.Now()
 	userMessage := models.Message{
 		ID:             primitive.NewObjectID(),
 		ConversationID: conversation.ID,
 		Role:           "user",
 		Content:        req.Prompt,
-		ModelName:      modelUsed,
+		ModelName:      imageGenModel,
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}
@@ -591,12 +497,7 @@ func (d *Deps) GenerateImage(w http.ResponseWriter, r *http.Request, conversatio
 		return
 	}
 
-	var imageDataURL string
-	if provider == "openai" {
-		imageDataURL, err = d.generateImageOpenAI(req.Prompt)
-	} else {
-		imageDataURL, err = d.generateImageQwen(req.Prompt)
-	}
+	imageDataURL, err := d.generateImageOpenAI(req.Prompt)
 	if err != nil {
 		httpx.WriteError(w, http.StatusBadGateway, err.Error())
 		return
@@ -609,7 +510,7 @@ func (d *Deps) GenerateImage(w http.ResponseWriter, r *http.Request, conversatio
 		Role:           "assistant",
 		Content:        `Image generee : "` + req.Prompt + `"`,
 		ImageDataURL:   imageDataURL,
-		ModelName:      modelUsed,
+		ModelName:      imageGenModel,
 		CreatedAt:      assistantNow,
 		UpdatedAt:      assistantNow,
 	}
@@ -639,7 +540,7 @@ func (d *Deps) GenerateImage(w http.ResponseWriter, r *http.Request, conversatio
 		"userMessage":      userMessage,
 		"assistantMessage": assistantMessage,
 		"creditBalance":    sub.CreditBalance,
-		"modelUsed":        modelUsed,
+		"modelUsed":        imageGenModel,
 	})
 }
 

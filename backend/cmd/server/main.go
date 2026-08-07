@@ -112,6 +112,12 @@ func main() {
 	protected.Handle("POST /api/ai/conversations/{id}/edit-image", userOnly(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		deps.EditImage(w, r, r.PathValue("id"))
 	})))
+	protected.Handle("POST /api/ai/conversations/{id}/generate-image-job", userOnly(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		deps.SubmitImageJob(w, r, r.PathValue("id"))
+	})))
+	protected.Handle("GET /api/ai/generate-image-job/{jobId}", userOnly(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		deps.GetImageJob(w, r, r.PathValue("jobId"))
+	})))
 	protected.Handle("POST /api/ai/speak", userOnly(http.HandlerFunc(deps.SpeakText)))
 	protected.Handle("POST /api/ai/transcribe", userOnly(http.HandlerFunc(deps.TranscribeAudio)))
 	protected.Handle("POST /api/ai/video", userOnly(http.HandlerFunc(deps.SubmitVideoJob)))
