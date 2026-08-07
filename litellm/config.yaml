@@ -182,11 +182,17 @@ model_list:
       api_key: os.environ/DASHSCOPE_API_KEY
 
   # Voix (TTS) et reconnaissance vocale (ASR) - pas d'UI d'enregistrement/lecture audio dans l'app
+  # model_info.mode tells LiteLLM's router which endpoint group a custom
+  # (non-built-in) model belongs to - without it, the model still shows up
+  # in /v1/models but the proxy's /audio/speech and /audio/transcriptions
+  # routers can't find it ("NotFoundError: Received Model Group=...").
   - model_name: qwen3-tts-flash-realtime
     litellm_params:
       model: openai/qwen3-tts-flash-realtime
       api_base: os.environ/DASHSCOPE_API_BASE
       api_key: os.environ/DASHSCOPE_API_KEY
+    model_info:
+      mode: audio_speech
   - model_name: qwen-voice-enrollment
     litellm_params:
       model: openai/qwen-voice-enrollment
@@ -197,11 +203,15 @@ model_list:
       model: openai/fun-asr-2025-08-25
       api_base: os.environ/DASHSCOPE_API_BASE
       api_key: os.environ/DASHSCOPE_API_KEY
+    model_info:
+      mode: audio_transcription
   - model_name: fun-asr-mtl
     litellm_params:
       model: openai/fun-asr-mtl
       api_base: os.environ/DASHSCOPE_API_BASE
       api_key: os.environ/DASHSCOPE_API_KEY
+    model_info:
+      mode: audio_transcription
   - model_name: fun-asr-realtime
     litellm_params:
       model: openai/fun-asr-realtime-2025-11-07
