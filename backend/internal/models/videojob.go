@@ -18,14 +18,18 @@ const (
 // VideoJob tracks an async Alibaba (wan2.x) video-generation task: submitted
 // once, then polled until Alibaba reports it done - see handlers/ai_video.go.
 type VideoJob struct {
-	ID        primitive.ObjectID `bson:"_id,omitempty"`
-	UserID    primitive.ObjectID `bson:"userId"`
-	Model     string             `bson:"model"`
-	Prompt    string             `bson:"prompt"`
-	TaskID    string             `bson:"taskId"`
-	Status    string             `bson:"status"`
-	VideoURL  string             `bson:"videoUrl,omitempty"`
-	Error     string             `bson:"error,omitempty"`
-	CreatedAt time.Time          `bson:"createdAt"`
-	UpdatedAt time.Time          `bson:"updatedAt"`
+	ID       primitive.ObjectID `bson:"_id,omitempty"`
+	UserID   primitive.ObjectID `bson:"userId"`
+	Model    string             `bson:"model"`
+	Prompt   string             `bson:"prompt"`
+	TaskID   string             `bson:"taskId"`
+	Status   string             `bson:"status"`
+	VideoURL string             `bson:"videoUrl,omitempty"`
+	Error    string             `bson:"error,omitempty"`
+	// NarratedVideoURL is set once a voice-over has been generated and mixed
+	// onto VideoURL via MergeVideoNarration (Cloudinary audio overlay) -
+	// optional, the base video remains usable/downloadable on its own.
+	NarratedVideoURL string    `bson:"narratedVideoUrl,omitempty"`
+	CreatedAt        time.Time `bson:"createdAt"`
+	UpdatedAt        time.Time `bson:"updatedAt"`
 }

@@ -129,6 +129,12 @@ export const aiApi = {
   getVideoJob: (token: string, jobId: string) =>
     request<{ status: string; videoUrl?: string; error?: string }>(`${AI_BASE_URL}/video/${jobId}`, token),
 
+  narrateVideo: (token: string, jobId: string, text: string) =>
+    request<{ narratedVideoUrl: string; creditBalance: number }>(`${AI_BASE_URL}/video/${jobId}/narrate`, token, {
+      method: "POST",
+      body: JSON.stringify({ text }),
+    }),
+
   // Utilitaire generique texte -> vecteur, pas rattache a une fonctionnalite
   // de recherche precise (voir la note dans ai_embed.go cote backend).
   embed: (token: string, text: string) =>

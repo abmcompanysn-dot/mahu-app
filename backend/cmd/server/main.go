@@ -124,6 +124,9 @@ func main() {
 	protected.Handle("GET /api/ai/video/{id}", userOnly(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		deps.GetVideoJob(w, r, r.PathValue("id"))
 	})))
+	protected.Handle("POST /api/ai/video/{id}/narrate", userOnly(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		deps.MergeVideoNarration(w, r, r.PathValue("id"))
+	})))
 	protected.Handle("POST /api/ai/embed", userOnly(http.HandlerFunc(deps.EmbedText)))
 
 	protected.Handle("GET /api/ai/card", userOnly(http.HandlerFunc(deps.GetCard)))

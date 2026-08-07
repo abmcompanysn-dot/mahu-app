@@ -176,6 +176,10 @@ export default function AiPage() {
   const [videoStatus, setVideoStatus] = useState<string | null>(null)
   const [videoUrl, setVideoUrl] = useState<string | null>(null)
   const [videoError, setVideoError] = useState<string | null>(null)
+  const [narrationText, setNarrationText] = useState("")
+  const [narratedVideoUrl, setNarratedVideoUrl] = useState<string | null>(null)
+  const [narrating, setNarrating] = useState(false)
+  const [narrationError, setNarrationError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [listening, setListening] = useState(false)
@@ -418,6 +422,9 @@ export default function AiPage() {
     setVideoError(null)
     setVideoUrl(null)
     setVideoStatus(null)
+    setNarratedVideoUrl(null)
+    setNarrationText("")
+    setNarrationError(null)
     setSending(true)
     try {
       const result = await aiApi.submitVideo(token, prompt)
@@ -431,6 +438,22 @@ export default function AiPage() {
       setSending(false)
     }
   }, [token, input])
+
+  const handleNarrate = useCallback(async () => {
+    const text = narrationText.trim()
+    if (!token || !videoJobId || !text) return
+    setNarrationError(null)
+    setNarrating(true)
+    try {
+      const result = await aiApi.narrateVideo(token, videoJobId, text)
+      setNarratedVideoUrl(result.narratedVideoUrl)
+      setModelsInfo((prev) => (prev ? { ...prev, creditBalance: result.creditBalance } : prev))
+    } catch (err) {
+      setNarrationError(err instanceof Error ? err.message : "Erreur de fusion audio")
+    } finally {
+      setNarrating(false)
+    }
+  }, [token, videoJobId, narrationText])
 
   if (!isAuthenticated) {
     return (
@@ -625,12 +648,28 @@ export default function AiPage() {
   )
 
   const videoPanel = videoJobId && (
-    <div className="mb-3 rounded-xl border border-border/50 bg-card/50 p-3 text-sm">
+    <div className="mb-3 rounded-xl border border-border/50 bg-card/50 p-3 text-sm space-y-3">
       {videoError ? (
         <p className="text-destructive">Erreur : {videoError}</p>
       ) : videoStatus === "SUCCEEDED" && videoUrl ? (
-        // eslint-disable-next-line jsx-a11y/media-has-caption
-        <video src={videoUrl} controls className="w-full rounded-lg max-h-80" />
+        <>
+          {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+          <video src={narratedVideoUrl ?? videoUrl} controls className="w-full rounded-lg max-h-80" />
+          <div className="flex items-center gap-2">
+            <input
+              value={narrationText}
+              onChange={(e) => setNarrationText(e.target.value)}
+              placeholder="Texte de la voix off a ajouter sur la video (5 credits)..."
+              className="flex-1 bg-background/50 border border-border/50 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-primary/40"
+              disabled={narrating}
+            />
+            <Button size="sm" onClick={handleNarrate} disabled={narrating || !narrationText.trim()}>
+              {narrating ? <Loader2 className="w-4 h-4 animate-spin" /> : "Ajouter la voix off"}
+            </Button>
+          </div>
+          {narrationError && <p className="text-destructive text-xs">Erreur : {narrationError}</p>}
+          {narratedVideoUrl && <p className="text-xs text-muted-foreground">Voix off ajoutee.</p>}
+        </>
       ) : (
         <div className="flex items-center gap-2 text-muted-foreground">
           <Loader2 className="w-4 h-4 animate-spin" />

@@ -2,13 +2,17 @@ package handlers
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
+	"mahu-backend/internal/cloudinaryutil"
 	"mahu-backend/internal/db"
 	"mahu-backend/internal/httpx"
 	"mahu-backend/internal/models"
@@ -28,6 +32,7 @@ import (
 
 const videoModel = "wan2.6-t2v"
 const videoCreditCost = 100
+const narrationCreditCost = 5
 
 type submitVideoRequest struct {
 	Prompt string `json:"prompt"`
@@ -189,5 +194,123 @@ func (d *Deps) GetVideoJob(w http.ResponseWriter, r *http.Request, jobID string)
 		"status":   update["status"],
 		"videoUrl": task.Output.VideoURL,
 		"error":    task.Output.Message,
+	})
+}
+
+type mergeNarrationRequest struct {
+	Text string `json:"text"`
+}
+
+// MergeVideoNarration generates a voice-over (same TTS model as SpeakText)
+// and mixes it onto an already-generated video as an additional audio track
+// via a Cloudinary overlay transformation (l_audio + fl_layer_apply) - NEW,
+// UNVERIFIED end-to-end (the DashScope video-synthesis call and the TTS call
+// are each independently confirmed working; this specific combination -
+// re-hosting the DashScope video on Cloudinary by remote URL, then layering
+// a Cloudinary-hosted audio clip onto it - has not been exercised against
+// live Cloudinary). Wan2.6 videos already carry their own generated
+// background music/sound effects; the overlay adds the narration as a
+// second track on top rather than replacing the original audio.
+func (d *Deps) MergeVideoNarration(w http.ResponseWriter, r *http.Request, jobID string) {
+	userID, ok := currentUserID(w, r)
+	if !ok {
+		return
+	}
+	objID, err := primitive.ObjectIDFromHex(jobID)
+	if err != nil {
+		httpx.WriteError(w, http.StatusNotFound, "Job not found")
+		return
+	}
+
+	var req mergeNarrationRequest
+	if err := httpx.DecodeJSON(r, &req); err != nil || len(req.Text) == 0 || len(req.Text) > 4000 {
+		httpx.WriteError(w, http.StatusBadRequest, "Invalid payload")
+		return
+	}
+
+	ctx := r.Context()
+	var job models.VideoJob
+	if err := db.Collection(models.VideoJobsCollection).FindOne(ctx, bson.M{"_id": objID, "userId": userID}).Decode(&job); err != nil {
+		httpx.WriteError(w, http.StatusNotFound, "Job not found")
+		return
+	}
+	if job.Status != models.VideoJobSucceeded || job.VideoURL == "" {
+		httpx.WriteError(w, http.StatusBadRequest, "La video n'est pas encore prete")
+		return
+	}
+
+	if d.Env.LiteLLMMasterKey == "" {
+		httpx.WriteError(w, http.StatusServiceUnavailable, "AI mode is not configured yet")
+		return
+	}
+
+	sub, err := services.GetOrCreateSubscription(ctx, userID)
+	if err != nil {
+		httpx.WriteError(w, http.StatusInternalServerError, "Erreur serveur")
+		return
+	}
+	if sub.CreditBalance < narrationCreditCost {
+		httpx.WriteError(w, http.StatusPaymentRequired, "Credits insuffisants pour la voix off")
+		return
+	}
+
+	// 1. Text-to-speech (same provider/model as SpeakText).
+	ttsBody, _ := json.Marshal(map[string]any{"model": ttsModel, "input": req.Text, "voice": "Cherry"})
+	ttsReq, _ := http.NewRequest("POST", d.Env.LiteLLMURL+"/audio/speech", bytes.NewReader(ttsBody))
+	ttsReq.Header.Set("Content-Type", "application/json")
+	ttsReq.Header.Set("Authorization", "Bearer "+d.Env.LiteLLMMasterKey)
+	ttsResp, err := http.DefaultClient.Do(ttsReq)
+	if err != nil {
+		httpx.WriteError(w, http.StatusBadGateway, "LiteLLM injoignable")
+		return
+	}
+	defer ttsResp.Body.Close()
+	audioBytes, err := io.ReadAll(ttsResp.Body)
+	if err != nil {
+		httpx.WriteError(w, http.StatusBadGateway, "AI provider error")
+		return
+	}
+	if ttsResp.StatusCode < 200 || ttsResp.StatusCode >= 300 {
+		httpx.WriteError(w, http.StatusBadGateway, "AI provider error: "+string(audioBytes[:min(len(audioBytes), 300)]))
+		return
+	}
+
+	// 2. Re-host the video and the generated narration on Cloudinary, since
+	// the audio-overlay transformation addresses assets by Cloudinary
+	// public_id (the DashScope video_url is a short-lived signed OSS link).
+	_, videoPublicID, err := cloudinaryutil.UploadVideo(d.Env, job.VideoURL)
+	if err != nil {
+		httpx.WriteError(w, http.StatusBadGateway, "Erreur hebergement video: "+err.Error())
+		return
+	}
+	audioDataURL := "data:audio/mpeg;base64," + base64.StdEncoding.EncodeToString(audioBytes)
+	_, audioPublicID, err := cloudinaryutil.UploadVideo(d.Env, audioDataURL)
+	if err != nil {
+		httpx.WriteError(w, http.StatusBadGateway, "Erreur hebergement audio: "+err.Error())
+		return
+	}
+
+	if err := services.DeductCredits(ctx, sub, narrationCreditCost); err != nil {
+		httpx.WriteError(w, http.StatusInternalServerError, "Erreur serveur")
+		return
+	}
+
+	// 3. l_audio overlay layers the narration on top of the video's own
+	// audio track (Cloudinary public_id path separators must be escaped as
+	// ":" inside a transformation component).
+	escapedAudioID := bytes.ReplaceAll([]byte(audioPublicID), []byte("/"), []byte(":"))
+	mergedURL := fmt.Sprintf(
+		"https://res.cloudinary.com/%s/video/upload/l_audio:%s,fl_layer_apply/%s.mp4",
+		d.Env.CloudinaryCloudName, string(escapedAudioID), videoPublicID,
+	)
+
+	_, _ = db.Collection(models.VideoJobsCollection).UpdateOne(ctx, bson.M{"_id": job.ID}, bson.M{"$set": bson.M{
+		"narratedVideoUrl": mergedURL,
+		"updatedAt":        time.Now(),
+	}})
+
+	httpx.WriteJSON(w, http.StatusOK, map[string]any{
+		"narratedVideoUrl": mergedURL,
+		"creditBalance":    sub.CreditBalance,
 	})
 }
