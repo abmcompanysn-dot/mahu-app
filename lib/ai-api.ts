@@ -127,10 +127,20 @@ export const aiApi = {
     }),
 
   getVideoJob: (token: string, jobId: string) =>
-    request<{ status: string; videoUrl?: string; error?: string }>(`${AI_BASE_URL}/video/${jobId}`, token),
+    request<{
+      status: string
+      videoUrl?: string
+      error?: string
+      narrationStatus?: string
+      narratedVideoUrl?: string
+      narrationError?: string
+    }>(`${AI_BASE_URL}/video/${jobId}`, token),
 
+  // Kicks off the merge in the background and returns immediately (the merge
+  // itself takes over a minute) - poll getVideoJob's narrationStatus for the
+  // result, same pattern as submitVideo/getVideoJob for the base video.
   narrateVideo: (token: string, jobId: string, text: string) =>
-    request<{ narratedVideoUrl: string; creditBalance: number }>(`${AI_BASE_URL}/video/${jobId}/narrate`, token, {
+    request<{ narrationStatus: string; creditBalance: number }>(`${AI_BASE_URL}/video/${jobId}/narrate`, token, {
       method: "POST",
       body: JSON.stringify({ text }),
     }),

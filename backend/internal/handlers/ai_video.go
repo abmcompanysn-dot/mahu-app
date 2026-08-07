@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -154,7 +155,14 @@ func (d *Deps) GetVideoJob(w http.ResponseWriter, r *http.Request, jobID string)
 	}
 
 	if job.Status == models.VideoJobSucceeded || job.Status == models.VideoJobFailed {
-		httpx.WriteJSON(w, http.StatusOK, map[string]any{"status": job.Status, "videoUrl": job.VideoURL, "error": job.Error})
+		httpx.WriteJSON(w, http.StatusOK, map[string]any{
+			"status":           job.Status,
+			"videoUrl":         job.VideoURL,
+			"error":            job.Error,
+			"narrationStatus":  job.NarrationStatus,
+			"narratedVideoUrl": job.NarratedVideoURL,
+			"narrationError":   job.NarrationError,
+		})
 		return
 	}
 
@@ -201,16 +209,16 @@ type mergeNarrationRequest struct {
 	Text string `json:"text"`
 }
 
-// MergeVideoNarration generates a voice-over (same TTS model as SpeakText)
-// and mixes it onto an already-generated video as an additional audio track
-// via a Cloudinary overlay transformation (l_audio + fl_layer_apply) - NEW,
-// UNVERIFIED end-to-end (the DashScope video-synthesis call and the TTS call
-// are each independently confirmed working; this specific combination -
-// re-hosting the DashScope video on Cloudinary by remote URL, then layering
-// a Cloudinary-hosted audio clip onto it - has not been exercised against
-// live Cloudinary). Wan2.6 videos already carry their own generated
-// background music/sound effects; the overlay adds the narration as a
-// second track on top rather than replacing the original audio.
+// MergeVideoNarration kicks off a voice-over merge in the background and
+// returns immediately - NEW, UNVERIFIED end-to-end. The actual work (TTS,
+// re-hosting the video + narration on Cloudinary, then compositing via an
+// audio-overlay transformation) reliably takes well over a minute, which was
+// timing out synchronously through the browser -> Next.js proxy -> Cloudflare
+// tunnel chain in front of this backend (observed as 502s). It now follows
+// the same submit-then-poll shape as SubmitVideoJob/GetVideoJob: this handler
+// only validates, deducts credits, and flips narrationStatus to PENDING; the
+// goroutine below does the slow part and writes the result whenever it's
+// done, decoupled from any single HTTP request's lifetime.
 func (d *Deps) MergeVideoNarration(w http.ResponseWriter, r *http.Request, jobID string) {
 	userID, ok := currentUserID(w, r)
 	if !ok {
@@ -253,45 +261,75 @@ func (d *Deps) MergeVideoNarration(w http.ResponseWriter, r *http.Request, jobID
 		httpx.WriteError(w, http.StatusPaymentRequired, "Credits insuffisants pour la voix off")
 		return
 	}
+	if err := services.DeductCredits(ctx, sub, narrationCreditCost); err != nil {
+		httpx.WriteError(w, http.StatusInternalServerError, "Erreur serveur")
+		return
+	}
+
+	_, _ = db.Collection(models.VideoJobsCollection).UpdateOne(ctx, bson.M{"_id": job.ID}, bson.M{"$set": bson.M{
+		"narrationStatus": models.VideoJobPending,
+		"narrationError":  "",
+		"updatedAt":       time.Now(),
+	}})
+
+	go d.runNarrationMerge(job.ID, job.VideoURL, req.Text)
+
+	httpx.WriteJSON(w, http.StatusAccepted, map[string]any{
+		"narrationStatus": models.VideoJobPending,
+		"creditBalance":   sub.CreditBalance - narrationCreditCost,
+	})
+}
+
+// runNarrationMerge does the slow, credit-already-deducted part of
+// MergeVideoNarration in the background - see the handler's comment above
+// for why this isn't inline in the HTTP request anymore. Uses a fresh
+// context (background, with its own timeout) since the original request's
+// context is cancelled the moment the handler above returns.
+func (d *Deps) runNarrationMerge(jobID primitive.ObjectID, videoURL, text string) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+
+	fail := func(reason string) {
+		_, _ = db.Collection(models.VideoJobsCollection).UpdateOne(ctx, bson.M{"_id": jobID}, bson.M{"$set": bson.M{
+			"narrationStatus": models.VideoJobFailed,
+			"narrationError":  reason,
+			"updatedAt":       time.Now(),
+		}})
+	}
 
 	// 1. Text-to-speech (same provider/model as SpeakText).
-	ttsBody, _ := json.Marshal(map[string]any{"model": ttsModel, "input": req.Text, "voice": "Cherry"})
-	ttsReq, _ := http.NewRequest("POST", d.Env.LiteLLMURL+"/audio/speech", bytes.NewReader(ttsBody))
+	ttsBody, _ := json.Marshal(map[string]any{"model": ttsModel, "input": text, "voice": "Cherry"})
+	ttsReq, _ := http.NewRequestWithContext(ctx, "POST", d.Env.LiteLLMURL+"/audio/speech", bytes.NewReader(ttsBody))
 	ttsReq.Header.Set("Content-Type", "application/json")
 	ttsReq.Header.Set("Authorization", "Bearer "+d.Env.LiteLLMMasterKey)
 	ttsResp, err := http.DefaultClient.Do(ttsReq)
 	if err != nil {
-		httpx.WriteError(w, http.StatusBadGateway, "LiteLLM injoignable")
+		fail("LiteLLM injoignable")
 		return
 	}
 	defer ttsResp.Body.Close()
 	audioBytes, err := io.ReadAll(ttsResp.Body)
 	if err != nil {
-		httpx.WriteError(w, http.StatusBadGateway, "AI provider error")
+		fail("AI provider error")
 		return
 	}
 	if ttsResp.StatusCode < 200 || ttsResp.StatusCode >= 300 {
-		httpx.WriteError(w, http.StatusBadGateway, "AI provider error: "+string(audioBytes[:min(len(audioBytes), 300)]))
+		fail("AI provider error: " + string(audioBytes[:min(len(audioBytes), 300)]))
 		return
 	}
 
 	// 2. Re-host the video and the generated narration on Cloudinary, since
 	// the audio-overlay transformation addresses assets by Cloudinary
 	// public_id (the DashScope video_url is a short-lived signed OSS link).
-	_, videoPublicID, err := cloudinaryutil.UploadVideo(d.Env, job.VideoURL)
+	_, videoPublicID, err := cloudinaryutil.UploadVideo(d.Env, videoURL)
 	if err != nil {
-		httpx.WriteError(w, http.StatusBadGateway, "Erreur hebergement video: "+err.Error())
+		fail("Erreur hebergement video: " + err.Error())
 		return
 	}
 	audioDataURL := "data:audio/mpeg;base64," + base64.StdEncoding.EncodeToString(audioBytes)
 	_, audioPublicID, err := cloudinaryutil.UploadVideo(d.Env, audioDataURL)
 	if err != nil {
-		httpx.WriteError(w, http.StatusBadGateway, "Erreur hebergement audio: "+err.Error())
-		return
-	}
-
-	if err := services.DeductCredits(ctx, sub, narrationCreditCost); err != nil {
-		httpx.WriteError(w, http.StatusInternalServerError, "Erreur serveur")
+		fail("Erreur hebergement audio: " + err.Error())
 		return
 	}
 
@@ -304,13 +342,9 @@ func (d *Deps) MergeVideoNarration(w http.ResponseWriter, r *http.Request, jobID
 		d.Env.CloudinaryCloudName, string(escapedAudioID), videoPublicID,
 	)
 
-	_, _ = db.Collection(models.VideoJobsCollection).UpdateOne(ctx, bson.M{"_id": job.ID}, bson.M{"$set": bson.M{
+	_, _ = db.Collection(models.VideoJobsCollection).UpdateOne(ctx, bson.M{"_id": jobID}, bson.M{"$set": bson.M{
+		"narrationStatus":  models.VideoJobSucceeded,
 		"narratedVideoUrl": mergedURL,
 		"updatedAt":        time.Now(),
 	}})
-
-	httpx.WriteJSON(w, http.StatusOK, map[string]any{
-		"narratedVideoUrl": mergedURL,
-		"creditBalance":    sub.CreditBalance,
-	})
 }

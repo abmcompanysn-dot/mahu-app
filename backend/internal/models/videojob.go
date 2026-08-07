@@ -26,10 +26,14 @@ type VideoJob struct {
 	Status   string             `bson:"status"`
 	VideoURL string             `bson:"videoUrl,omitempty"`
 	Error    string             `bson:"error,omitempty"`
-	// NarratedVideoURL is set once a voice-over has been generated and mixed
-	// onto VideoURL via MergeVideoNarration (Cloudinary audio overlay) -
-	// optional, the base video remains usable/downloadable on its own.
+	// Narration tracks the optional voice-over merge (see
+	// handlers.MergeVideoNarration) - runs in the background after the base
+	// video succeeds, since re-hosting + mixing on Cloudinary takes well
+	// over a minute and would otherwise sit inside a single synchronous HTTP
+	// request, timing out the frontend/proxy/tunnel chain in front of it.
+	NarrationStatus  string    `bson:"narrationStatus,omitempty"`
 	NarratedVideoURL string    `bson:"narratedVideoUrl,omitempty"`
+	NarrationError   string    `bson:"narrationError,omitempty"`
 	CreatedAt        time.Time `bson:"createdAt"`
 	UpdatedAt        time.Time `bson:"updatedAt"`
 }

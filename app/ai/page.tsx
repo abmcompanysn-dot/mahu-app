@@ -177,8 +177,8 @@ export default function AiPage() {
   const [videoUrl, setVideoUrl] = useState<string | null>(null)
   const [videoError, setVideoError] = useState<string | null>(null)
   const [narrationText, setNarrationText] = useState("")
+  const [narrationStatus, setNarrationStatus] = useState<string | null>(null)
   const [narratedVideoUrl, setNarratedVideoUrl] = useState<string | null>(null)
-  const [narrating, setNarrating] = useState(false)
   const [narrationError, setNarrationError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
@@ -220,6 +220,22 @@ export default function AiPage() {
     }, 4000)
     return () => clearInterval(interval)
   }, [token, videoJobId, videoStatus])
+
+  // Idem pour la fusion de la voix off, une fois demarree (voir handleNarrate).
+  useEffect(() => {
+    if (!token || !videoJobId || narrationStatus === "SUCCEEDED" || narrationStatus === "FAILED" || !narrationStatus) return
+    const interval = setInterval(async () => {
+      try {
+        const job = await aiApi.getVideoJob(token, videoJobId)
+        if (job.narrationStatus) setNarrationStatus(job.narrationStatus)
+        if (job.narratedVideoUrl) setNarratedVideoUrl(job.narratedVideoUrl)
+        if (job.narrationError) setNarrationError(job.narrationError)
+      } catch (err) {
+        setNarrationError(err instanceof Error ? err.message : "Erreur de suivi de la voix off")
+      }
+    }, 4000)
+    return () => clearInterval(interval)
+  }, [token, videoJobId, narrationStatus])
 
   // Idem pour la generation d'image Qwen : le job resout en base directement
   // (message assistant cree cote serveur), on rafraichit juste les messages
@@ -422,6 +438,7 @@ export default function AiPage() {
     setVideoError(null)
     setVideoUrl(null)
     setVideoStatus(null)
+    setNarrationStatus(null)
     setNarratedVideoUrl(null)
     setNarrationText("")
     setNarrationError(null)
@@ -443,15 +460,15 @@ export default function AiPage() {
     const text = narrationText.trim()
     if (!token || !videoJobId || !text) return
     setNarrationError(null)
-    setNarrating(true)
+    setNarratedVideoUrl(null)
     try {
+      // Merges in the background (takes over a minute) - the poll effect
+      // below picks up narrationStatus/narratedVideoUrl once it's done.
       const result = await aiApi.narrateVideo(token, videoJobId, text)
-      setNarratedVideoUrl(result.narratedVideoUrl)
+      setNarrationStatus(result.narrationStatus)
       setModelsInfo((prev) => (prev ? { ...prev, creditBalance: result.creditBalance } : prev))
     } catch (err) {
       setNarrationError(err instanceof Error ? err.message : "Erreur de fusion audio")
-    } finally {
-      setNarrating(false)
     }
   }, [token, videoJobId, narrationText])
 
@@ -655,20 +672,28 @@ export default function AiPage() {
         <>
           {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
           <video src={narratedVideoUrl ?? videoUrl} controls className="w-full rounded-lg max-h-80" />
-          <div className="flex items-center gap-2">
-            <input
-              value={narrationText}
-              onChange={(e) => setNarrationText(e.target.value)}
-              placeholder="Texte de la voix off a ajouter sur la video (5 credits)..."
-              className="flex-1 bg-background/50 border border-border/50 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-primary/40"
-              disabled={narrating}
-            />
-            <Button size="sm" onClick={handleNarrate} disabled={narrating || !narrationText.trim()}>
-              {narrating ? <Loader2 className="w-4 h-4 animate-spin" /> : "Ajouter la voix off"}
-            </Button>
-          </div>
+          {narrationStatus === "PENDING" || narrationStatus === "RUNNING" ? (
+            <div className="flex items-center gap-2 text-muted-foreground text-xs">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Ajout de la voix off en cours... cela peut prendre 1 a 2 minutes.
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <input
+                value={narrationText}
+                onChange={(e) => setNarrationText(e.target.value)}
+                placeholder="Texte de la voix off a ajouter sur la video (5 credits)..."
+                className="flex-1 bg-background/50 border border-border/50 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-primary/40"
+              />
+              <Button size="sm" onClick={handleNarrate} disabled={!narrationText.trim()}>
+                Ajouter la voix off
+              </Button>
+            </div>
+          )}
           {narrationError && <p className="text-destructive text-xs">Erreur : {narrationError}</p>}
-          {narratedVideoUrl && <p className="text-xs text-muted-foreground">Voix off ajoutee.</p>}
+          {narrationStatus === "SUCCEEDED" && narratedVideoUrl && (
+            <p className="text-xs text-muted-foreground">Voix off ajoutee.</p>
+          )}
         </>
       ) : (
         <div className="flex items-center gap-2 text-muted-foreground">
