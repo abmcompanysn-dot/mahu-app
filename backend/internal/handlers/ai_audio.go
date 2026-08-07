@@ -12,18 +12,16 @@ import (
 	"mahu-backend/internal/services"
 )
 
-// Audio (TTS/ASR) support for AI MAHU - NEW, UNVERIFIED: Alibaba's realtime-
-// labeled audio models (qwen3-tts-flash-realtime, fun-asr-*) are primarily
-// documented for WebSocket use; this implements the standard OpenAI-style
-// one-shot REST contract (/audio/speech, /audio/transcriptions) against them
-// via LiteLLM. It has not been tested against the live endpoint (no LiteLLM
-// running locally) - if Alibaba rejects one-shot calls for these specific
-// model codes, swap ttsModel/asrModel below for a non-realtime equivalent
-// once you confirm which ones support it.
+// Audio (TTS/ASR) support for AI MAHU. Alibaba's DashScope TTS/ASR models
+// (qwen3-tts-flash-realtime, fun-asr-*) are WebSocket-only - they 404 against
+// DashScope's OpenAI-compatible REST host no matter how LiteLLM is
+// configured for them (confirmed live). Using OpenAI's tts-1/whisper-1
+// instead, which genuinely implement the OpenAI /audio/speech and
+// /audio/transcriptions REST contract LiteLLM expects.
 
-const ttsModel = "qwen3-tts-flash-realtime"
+const ttsModel = "openai-tts"
 const ttsCreditCost = 5
-const asrModel = "fun-asr"
+const asrModel = "openai-whisper"
 const asrCreditCost = 2
 
 type speakRequest struct {
@@ -60,7 +58,7 @@ func (d *Deps) SpeakText(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	reqBody, _ := json.Marshal(map[string]any{"model": ttsModel, "input": req.Text, "voice": "Cherry"})
+	reqBody, _ := json.Marshal(map[string]any{"model": ttsModel, "input": req.Text, "voice": "alloy"})
 	litellmReq, _ := http.NewRequest("POST", d.Env.LiteLLMURL+"/audio/speech", bytes.NewReader(reqBody))
 	litellmReq.Header.Set("Content-Type", "application/json")
 	litellmReq.Header.Set("Authorization", "Bearer "+d.Env.LiteLLMMasterKey)

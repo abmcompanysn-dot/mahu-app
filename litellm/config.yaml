@@ -182,10 +182,26 @@ model_list:
       api_key: os.environ/DASHSCOPE_API_KEY
 
   # Voix (TTS) et reconnaissance vocale (ASR) - pas d'UI d'enregistrement/lecture audio dans l'app
+  # Qwen's TTS/ASR models are WebSocket-only on DashScope (no OpenAI-compatible
+  # REST /audio/speech or /audio/transcriptions endpoint exists for them - the
+  # entries below 404 against the compatible-mode host no matter how they're
+  # configured here). openai-tts/openai-whisper are the ones actually wired
+  # to the app's SpeakText/TranscribeAudio/MergeVideoNarration handlers.
+  - model_name: openai-tts
+    litellm_params:
+      model: openai/tts-1
+      api_key: os.environ/OPENAI_API_KEY
+  - model_name: openai-whisper
+    litellm_params:
+      model: openai/whisper-1
+      api_key: os.environ/OPENAI_API_KEY
+
   # model_info.mode tells LiteLLM's router which endpoint group a custom
   # (non-built-in) model belongs to - without it, the model still shows up
   # in /v1/models but the proxy's /audio/speech and /audio/transcriptions
   # routers can't find it ("NotFoundError: Received Model Group=...").
+  # Left declared (unused by the app) in case a future WebSocket-based
+  # integration wires them up properly.
   - model_name: qwen3-tts-flash-realtime
     litellm_params:
       model: openai/qwen3-tts-flash-realtime

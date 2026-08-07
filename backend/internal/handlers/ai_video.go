@@ -298,7 +298,7 @@ func (d *Deps) runNarrationMerge(jobID primitive.ObjectID, videoURL, text string
 	}
 
 	// 1. Text-to-speech (same provider/model as SpeakText).
-	ttsBody, _ := json.Marshal(map[string]any{"model": ttsModel, "input": text, "voice": "Cherry"})
+	ttsBody, _ := json.Marshal(map[string]any{"model": ttsModel, "input": text, "voice": "alloy"})
 	ttsReq, _ := http.NewRequestWithContext(ctx, "POST", d.Env.LiteLLMURL+"/audio/speech", bytes.NewReader(ttsBody))
 	ttsReq.Header.Set("Content-Type", "application/json")
 	ttsReq.Header.Set("Authorization", "Bearer "+d.Env.LiteLLMMasterKey)
