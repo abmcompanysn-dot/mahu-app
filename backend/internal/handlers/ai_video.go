@@ -72,8 +72,9 @@ func (d *Deps) SubmitVideoJob(w http.ResponseWriter, r *http.Request) {
 	}
 
 	reqBody, _ := json.Marshal(map[string]any{
-		"model": videoModel,
-		"input": map[string]any{"prompt": req.Prompt},
+		"model":      videoModel,
+		"input":      map[string]any{"prompt": req.Prompt},
+		"parameters": map[string]any{},
 	})
 	dsReq, _ := http.NewRequest("POST", d.Env.DashscopeNativeBase()+"/services/aigc/video-generation/video-synthesis", bytes.NewReader(reqBody))
 	dsReq.Header.Set("Content-Type", "application/json")
