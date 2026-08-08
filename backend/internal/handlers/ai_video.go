@@ -6,12 +6,12 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"mahu-backend/internal/cloudinaryutil"
 	"mahu-backend/internal/db"
@@ -297,24 +297,10 @@ func (d *Deps) runNarrationMerge(jobID primitive.ObjectID, videoURL, text string
 		}})
 	}
 
-	// 1. Text-to-speech (same provider/model as SpeakText).
-	ttsBody, _ := json.Marshal(map[string]any{"model": ttsModel, "input": text, "voice": "alloy"})
-	ttsReq, _ := http.NewRequestWithContext(ctx, "POST", d.Env.LiteLLMURL+"/audio/speech", bytes.NewReader(ttsBody))
-	ttsReq.Header.Set("Content-Type", "application/json")
-	ttsReq.Header.Set("Authorization", "Bearer "+d.Env.LiteLLMMasterKey)
-	ttsResp, err := http.DefaultClient.Do(ttsReq)
+	// 1. Text-to-speech (same DashScope call as SpeakText, see ai_audio.go).
+	audioBytes, err := synthesizeSpeech(d.Env, text)
 	if err != nil {
-		fail("LiteLLM injoignable")
-		return
-	}
-	defer ttsResp.Body.Close()
-	audioBytes, err := io.ReadAll(ttsResp.Body)
-	if err != nil {
-		fail("AI provider error")
-		return
-	}
-	if ttsResp.StatusCode < 200 || ttsResp.StatusCode >= 300 {
-		fail("AI provider error: " + string(audioBytes[:min(len(audioBytes), 300)]))
+		fail(err.Error())
 		return
 	}
 
@@ -326,7 +312,7 @@ func (d *Deps) runNarrationMerge(jobID primitive.ObjectID, videoURL, text string
 		fail("Erreur hebergement video: " + err.Error())
 		return
 	}
-	audioDataURL := "data:audio/mpeg;base64," + base64.StdEncoding.EncodeToString(audioBytes)
+	audioDataURL := "data:audio/wav;base64," + base64.StdEncoding.EncodeToString(audioBytes)
 	_, audioPublicID, err := cloudinaryutil.UploadVideo(d.Env, audioDataURL)
 	if err != nil {
 		fail("Erreur hebergement audio: " + err.Error())
@@ -347,4 +333,35 @@ func (d *Deps) runNarrationMerge(jobID primitive.ObjectID, videoURL, text string
 		"narratedVideoUrl": mergedURL,
 		"updatedAt":        time.Now(),
 	}})
+}
+
+// ListVideoJobs returns the user's video generation history (most recent
+// first) so past videos remain reachable after leaving the conversation
+// they were generated in - the jobs themselves were already persisted in
+// Mongo from the start, this just exposes them.
+func (d *Deps) ListVideoJobs(w http.ResponseWriter, r *http.Request) {
+	userID, ok := currentUserID(w, r)
+	if !ok {
+		return
+	}
+	ctx := r.Context()
+
+	cursor, err := db.Collection(models.VideoJobsCollection).Find(
+		ctx,
+		bson.M{"userId": userID},
+		options.Find().SetSort(bson.D{{Key: "createdAt", Value: -1}}).SetLimit(50),
+	)
+	if err != nil {
+		httpx.WriteError(w, http.StatusInternalServerError, "Erreur serveur")
+		return
+	}
+	defer cursor.Close(ctx)
+
+	jobs := []models.VideoJob{}
+	if err := cursor.All(ctx, &jobs); err != nil {
+		httpx.WriteError(w, http.StatusInternalServerError, "Erreur serveur")
+		return
+	}
+
+	httpx.WriteJSON(w, http.StatusOK, map[string]any{"jobs": jobs})
 }

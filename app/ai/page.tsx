@@ -8,6 +8,7 @@ import {
   Copy,
   CreditCard,
   Download,
+  Film,
   FileText,
   ImagePlus,
   Lightbulb,
@@ -180,6 +181,9 @@ export default function AiPage() {
   const [narrationStatus, setNarrationStatus] = useState<string | null>(null)
   const [narratedVideoUrl, setNarratedVideoUrl] = useState<string | null>(null)
   const [narrationError, setNarrationError] = useState<string | null>(null)
+  const [videoHistoryOpen, setVideoHistoryOpen] = useState(false)
+  const [videoHistory, setVideoHistory] = useState<Awaited<ReturnType<typeof aiApi.listVideos>>["jobs"]>([])
+  const [videoHistoryLoading, setVideoHistoryLoading] = useState(false)
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [listening, setListening] = useState(false)
@@ -471,6 +475,21 @@ export default function AiPage() {
       setNarrationError(err instanceof Error ? err.message : "Erreur de fusion audio")
     }
   }, [token, videoJobId, narrationText])
+
+  const openVideoHistory = useCallback(async () => {
+    setVideoHistoryOpen(true)
+    setSidebarOpen(false)
+    if (!token) return
+    setVideoHistoryLoading(true)
+    try {
+      const { jobs } = await aiApi.listVideos(token)
+      setVideoHistory(jobs)
+    } catch {
+      // Silencieux - la liste reste vide, pas critique.
+    } finally {
+      setVideoHistoryLoading(false)
+    }
+  }, [token])
 
   if (!isAuthenticated) {
     return (
@@ -803,6 +822,13 @@ export default function AiPage() {
                 <ScanFace className="w-4 h-4" />
                 Ma carte IA
               </Link>
+              <button
+                onClick={openVideoHistory}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-muted/30 hover:text-foreground transition-colors"
+              >
+                <Film className="w-4 h-4" />
+                Mes videos
+              </button>
               <Link
                 href="/dashboard/abonnement"
                 className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-muted/30 hover:text-foreground transition-colors"
@@ -967,6 +993,65 @@ export default function AiPage() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {videoHistoryOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+          onClick={() => setVideoHistoryOpen(false)}
+        >
+          <div
+            className="bg-card border border-border/50 rounded-2xl w-full max-w-3xl max-h-[80vh] overflow-y-auto p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold flex items-center gap-2">
+                <Film className="w-5 h-5 text-primary" />
+                Mes videos
+              </h2>
+              <button
+                onClick={() => setVideoHistoryOpen(false)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {videoHistoryLoading ? (
+              <div className="flex items-center justify-center py-10">
+                <Loader2 className="w-6 h-6 animate-spin text-primary" />
+              </div>
+            ) : videoHistory.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-6 text-center">
+                Aucune video generee pour l&apos;instant.
+              </p>
+            ) : (
+              <div className="grid sm:grid-cols-2 gap-4">
+                {videoHistory.map((job) => (
+                  <div key={job._id} className="rounded-xl border border-border/50 bg-background/50 p-3 space-y-2">
+                    {job.status === "SUCCEEDED" && (job.narratedVideoUrl || job.videoUrl) ? (
+                      // eslint-disable-next-line jsx-a11y/media-has-caption
+                      <video src={job.narratedVideoUrl ?? job.videoUrl} controls className="w-full rounded-lg max-h-48" />
+                    ) : job.status === "FAILED" ? (
+                      <div className="h-32 rounded-lg bg-muted/30 flex items-center justify-center text-xs text-destructive px-3 text-center">
+                        Echec : {job.error || "erreur inconnue"}
+                      </div>
+                    ) : (
+                      <div className="h-32 rounded-lg bg-muted/30 flex items-center justify-center gap-2 text-xs text-muted-foreground">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        En cours...
+                      </div>
+                    )}
+                    <p className="text-xs text-muted-foreground line-clamp-2">{job.prompt}</p>
+                    <p className="text-[11px] text-muted-foreground/70">
+                      {new Date(job.createdAt).toLocaleString("fr-FR")}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

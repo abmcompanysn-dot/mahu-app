@@ -4,25 +4,84 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"io"
 	"mime/multipart"
 	"net/http"
 
+	"mahu-backend/internal/config"
 	"mahu-backend/internal/httpx"
 	"mahu-backend/internal/services"
 )
 
-// Audio (TTS/ASR) support for AI MAHU. Alibaba's DashScope TTS/ASR models
-// (qwen3-tts-flash-realtime, fun-asr-*) are WebSocket-only - they 404 against
-// DashScope's OpenAI-compatible REST host no matter how LiteLLM is
-// configured for them (confirmed live). Using OpenAI's tts-1/whisper-1
-// instead, which genuinely implement the OpenAI /audio/speech and
-// /audio/transcriptions REST contract LiteLLM expects.
+// Audio (TTS/ASR) support for AI MAHU. TTS uses DashScope's native
+// non-realtime speech-synthesis HTTP endpoint directly (same pattern as
+// video generation - see ai_video.go), confirmed live: the "-realtime"
+// model variants and the OpenAI-compatible /audio/speech route both 404,
+// but the plain "qwen3-tts-flash" model against
+// /services/aigc/multimodal-generation/generation works and is covered by
+// the DashScope workspace's free quota. ASR still goes through LiteLLM to
+// OpenAI's whisper-1 (untouched by this).
 
-const ttsModel = "openai-tts"
+const dashscopeTTSModel = "qwen3-tts-flash"
 const ttsCreditCost = 5
 const asrModel = "openai-whisper"
 const asrCreditCost = 2
+
+type dashscopeTTSResponse struct {
+	Output struct {
+		Audio struct {
+			URL string `json:"url"`
+		} `json:"audio"`
+	} `json:"output"`
+	Code    string `json:"code"`
+	Message string `json:"message"`
+}
+
+// synthesizeSpeech calls DashScope's non-realtime TTS endpoint and returns
+// the raw audio bytes (WAV) - shared by SpeakText below and
+// MergeVideoNarration (ai_video.go).
+func synthesizeSpeech(env *config.Env, text string) ([]byte, error) {
+	reqBody, _ := json.Marshal(map[string]any{
+		"model": dashscopeTTSModel,
+		"input": map[string]any{
+			"text":          text,
+			"voice":         "Cherry",
+			"language_type": "French",
+		},
+	})
+	req, err := http.NewRequest("POST", env.DashscopeNativeBase()+"/services/aigc/multimodal-generation/generation", bytes.NewReader(reqBody))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+env.DashscopeAPIKey)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("Alibaba Cloud injoignable")
+	}
+	defer resp.Body.Close()
+
+	var result dashscopeTTSResponse
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("Reponse invalide du provider")
+	}
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 || result.Output.Audio.URL == "" {
+		msg := result.Message
+		if msg == "" {
+			msg = "Echec de synthese vocale"
+		}
+		return nil, fmt.Errorf(msg)
+	}
+
+	audioResp, err := http.Get(result.Output.Audio.URL)
+	if err != nil {
+		return nil, fmt.Errorf("Erreur de telechargement audio")
+	}
+	defer audioResp.Body.Close()
+	return io.ReadAll(audioResp.Body)
+}
 
 type speakRequest struct {
 	Text string `json:"text"`
@@ -43,7 +102,7 @@ func (d *Deps) SpeakText(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx := r.Context()
 
-	if d.Env.LiteLLMMasterKey == "" {
+	if d.Env.DashscopeAPIKey == "" || d.Env.DashscopeAPIBase == "" {
 		httpx.WriteError(w, http.StatusServiceUnavailable, "AI mode is not configured yet")
 		return
 	}
@@ -58,25 +117,9 @@ func (d *Deps) SpeakText(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	reqBody, _ := json.Marshal(map[string]any{"model": ttsModel, "input": req.Text, "voice": "alloy"})
-	litellmReq, _ := http.NewRequest("POST", d.Env.LiteLLMURL+"/audio/speech", bytes.NewReader(reqBody))
-	litellmReq.Header.Set("Content-Type", "application/json")
-	litellmReq.Header.Set("Authorization", "Bearer "+d.Env.LiteLLMMasterKey)
-
-	litellmResp, err := http.DefaultClient.Do(litellmReq)
+	audioBytes, err := synthesizeSpeech(d.Env, req.Text)
 	if err != nil {
-		httpx.WriteError(w, http.StatusBadGateway, "LiteLLM injoignable")
-		return
-	}
-	defer litellmResp.Body.Close()
-
-	audioBytes, err := io.ReadAll(litellmResp.Body)
-	if err != nil {
-		httpx.WriteError(w, http.StatusBadGateway, "AI provider error")
-		return
-	}
-	if litellmResp.StatusCode < 200 || litellmResp.StatusCode >= 300 {
-		httpx.WriteError(w, http.StatusBadGateway, "AI provider error: "+string(audioBytes[:min(len(audioBytes), 300)]))
+		httpx.WriteError(w, http.StatusBadGateway, err.Error())
 		return
 	}
 
@@ -85,7 +128,7 @@ func (d *Deps) SpeakText(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	audioDataURL := "data:audio/mpeg;base64," + base64.StdEncoding.EncodeToString(audioBytes)
+	audioDataURL := "data:audio/wav;base64," + base64.StdEncoding.EncodeToString(audioBytes)
 	httpx.WriteJSON(w, http.StatusOK, map[string]any{
 		"audioDataUrl":  audioDataURL,
 		"creditBalance": sub.CreditBalance,

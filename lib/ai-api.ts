@@ -145,6 +145,22 @@ export const aiApi = {
       body: JSON.stringify({ text }),
     }),
 
+  // Historique des videos generees (toutes conversations confondues) - les
+  // jobs sont deja persistes des la soumission, ceci expose juste la liste.
+  listVideos: (token: string) =>
+    request<{
+      jobs: Array<{
+        _id: string
+        prompt: string
+        status: string
+        videoUrl?: string
+        error?: string
+        narrationStatus?: string
+        narratedVideoUrl?: string
+        createdAt: string
+      }>
+    }>(`${AI_BASE_URL}/videos`, token),
+
   // Utilitaire generique texte -> vecteur, pas rattache a une fonctionnalite
   // de recherche precise (voir la note dans ai_embed.go cote backend).
   embed: (token: string, text: string) =>
