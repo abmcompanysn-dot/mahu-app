@@ -181,6 +181,7 @@ export default function AiPage() {
   const [narrationStatus, setNarrationStatus] = useState<string | null>(null)
   const [narratedVideoUrl, setNarratedVideoUrl] = useState<string | null>(null)
   const [narrationError, setNarrationError] = useState<string | null>(null)
+  const [showPreviewModal, setShowPreviewModal] = useState(false)
   const [videoHistoryOpen, setVideoHistoryOpen] = useState(false)
   const [videoHistory, setVideoHistory] = useState<Awaited<ReturnType<typeof aiApi.listVideos>>["jobs"]>([])
   const [videoHistoryLoading, setVideoHistoryLoading] = useState(false)
@@ -860,50 +861,74 @@ export default function AiPage() {
                   Connecte-toi avec ta carte IA, sans mot de passe
                 </Link>
 
-                <div className="grid lg:grid-cols-2 gap-10 items-center mb-12">
-                  <div>
-                    <AiLogo size="md" className="mb-4" />
-                    <p className="text-xs font-medium tracking-widest text-primary uppercase mb-3">made by mahu</p>
-                    <h1 className="ai-hero-gradient-text text-6xl md:text-7xl font-bold mb-4 tracking-tight leading-[0.95]">
-                      AI FOR
-                      <br />
-                      ALL
-                    </h1>
-                    <p className="text-muted-foreground text-lg max-w-md mb-6">
-                      L&apos;intelligence artificielle pour tous. Discute, cree, redige et debug avec les meilleurs
-                      modeles, directement sur AI MAHU.
-                    </p>
+                <div className="mb-12">
+                  <AiLogo size="md" className="mb-4" />
+                  <p className="text-xs font-medium tracking-widest text-primary uppercase mb-3">made by mahu</p>
+                  <h1 className="ai-hero-gradient-text text-6xl md:text-7xl font-bold mb-4 tracking-tight leading-[0.95]">
+                    AI FOR
+                    <br />
+                    ALL
+                  </h1>
+                  <p className="text-muted-foreground text-lg max-w-md mb-6">
+                    L&apos;intelligence artificielle pour tous. Discute, cree, redige et debug avec les meilleurs
+                    modeles, directement sur AI MAHU.
+                  </p>
+                  <div className="flex items-center gap-4 flex-wrap">
                     <Button size="lg" onClick={() => document.getElementById("ai-composer-input")?.focus()}>
                       Commencer a discuter
                     </Button>
-                  </div>
-
-                  {/* Panneau visuel decoratif, esprit "Google AI Studio" */}
-                  <div className="relative rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 via-card/50 to-violet-500/10 p-4 shadow-2xl">
-                    <div className="flex items-center gap-1.5 mb-4">
-                      <span className="w-2.5 h-2.5 rounded-full bg-destructive/60" />
-                      <span className="w-2.5 h-2.5 rounded-full bg-amber-500/60" />
-                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/60" />
-                      <span className="ml-2 text-xs text-muted-foreground">AI MAHU</span>
-                    </div>
-                    <div className="space-y-2 mb-4">
-                      <div className="flex justify-end">
-                        <div className="bg-primary text-primary-foreground text-xs rounded-xl px-3 py-1.5 max-w-[70%]">
-                          Redige-moi une annonce pour mon entreprise
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <AiLogo size="sm" />
-                        <div className="bg-muted/40 text-xs rounded-xl px-3 py-1.5 text-foreground">
-                          Bien sur ! Voici une proposition...
-                        </div>
-                      </div>
-                    </div>
-                    <div className="rounded-xl border border-border/50 bg-background/60 px-3 py-2 text-xs text-muted-foreground">
-                      Ecris ton message a AI MAHU...
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowPreviewModal(true)}
+                      className="text-sm text-muted-foreground hover:text-foreground transition-colors underline underline-offset-4"
+                    >
+                      Voir un aperçu
+                    </button>
                   </div>
                 </div>
+
+                {showPreviewModal && (
+                  <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+                    onClick={() => setShowPreviewModal(false)}
+                  >
+                    <div
+                      className="relative w-full max-w-sm rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 via-card to-violet-500/10 p-4 shadow-2xl"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setShowPreviewModal(false)}
+                        className="absolute -top-3 -right-3 w-7 h-7 rounded-full bg-card border border-border/50 flex items-center justify-center text-muted-foreground hover:text-foreground"
+                        aria-label="Fermer l'aperçu"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                      <div className="flex items-center gap-1.5 mb-4">
+                        <span className="w-2.5 h-2.5 rounded-full bg-destructive/60" />
+                        <span className="w-2.5 h-2.5 rounded-full bg-amber-500/60" />
+                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/60" />
+                        <span className="ml-2 text-xs text-muted-foreground">AI MAHU</span>
+                      </div>
+                      <div className="space-y-2 mb-4">
+                        <div className="flex justify-end">
+                          <div className="bg-primary text-primary-foreground text-xs rounded-xl px-3 py-1.5 max-w-[70%]">
+                            Redige-moi une annonce pour mon entreprise
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <AiLogo size="sm" />
+                          <div className="bg-muted/40 text-xs rounded-xl px-3 py-1.5 text-foreground">
+                            Bien sur ! Voici une proposition...
+                          </div>
+                        </div>
+                      </div>
+                      <div className="rounded-xl border border-border/50 bg-background/60 px-3 py-2 text-xs text-muted-foreground">
+                        Ecris ton message a AI MAHU...
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {videoPanel}
                 {composer}
