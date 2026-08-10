@@ -31,8 +31,18 @@
       </div>
 
       <div class="field">
-        <label for="contact">Email ou telephone (WhatsApp de preference)</label>
-        <input id="contact" name="contact" type="text" placeholder="vous@email.com ou +221 77 000 00 00" required maxlength="200" />
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" placeholder="vous@email.com" required maxlength="200" />
+      </div>
+
+      <div class="field">
+        <label for="phone">Telephone (WhatsApp de preference)</label>
+        <input id="phone" name="phone" type="tel" placeholder="+221 77 000 00 00" required maxlength="50" />
+      </div>
+
+      <div class="field">
+        <label for="address">Adresse</label>
+        <input id="address" name="address" type="text" placeholder="Quartier, ville" required maxlength="300" />
       </div>
 
       <div class="field">
@@ -100,6 +110,10 @@
       <button type="submit" id="submit-btn">Je veux participer a la beta</button>
       <p id="form-message" class="form-message" role="status"></p>
     </form>
+
+    <p id="signup-counter" class="counter" aria-live="polite"></p>
+
+    <a href="mailto:contact@mahu.cards" class="contact-btn">Nous contacter - contact@mahu.cards</a>
 
     <p class="footer">AI MAHU - <a href="https://ai.mahu.cards">ai.mahu.cards</a></p>
   </main>

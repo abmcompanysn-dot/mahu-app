@@ -183,6 +183,36 @@ button:disabled {
   color: #ff453a;
 }
 
+.counter {
+  margin: 20px 0 0;
+  text-align: center;
+  font-size: 14px;
+  color: var(--muted);
+  min-height: 20px;
+}
+.counter strong {
+  color: var(--text);
+}
+
+.contact-btn {
+  display: block;
+  margin: 24px auto 0;
+  width: fit-content;
+  padding: 12px 24px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: border-color 0.2s, background 0.2s;
+}
+.contact-btn:hover {
+  border-color: rgba(0, 122, 255, 0.4);
+  background: rgba(0, 122, 255, 0.06);
+}
+
 .footer {
   margin-top: 32px;
   text-align: center;

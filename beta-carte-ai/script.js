@@ -6,6 +6,22 @@ const APPS_SCRIPT_URL = "COLLEZ_ICI_VOTRE_URL_APPS_SCRIPT"
 const form = document.getElementById("beta-form")
 const submitBtn = document.getElementById("submit-btn")
 const messageEl = document.getElementById("form-message")
+const counterEl = document.getElementById("signup-counter")
+
+async function loadCounter() {
+  if (APPS_SCRIPT_URL === "COLLEZ_ICI_VOTRE_URL_APPS_SCRIPT") return
+  try {
+    const response = await fetch(`${APPS_SCRIPT_URL}?action=count`)
+    const result = await response.json()
+    if (result.success) {
+      counterEl.innerHTML = `<strong>${result.count}</strong> personne${result.count > 1 ? "s" : ""} deja inscrite${result.count > 1 ? "s" : ""} a la beta`
+    }
+  } catch (error) {
+    // Silencieux - le compteur est un bonus, pas critique pour le formulaire.
+  }
+}
+
+loadCounter()
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault()
@@ -18,11 +34,13 @@ form.addEventListener("submit", async (event) => {
 
   const data = {
     name: document.getElementById("name").value.trim(),
-    contact: document.getElementById("contact").value.trim(),
+    email: document.getElementById("email").value.trim(),
+    phone: document.getElementById("phone").value.trim(),
+    address: document.getElementById("address").value.trim(),
     country: document.getElementById("country").value,
   }
 
-  if (!data.name || !data.contact || !data.country) {
+  if (!data.name || !data.email || !data.phone || !data.address || !data.country) {
     messageEl.textContent = "Merci de remplir tous les champs."
     messageEl.className = "form-message error"
     return
@@ -48,6 +66,7 @@ form.addEventListener("submit", async (event) => {
       messageEl.textContent = "Merci ! Votre demande a bien ete enregistree, nous vous contacterons bientot."
       messageEl.className = "form-message success"
       submitBtn.textContent = "Inscription envoyee"
+      loadCounter()
     } else {
       // Message serveur affiche tel quel (ex: quota atteint pour ce pays) -
       // reessayer ne changerait rien, donc on ne le masque pas derriere un
