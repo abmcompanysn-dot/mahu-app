@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Carte Mahu IA - Rejoins la beta</title>
+  <meta name="description" content="Rejoins la liste d'attente de la beta payante de la carte Mahu avec intelligence artificielle. Ouvert a toute l'Afrique." />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="glow glow-1"></div>
+  <div class="glow glow-2"></div>
+
+  <main class="wrap">
+    <div class="badge">
+      <span class="badge-tag">BETA</span>
+      Places limitees - ouvert a toute l'Afrique
+    </div>
+
+    <h1>La carte Mahu, <span class="grad">avec Intelligence Artificielle.</span></h1>
+    <p class="lead">
+      Une carte de visite qui se deverrouille par reconnaissance faciale, connectee a un assistant IA
+      qui parle en votre nom. Nous ouvrons un nombre limite de places pour tester la carte en avant-premiere.
+    </p>
+    <p class="note">Beta payante - non gratuite. Reserve aux personnes motivees a tester et donner leur avis.</p>
+
+    <form id="beta-form" class="card">
+      <div class="field">
+        <label for="name">Nom complet</label>
+        <input id="name" name="name" type="text" placeholder="Votre nom" required maxlength="200" />
+      </div>
+
+      <div class="field">
+        <label for="contact">Email ou telephone (WhatsApp de preference)</label>
+        <input id="contact" name="contact" type="text" placeholder="vous@email.com ou +221 77 000 00 00" required maxlength="200" />
+      </div>
+
+      <div class="field">
+        <label for="country">Pays</label>
+        <select id="country" name="country" required>
+          <option value="" disabled selected>Choisissez votre pays</option>
+          <option>Afrique du Sud</option>
+          <option>Algerie</option>
+          <option>Angola</option>
+          <option>Benin</option>
+          <option>Botswana</option>
+          <option>Burkina Faso</option>
+          <option>Burundi</option>
+          <option>Cameroun</option>
+          <option>Cap-Vert</option>
+          <option>Republique centrafricaine</option>
+          <option>Comores</option>
+          <option>Congo-Brazzaville</option>
+          <option>Congo-Kinshasa (RDC)</option>
+          <option>Cote d'Ivoire</option>
+          <option>Djibouti</option>
+          <option>Egypte</option>
+          <option>Erythree</option>
+          <option>Eswatini</option>
+          <option>Ethiopie</option>
+          <option>Gabon</option>
+          <option>Gambie</option>
+          <option>Ghana</option>
+          <option>Guinee</option>
+          <option>Guinee-Bissau</option>
+          <option>Guinee equatoriale</option>
+          <option>Kenya</option>
+          <option>Lesotho</option>
+          <option>Liberia</option>
+          <option>Libye</option>
+          <option>Madagascar</option>
+          <option>Malawi</option>
+          <option>Mali</option>
+          <option>Maroc</option>
+          <option>Maurice</option>
+          <option>Mauritanie</option>
+          <option>Mozambique</option>
+          <option>Namibie</option>
+          <option>Niger</option>
+          <option>Nigeria</option>
+          <option>Ouganda</option>
+          <option>Rwanda</option>
+          <option>Sao Tome-et-Principe</option>
+          <option selected>Senegal</option>
+          <option>Seychelles</option>
+          <option>Sierra Leone</option>
+          <option>Somalie</option>
+          <option>Soudan</option>
+          <option>Soudan du Sud</option>
+          <option>Tanzanie</option>
+          <option>Tchad</option>
+          <option>Togo</option>
+          <option>Tunisie</option>
+          <option>Zambie</option>
+          <option>Zimbabwe</option>
+          <option>Autre</option>
+        </select>
+      </div>
+
+      <button type="submit" id="submit-btn">Je veux participer a la beta</button>
+      <p id="form-message" class="form-message" role="status"></p>
+    </form>
+
+    <p class="footer">AI MAHU - <a href="https://ai.mahu.cards">ai.mahu.cards</a></p>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
