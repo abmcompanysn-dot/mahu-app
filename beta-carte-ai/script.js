@@ -49,7 +49,13 @@ form.addEventListener("submit", async (event) => {
       messageEl.className = "form-message success"
       submitBtn.textContent = "Inscription envoyee"
     } else {
-      throw new Error(result.error || "Erreur inconnue")
+      // Message serveur affiche tel quel (ex: quota atteint pour ce pays) -
+      // reessayer ne changerait rien, donc on ne le masque pas derriere un
+      // message generique.
+      messageEl.textContent = result.error || "Erreur inconnue"
+      messageEl.className = "form-message error"
+      submitBtn.disabled = false
+      submitBtn.textContent = "Je veux participer a la beta"
     }
   } catch (error) {
     messageEl.textContent = "Erreur d'envoi, merci de reessayer dans un instant."
