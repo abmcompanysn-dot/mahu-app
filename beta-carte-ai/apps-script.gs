@@ -9,8 +9,8 @@
 // - Expose un compteur total (GET ?action=count) pour la page publique.
 //
 // Installation :
-// 1. Creez une nouvelle Google Sheet, et ajoutez une ligne d'en-tete sur la
-//    premiere feuille : Date | Nom | Email | Telephone | Adresse | Pays
+// 1. Creez une nouvelle Google Sheet (peut rester vide, le script initialise
+//    la ligne d'en-tete tout seul au premier appel).
 // 2. Dans la Sheet : Extensions > Apps Script, collez ce fichier entier.
 // 3. Deployer > Nouveau deploiement > type "Application Web" :
 //      - Executer en tant que : Moi
@@ -20,10 +20,22 @@
 
 const MAX_PER_COUNTRY = 10
 const ADMIN_EMAIL = "abmcompanysn@gmail.com"
+const HEADERS = ["Date", "Nom", "Email", "Telephone", "Adresse", "Pays"]
+
+// Recupere la feuille active et s'assure que la ligne d'en-tete existe -
+// evite d'avoir a la creer manuellement avant le premier deploiement.
+function getSheet() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0]
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(HEADERS)
+    sheet.getRange(1, 1, 1, HEADERS.length).setFontWeight("bold")
+  }
+  return sheet
+}
 
 function doGet(e) {
   if (e.parameter.action === "count") {
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0]
+    const sheet = getSheet()
     const count = Math.max(sheet.getLastRow() - 1, 0)
     return jsonResponse({ success: true, count: count })
   }
@@ -43,7 +55,7 @@ function doPost(e) {
       return jsonResponse({ success: false, error: "Champs manquants" })
     }
 
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0]
+    const sheet = getSheet()
     const rows = sheet.getLastRow() > 1 ? sheet.getRange(2, 1, sheet.getLastRow() - 1, 6).getValues() : []
     const countryCount = rows.filter((row) => String(row[5]).trim().toLowerCase() === country.toLowerCase()).length
 
@@ -69,24 +81,31 @@ function doPost(e) {
 
 function sendConfirmationEmail(name, email, country) {
   try {
-    const subject = "Votre demande pour la beta de la carte Mahu IA"
+    const subject = `Votre demande pour la beta de la carte Mahu IA - ${name}`
     const htmlBody = `
-      <div style="font-family: Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee;">
-        <div style="background: #06070b; padding: 30px; text-align: center;">
-          <span style="color: #fff; font-size: 20px; font-weight: 700; letter-spacing: 0.05em;">AI MAHU</span>
+      <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #eeeeee; box-shadow: 0 5px 15px rgba(0,0,0,0.05);">
+        <div style="background-color: #06070b; padding: 34px 20px; text-align: center;">
+          <span style="color: #ffffff; font-size: 22px; font-weight: 700; letter-spacing: 0.08em;">AI MAHU</span>
         </div>
-        <div style="padding: 32px 28px; color: #1a1a1a; line-height: 1.7; font-size: 15px;">
-          <h2 style="margin-top: 0; color: #000;">Merci, ${name} !</h2>
+        <div style="padding: 40px 32px; color: #1a1a1a; line-height: 1.8; font-size: 16px;">
+          <h2 style="color: #000000; margin-top: 0; font-weight: 300; letter-spacing: 1px; text-transform: uppercase; font-size: 22px; text-align: center; margin-bottom: 8px;">Demande bien recue</h2>
+          <p style="text-align: center; color: #555; margin-top: 0; margin-bottom: 30px;">Merci, ${name} 👋</p>
           <p>Votre demande de participation a la beta de la carte Mahu avec intelligence artificielle a bien ete enregistree pour <strong>${country}</strong>.</p>
-          <p>C'est une beta payante et a places limitees : notre equipe vous contactera personnellement pour la suite (paiement, expedition de la carte, et acces a l'application).</p>
-          <p>A tres bientot,<br>L'equipe Mahu</p>
+          <div style="background-color: #f9f9f9; padding: 20px 22px; border-left: 4px solid #007aff; margin: 28px 0; border-radius: 0 8px 8px 0;">
+            <p style="margin: 0; font-size: 14px; color: #444;">C'est une <strong>beta payante</strong>, a places limitees (10 par pays). Notre equipe vous contactera personnellement pour la suite : confirmation, paiement, puis expedition de votre carte.</p>
+          </div>
+          <div style="text-align: center; margin: 36px 0 8px;">
+            <a href="mailto:contact@mahu.cards" style="background-color: #000000; color: #ffffff; padding: 15px 30px; text-decoration: none; font-weight: 500; font-size: 14px; display: inline-block; letter-spacing: 1px; text-transform: uppercase; border-radius: 4px;">Nous contacter</a>
+          </div>
+          <p style="text-align: center; font-size: 13px; color: #999;">contact@mahu.cards</p>
+          <p style="margin-top: 30px;">A tres bientot,<br>L'equipe Mahu</p>
         </div>
-        <div style="background: #f9f9f9; padding: 18px; text-align: center; font-size: 11px; color: #999; border-top: 1px solid #eee;">
+        <div style="background-color: #fcfcfc; padding: 20px; text-align: center; font-size: 11px; color: #999999; border-top: 1px solid #eeeeee;">
           MAHU DIGITAL SYSTEM - Medina Rue 13 Angle 12, Dakar, Senegal<br>
           NINEA 012834182 | RCCM SN.DKR.2026.A.6465
         </div>
       </div>`
-    GmailApp.sendEmail(email, subject, "Merci pour votre inscription a la beta Mahu IA.", { htmlBody, name: "MAHU DIGITAL SYSTEM" })
+    GmailApp.sendEmail(email, subject, "Merci pour votre inscription a la beta Mahu IA. Notre equipe vous contactera bientot.", { htmlBody, name: "MAHU DIGITAL SYSTEM" })
   } catch (error) {
     Logger.log("Erreur email confirmation: " + error)
   }
