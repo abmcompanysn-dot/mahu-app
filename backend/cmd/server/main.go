@@ -47,6 +47,11 @@ func main() {
 
 	mux.HandleFunc("GET /health", handlers.Health)
 
+	// Called directly by the browser from the standalone beta-carte-ai
+	// static page (its own subdomain, no service key) - see CORS_ORIGIN.
+	mux.HandleFunc("POST /api/beta/signup", deps.SubmitBetaSignup)
+	mux.HandleFunc("GET /api/beta/count", deps.GetBetaSignupCount)
+
 	// Called directly by PayDunya's/PawaPay's servers, so they must stay ahead
 	// of requireServiceKey — each verifies the payment with its own provider
 	// directly instead.
@@ -92,6 +97,7 @@ func main() {
 	protected.Handle("POST /api/admin/2fa/setup", adminOnly(http.HandlerFunc(deps.Setup2FA)))
 	protected.Handle("POST /api/admin/2fa/confirm", adminOnly(http.HandlerFunc(deps.Confirm2FA)))
 	protected.Handle("POST /api/admin/2fa/disable", adminOnly(http.HandlerFunc(deps.Disable2FA)))
+	protected.Handle("GET /api/admin/beta-signups", adminOnly(http.HandlerFunc(deps.ListBetaSignups)))
 
 	userOnly := middleware.RequireUserAuth(env.JWTSecret)
 	protected.Handle("GET /api/ai/models", userOnly(http.HandlerFunc(deps.ListModels)))

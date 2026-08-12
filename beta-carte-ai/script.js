@@ -1,7 +1,4 @@
-// Remplacez cette URL par celle de votre deploiement Google Apps Script
-// (voir apps-script.gs - Deployer > Nouveau deploiement > Application Web,
-// puis collez l'URL qui se termine par /exec ici).
-const APPS_SCRIPT_URL = "COLLEZ_ICI_VOTRE_URL_APPS_SCRIPT"
+const API_BASE = "https://ai-api.mahu.cards/api/beta"
 
 const form = document.getElementById("beta-form")
 const submitBtn = document.getElementById("submit-btn")
@@ -9,9 +6,8 @@ const messageEl = document.getElementById("form-message")
 const counterEl = document.getElementById("signup-counter")
 
 async function loadCounter() {
-  if (APPS_SCRIPT_URL === "COLLEZ_ICI_VOTRE_URL_APPS_SCRIPT") return
   try {
-    const response = await fetch(`${APPS_SCRIPT_URL}?action=count`)
+    const response = await fetch(`${API_BASE}/count`)
     const result = await response.json()
     if (result.success) {
       counterEl.innerHTML = `<strong>${result.count}</strong> personne${result.count > 1 ? "s" : ""} deja inscrite${result.count > 1 ? "s" : ""} a la beta`
@@ -25,12 +21,6 @@ loadCounter()
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault()
-
-  if (APPS_SCRIPT_URL === "COLLEZ_ICI_VOTRE_URL_APPS_SCRIPT") {
-    messageEl.textContent = "Le formulaire n'est pas encore connecte (URL Apps Script manquante)."
-    messageEl.className = "form-message error"
-    return
-  }
 
   const data = {
     name: document.getElementById("name").value.trim(),
@@ -52,16 +42,14 @@ form.addEventListener("submit", async (event) => {
   messageEl.className = "form-message"
 
   try {
-    // text/plain evite le preflight CORS (Apps Script Web Apps ne
-    // repondent pas correctement aux requetes OPTIONS).
-    const response = await fetch(APPS_SCRIPT_URL, {
+    const response = await fetch(`${API_BASE}/signup`, {
       method: "POST",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     })
-    const result = await response.json()
+    const result = await response.json().catch(() => ({}))
 
-    if (result.success) {
+    if (response.ok && result.success) {
       form.reset()
       messageEl.textContent = "Merci ! Votre demande a bien ete enregistree, nous vous contacterons bientot."
       messageEl.className = "form-message success"

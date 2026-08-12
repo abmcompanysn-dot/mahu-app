@@ -3,6 +3,7 @@ package middleware
 import (
 	"log"
 	"net/http"
+	"strings"
 
 	"mahu-backend/internal/httpx"
 )
@@ -24,11 +25,31 @@ func Recover(next http.Handler) http.Handler {
 	})
 }
 
-// CORS mirrors the previous cors({ origin: env.CORS_ORIGIN }) configuration.
-func CORS(origin string) func(http.Handler) http.Handler {
+// CORS mirrors the previous cors({ origin: env.CORS_ORIGIN }) configuration,
+// extended to accept a comma-separated allowlist (needed once more than one
+// browser-facing origin exists, e.g. the standalone beta signup page on its
+// own subdomain) - the request's Origin is echoed back only if it matches
+// one of the configured origins, otherwise the first configured origin is
+// used as a safe default (matches the previous single-origin behavior).
+func CORS(origins string) func(http.Handler) http.Handler {
+	allowed := strings.Split(origins, ",")
+	for i := range allowed {
+		allowed[i] = strings.TrimSpace(allowed[i])
+	}
+	defaultOrigin := allowed[0]
+
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Access-Control-Allow-Origin", origin)
+			origin := r.Header.Get("Origin")
+			allowOrigin := defaultOrigin
+			for _, o := range allowed {
+				if o == origin {
+					allowOrigin = origin
+					break
+				}
+			}
+
+			w.Header().Set("Access-Control-Allow-Origin", allowOrigin)
 			w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS")
 			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, x-api-key")
 			w.Header().Set("Vary", "Origin")
