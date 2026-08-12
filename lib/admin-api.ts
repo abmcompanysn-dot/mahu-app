@@ -52,6 +52,16 @@ export interface PaymentsResponse {
   totalRevenueXof: number
 }
 
+export interface BetaSignup {
+  _id: string
+  name: string
+  email: string
+  phone: string
+  address: string
+  country: string
+  createdAt: string
+}
+
 export interface Announcement {
   _id: string
   title: string
@@ -202,4 +212,6 @@ export const adminApi = {
       method: "POST",
       body: JSON.stringify(data),
     }),
+
+  getBetaSignups: (token: string) => request<{ signups: BetaSignup[] }>(`${ADMIN_BASE_URL}/beta-signups`, token),
 }
