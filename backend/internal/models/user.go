@@ -37,6 +37,11 @@ type User struct {
 	// biometric) but keep their data, unlike a delete.
 	Disabled bool `bson:"disabled,omitempty" json:"disabled,omitempty"`
 
+	// Mode IA (/ai) is hidden from the dashboard and its API endpoints
+	// rejected until an admin explicitly enables it per user - controlled
+	// rollout rather than open to everyone by default.
+	AiEnabled bool `bson:"aiEnabled,omitempty" json:"aiEnabled,omitempty"`
+
 	CreatedAt time.Time `bson:"createdAt" json:"createdAt"`
 	UpdatedAt time.Time `bson:"updatedAt" json:"updatedAt"`
 }

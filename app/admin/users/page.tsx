@@ -70,6 +70,19 @@ export default function AdminUsersPage() {
     }
   }
 
+  const handleToggleAiEnabled = async (userId: string, aiEnabled: boolean) => {
+    if (!token) return
+    setSavingId(userId)
+    try {
+      await adminApi.setUserAiEnabled(token, userId, aiEnabled)
+      setUsers((prev) => prev.map((u) => (u._id === userId ? { ...u, aiEnabled } : u)))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur")
+    } finally {
+      setSavingId(null)
+    }
+  }
+
   return (
     <div className="p-6 md:p-10">
       <div className="max-w-5xl mx-auto space-y-6">
@@ -105,6 +118,7 @@ export default function AdminUsersPage() {
                     <TableHead>Role</TableHead>
                     <TableHead>Plan</TableHead>
                     <TableHead>Actif</TableHead>
+                    <TableHead>Acces IA</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -134,6 +148,13 @@ export default function AdminUsersPage() {
                           checked={!u.disabled}
                           disabled={savingId === u._id}
                           onCheckedChange={(checked) => handleToggleDisabled(u._id, !checked)}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Switch
+                          checked={!!u.aiEnabled}
+                          disabled={savingId === u._id}
+                          onCheckedChange={(checked) => handleToggleAiEnabled(u._id, checked)}
                         />
                       </TableCell>
                     </TableRow>

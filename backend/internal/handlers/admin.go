@@ -518,3 +518,40 @@ func (d *Deps) SetUserDisabled(w http.ResponseWriter, r *http.Request, userIDHex
 
 	httpx.WriteJSON(w, http.StatusOK, map[string]any{"success": true})
 }
+
+type setUserAiEnabledRequest struct {
+	AiEnabled bool `json:"aiEnabled"`
+}
+
+// SetUserAiEnabled gates mode IA (/ai) per user - hidden from the dashboard
+// and rejected at the API level (ListModels, CreateConversation) until an
+// admin turns it on, for a controlled rollout instead of open-by-default.
+func (d *Deps) SetUserAiEnabled(w http.ResponseWriter, r *http.Request, userIDHex string) {
+	var req setUserAiEnabledRequest
+	if err := httpx.DecodeJSON(r, &req); err != nil {
+		httpx.WriteError(w, http.StatusBadRequest, "Invalid payload")
+		return
+	}
+
+	userID, err := primitive.ObjectIDFromHex(userIDHex)
+	if err != nil {
+		httpx.WriteError(w, http.StatusBadRequest, "Invalid user id")
+		return
+	}
+
+	ctx := r.Context()
+	res, err := db.Collection(models.UsersCollection).UpdateOne(ctx, bson.M{"_id": userID}, bson.M{"$set": bson.M{
+		"aiEnabled": req.AiEnabled,
+		"updatedAt": time.Now(),
+	}})
+	if err != nil {
+		httpx.WriteError(w, http.StatusInternalServerError, "Erreur serveur")
+		return
+	}
+	if res.MatchedCount == 0 {
+		httpx.WriteError(w, http.StatusNotFound, "Utilisateur introuvable")
+		return
+	}
+
+	httpx.WriteJSON(w, http.StatusOK, map[string]any{"success": true})
+}

@@ -76,6 +76,7 @@ export interface AdminUserRow {
   name: string
   role: string
   disabled?: boolean
+  aiEnabled?: boolean
   plan: "gratuit" | "premium" | "pro"
   createdAt: string
 }
@@ -172,6 +173,12 @@ export const adminApi = {
     request<{ success: boolean }>(`${ADMIN_BASE_URL}/users/${userId}/disable`, token, {
       method: "PATCH",
       body: JSON.stringify({ disabled }),
+    }),
+
+  setUserAiEnabled: (token: string, userId: string, aiEnabled: boolean) =>
+    request<{ success: boolean }>(`${ADMIN_BASE_URL}/users/${userId}/ai-access`, token, {
+      method: "PATCH",
+      body: JSON.stringify({ aiEnabled }),
     }),
 
   // Cartes/revendeurs : actions legacy existantes (backend/internal/handlers/legacy_admin.go),

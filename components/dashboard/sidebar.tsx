@@ -34,18 +34,22 @@ const navItems = [
   { icon: Settings, label: "Parametres", href: "/dashboard/settings" },
 ]
 
-export function DashboardSidebar({ 
-  collapsed, 
+export function DashboardSidebar({
+  collapsed,
   onCollapsedChange,
   mobileOpen,
   onMobileOpenChange
 }: SidebarProps) {
   const pathname = usePathname()
-  const { logout } = useAuth()
+  const { logout, user } = useAuth()
 
   const handleLogout = () => {
     logout()
   }
+
+  // Mode IA reste cache tant qu'un admin ne l'a pas active pour ce compte
+  // (rollout controle) - voir requireAiAccess cote backend.
+  const visibleNavItems = navItems.filter((item) => item.href !== "/ai" || user?.Ai_Enabled)
 
   const SidebarContent = () => (
     <>
@@ -83,7 +87,7 @@ export function DashboardSidebar({
 
       {/* Navigation */}
       <nav className="flex-1 p-4 space-y-2">
-        {navItems.map((item) => {
+        {visibleNavItems.map((item) => {
           const isActive = pathname === item.href
           return (
             <Link key={item.href} href={item.href} onClick={() => onMobileOpenChange(false)}>

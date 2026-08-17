@@ -26,8 +26,29 @@ func currentUserID(w http.ResponseWriter, r *http.Request) (primitive.ObjectID, 
 	return requireUserObjID(w, r)
 }
 
-func (d *Deps) ListModels(w http.ResponseWriter, r *http.Request) {
+// requireAiAccess wraps currentUserID with a check that mode IA is enabled
+// for this user - hidden from the dashboard client-side, but this is what
+// actually enforces it, since ListModels/CreateConversation are the two
+// choke points every /ai interaction passes through first.
+func requireAiAccess(w http.ResponseWriter, r *http.Request) (primitive.ObjectID, bool) {
 	userID, ok := currentUserID(w, r)
+	if !ok {
+		return userID, false
+	}
+	var user models.User
+	if err := db.Collection(models.UsersCollection).FindOne(r.Context(), bson.M{"_id": userID}).Decode(&user); err != nil {
+		httpx.WriteError(w, http.StatusInternalServerError, "Erreur serveur")
+		return userID, false
+	}
+	if !user.AiEnabled {
+		httpx.WriteError(w, http.StatusForbidden, "Le mode IA n'est pas encore active pour ton compte")
+		return userID, false
+	}
+	return userID, true
+}
+
+func (d *Deps) ListModels(w http.ResponseWriter, r *http.Request) {
+	userID, ok := requireAiAccess(w, r)
 	if !ok {
 		return
 	}
@@ -72,16 +93,17 @@ type createConversationRequest struct {
 }
 
 func (d *Deps) CreateConversation(w http.ResponseWriter, r *http.Request) {
+	userID, ok := requireAiAccess(w, r)
+	if !ok {
+		return
+	}
+
 	var req createConversationRequest
 	if err := httpx.DecodeJSON(r, &req); err != nil || req.Model == "" {
 		httpx.WriteError(w, http.StatusBadRequest, "Invalid payload")
 		return
 	}
 
-	userID, ok := currentUserID(w, r)
-	if !ok {
-		return
-	}
 	ctx := r.Context()
 	sub, err := services.GetOrCreateSubscription(ctx, userID)
 	if err != nil {

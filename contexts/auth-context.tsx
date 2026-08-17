@@ -14,6 +14,7 @@ export interface AppScriptUser {
   URL_Profil_2?: string
   URL_Profil_3?: string
   Onboarding_Status: string
+  Ai_Enabled: boolean
 }
 
 export interface AppScriptProfile {

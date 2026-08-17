@@ -152,14 +152,15 @@ func userToMap(u *models.User) map[string]any {
 		return map[string]any{}
 	}
 	return map[string]any{
-		"ID_Unique":          u.ID.Hex(),
-		"Email":              u.Email,
-		"Role":               u.Role,
-		"URL_Profil":         u.ProfileURL,
-		"URL_Profil_2":       u.ProfileURL2,
-		"URL_Profil_3":       u.ProfileURL3,
-		"Onboarding_Status":  u.OnboardingStatus,
-		"ID_Entreprise":      u.EnterpriseID,
+		"ID_Unique":         u.ID.Hex(),
+		"Email":             u.Email,
+		"Role":              u.Role,
+		"URL_Profil":        u.ProfileURL,
+		"URL_Profil_2":      u.ProfileURL2,
+		"URL_Profil_3":      u.ProfileURL3,
+		"Onboarding_Status": u.OnboardingStatus,
+		"ID_Entreprise":     u.EnterpriseID,
+		"Ai_Enabled":        u.AiEnabled,
 	}
 }
 
