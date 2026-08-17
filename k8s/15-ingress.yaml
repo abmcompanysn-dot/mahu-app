@@ -1,0 +1,34 @@
+# Mirrors the mahu VPS's current Caddy/tunnel split: ai.mahu.cards and
+# mahu.mahu.cards both hit the same Next.js app (proxy.ts gates /admin/*
+# to only the mahu.mahu.cards host, see proxy.ts at the repo root),
+# ai-api.mahu.cards goes straight to the Go backend.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mahu
+  namespace: mahu
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "120"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "120"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: ai.mahu.cards
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend: { service: { name: web, port: { number: 3000 } } }
+    - host: mahu.mahu.cards
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend: { service: { name: web, port: { number: 3000 } } }
+    - host: ai-api.mahu.cards
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend: { service: { name: backend, port: { number: 4000 } } }

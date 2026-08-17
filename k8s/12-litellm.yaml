@@ -1,0 +1,37 @@
+# The litellm-config ConfigMap is NOT defined here - it's generated straight
+# from the source of truth (litellm/config.yaml) by k8s/deploy.sh, so the two
+# never drift apart the way a duplicated inline ConfigMap would.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: litellm
+  namespace: mahu
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: litellm }
+  template:
+    metadata:
+      labels: { app: litellm }
+    spec:
+      containers:
+        - name: litellm
+          image: ghcr.io/berriai/litellm:main-stable
+          args: ["--config", "/app/config.yaml", "--port", "4001"]
+          ports: [{ containerPort: 4001 }]
+          envFrom:
+            - secretRef: { name: mahu-backend-env }
+          volumeMounts:
+            - { name: config, mountPath: /app/config.yaml, subPath: config.yaml, readOnly: true }
+      volumes:
+        - name: config
+          configMap: { name: litellm-config }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: litellm
+  namespace: mahu
+spec:
+  selector: { app: litellm }
+  ports: [{ port: 4001, targetPort: 4001 }]

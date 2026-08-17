@@ -1,0 +1,41 @@
+# Image mahu-backend:latest is built locally and imported straight into k3s's
+# containerd by k8s/deploy.sh (docker build + docker save | k3s ctr images
+# import) - single-node cluster, no registry needed. imagePullPolicy: Never
+# so kubelet doesn't try (and fail) to pull it from a real registry.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: mahu
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: backend }
+  template:
+    metadata:
+      labels: { app: backend }
+    spec:
+      containers:
+        - name: backend
+          image: mahu-backend:latest
+          imagePullPolicy: Never
+          ports: [{ containerPort: 4000 }]
+          envFrom:
+            - secretRef: { name: mahu-backend-env }
+          readinessProbe:
+            httpGet: { path: /health, port: 4000 }
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          livenessProbe:
+            httpGet: { path: /health, port: 4000 }
+            initialDelaySeconds: 10
+            periodSeconds: 15
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: mahu
+spec:
+  selector: { app: backend }
+  ports: [{ port: 4000, targetPort: 4000 }]
