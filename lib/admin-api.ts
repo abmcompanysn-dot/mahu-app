@@ -37,6 +37,19 @@ export interface ConsumptionStats {
   activeConversationCount: number
 }
 
+export interface LitellmUnhealthyEndpoint {
+  model: string
+  error: string
+  usedByApp: boolean
+}
+
+export interface LitellmHealth {
+  healthyCount: number
+  unhealthyCount: number
+  unhealthy: LitellmUnhealthyEndpoint[]
+  checkedAt: string
+}
+
 export interface Payment {
   _id: string
   userId: { _id: string; email: string; name: string } | string
@@ -208,6 +221,9 @@ export const adminApi = {
   getStats: (token: string) => request<AdminStats>(`${ADMIN_BASE_URL}/stats`, token),
 
   getConsumption: (token: string) => request<ConsumptionStats>(`${ADMIN_BASE_URL}/consumption`, token),
+
+  getLitellmHealth: (token: string, refresh = false) =>
+    request<LitellmHealth>(`${ADMIN_BASE_URL}/litellm/health${refresh ? "?refresh=true" : ""}`, token),
 
   getPayments: (token: string) => request<PaymentsResponse>(`${ADMIN_BASE_URL}/payments`, token),
 

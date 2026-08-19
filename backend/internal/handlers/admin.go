@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"regexp"
 	"strings"
@@ -554,4 +556,102 @@ func (d *Deps) SetUserAiEnabled(w http.ResponseWriter, r *http.Request, userIDHe
 	}
 
 	httpx.WriteJSON(w, http.StatusOK, map[string]any{"success": true})
+}
+
+// litellmAppModels are the litellm_params.model values (not the model_name
+// aliases - LiteLLM's /health reports the former) actually called by the
+// app's handlers (ai.go/ai_audio.go chat, image and audio paths, via
+// config.AIPlans). litellm/config.yaml declares many more Qwen models than
+// this - those are kept for future features and have no app code calling
+// them yet, so their health is noise here, not a real incident.
+var litellmAppModels = map[string]bool{
+	"groq/openai/gpt-oss-120b":           true,
+	"openai/gpt-4o-mini":                 true,
+	"anthropic/claude-3-5-haiku-latest":  true,
+	"openai/qwen-plus":                   true,
+	"openai/qwen-vl-ocr-2025-11-20":      true,
+	"openai/gpt-4o":                      true,
+	"anthropic/claude-sonnet-4-5":        true,
+	"anthropic/claude-opus-5":            true,
+	"openai/qwen-max":                    true,
+	"openai/qwen3-max":                   true,
+	"openai/qwen3.7-plus":                true,
+	"openai/qwen3.5-122b-a10b":           true,
+	"openai/qwen-mt-flash":               true,
+	"openai/qwen3-vl-235b-a22b-thinking": true,
+	"openai/gpt-image-1":                 true,
+	"openai/tts-1":                       true,
+	"openai/whisper-1":                   true,
+}
+
+type litellmHealthEndpoint struct {
+	Model     string `json:"model"`
+	Error     string `json:"error"`
+	UsedByApp bool   `json:"usedByApp"`
+}
+
+type litellmHealthResponse struct {
+	HealthyCount   int                     `json:"healthyCount"`
+	UnhealthyCount int                     `json:"unhealthyCount"`
+	Unhealthy      []litellmHealthEndpoint `json:"unhealthy"`
+	CheckedAt      time.Time               `json:"checkedAt"`
+}
+
+// GetLitellmHealth proxies LiteLLM's own /health check, which actually
+// pings every configured model against its real provider - the only way to
+// catch a deprecated model or an exhausted provider quota before a user
+// hits it (this is how the 2026-08-19 Groq/OpenAI/Anthropic incidents were
+// found). use_cache=true (LiteLLM caches ~5min) unless refresh=true, since a
+// full non-cached sweep over every configured model takes ~40s.
+func (d *Deps) GetLitellmHealth(w http.ResponseWriter, r *http.Request) {
+	useCache := r.URL.Query().Get("refresh") != "true"
+	url := fmt.Sprintf("%s/health?use_cache=%t", d.Env.LiteLLMURL, useCache)
+
+	req, err := http.NewRequestWithContext(r.Context(), http.MethodGet, url, nil)
+	if err != nil {
+		httpx.WriteError(w, http.StatusInternalServerError, "Erreur serveur")
+		return
+	}
+	req.Header.Set("Authorization", "Bearer "+d.Env.LiteLLMMasterKey)
+
+	client := &http.Client{Timeout: 55 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		httpx.WriteError(w, http.StatusBadGateway, "LiteLLM injoignable")
+		return
+	}
+	defer resp.Body.Close()
+
+	var raw struct {
+		HealthyCount       int `json:"healthy_count"`
+		UnhealthyCount     int `json:"unhealthy_count"`
+		UnhealthyEndpoints []struct {
+			Model string `json:"model"`
+			Error string `json:"error"`
+		} `json:"unhealthy_endpoints"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&raw); err != nil {
+		httpx.WriteError(w, http.StatusBadGateway, "Reponse LiteLLM invalide")
+		return
+	}
+
+	unhealthy := make([]litellmHealthEndpoint, 0, len(raw.UnhealthyEndpoints))
+	for _, e := range raw.UnhealthyEndpoints {
+		firstLine := e.Error
+		if idx := strings.IndexByte(firstLine, '\n'); idx != -1 {
+			firstLine = firstLine[:idx]
+		}
+		unhealthy = append(unhealthy, litellmHealthEndpoint{
+			Model:     e.Model,
+			Error:     firstLine,
+			UsedByApp: litellmAppModels[e.Model],
+		})
+	}
+
+	httpx.WriteJSON(w, http.StatusOK, litellmHealthResponse{
+		HealthyCount:   raw.HealthyCount,
+		UnhealthyCount: raw.UnhealthyCount,
+		Unhealthy:      unhealthy,
+		CheckedAt:      time.Now(),
+	})
 }

@@ -84,6 +84,7 @@ func main() {
 	adminOnly := middleware.RequireAdminAuth(env.JWTSecret)
 	protected.Handle("GET /api/admin/stats", adminOnly(http.HandlerFunc(deps.GetStats)))
 	protected.Handle("GET /api/admin/consumption", adminOnly(http.HandlerFunc(deps.GetConsumption)))
+	protected.Handle("GET /api/admin/litellm/health", adminOnly(http.HandlerFunc(deps.GetLitellmHealth)))
 	protected.Handle("GET /api/admin/payments", adminOnly(http.HandlerFunc(deps.GetPayments)))
 	protected.Handle("GET /api/admin/announcements", adminOnly(http.HandlerFunc(deps.ListAnnouncements)))
 	protected.Handle("POST /api/admin/announcements", adminOnly(http.HandlerFunc(deps.CreateAnnouncement)))
