@@ -1,8 +1,10 @@
 model_list:
   # Palier gratuit
+  # llama-3.3-70b-versatile deprecated par Groq le 2026-06-17 (404 model_not_found) -
+  # migre vers le remplacement recommande par Groq.
   - model_name: llama3-70b
     litellm_params:
-      model: groq/llama-3.3-70b-versatile
+      model: groq/openai/gpt-oss-120b
       api_key: os.environ/GROQ_API_KEY
 
   # Palier premium
