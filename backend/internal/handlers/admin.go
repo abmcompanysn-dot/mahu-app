@@ -560,10 +560,17 @@ func (d *Deps) SetUserAiEnabled(w http.ResponseWriter, r *http.Request, userIDHe
 
 // litellmAppModels are the litellm_params.model values (not the model_name
 // aliases - LiteLLM's /health reports the former) actually called by the
-// app's handlers (ai.go/ai_audio.go chat, image and audio paths, via
+// app's handlers (ai.go/ai_audio.go chat and image paths, via
 // config.AIPlans). litellm/config.yaml declares many more Qwen models than
 // this - those are kept for future features and have no app code calling
 // them yet, so their health is noise here, not a real incident.
+//
+// Notably absent: openai/tts-1 - despite litellm/config.yaml's comment
+// claiming it's wired to SpeakText, ai_audio.go actually calls DashScope's
+// qwen3-tts-flash natively (confirmed live 2026-08-20), bypassing LiteLLM
+// entirely, same as image/video generation below. Its litellm health is
+// noise, not a real incident. whisper-1 (transcription) is the one audio
+// model still genuinely routed through LiteLLM to OpenAI.
 var litellmAppModels = map[string]bool{
 	"groq/openai/gpt-oss-120b":           true,
 	"openai/gpt-4o-mini":                 true,
@@ -580,7 +587,6 @@ var litellmAppModels = map[string]bool{
 	"openai/qwen-mt-flash":               true,
 	"openai/qwen3-vl-235b-a22b-thinking": true,
 	"openai/gpt-image-1":                 true,
-	"openai/tts-1":                       true,
 	"openai/whisper-1":                   true,
 }
 

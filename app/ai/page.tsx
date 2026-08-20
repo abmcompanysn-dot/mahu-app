@@ -449,17 +449,18 @@ export default function AiPage() {
     setNarrationError(null)
     setSending(true)
     try {
-      const result = await aiApi.submitVideo(token, prompt)
+      const result = await aiApi.submitVideo(token, prompt, pendingImage ?? undefined)
       setVideoJobId(result.jobId)
       setVideoStatus(result.status)
       setModelsInfo((prev) => (prev ? { ...prev, creditBalance: result.creditBalance } : prev))
       setInput("")
+      setPendingImage(null)
     } catch (err) {
       setVideoError(err instanceof Error ? err.message : "Erreur de soumission")
     } finally {
       setSending(false)
     }
-  }, [token, input])
+  }, [token, input, pendingImage])
 
   const handleNarrate = useCallback(async () => {
     const text = narrationText.trim()
@@ -545,7 +546,9 @@ export default function AiPage() {
       {videoMode && (
         <div className="flex items-center gap-1.5 text-xs text-primary">
           <Video className="w-3.5 h-3.5" />
-          Mode generation video active (100 credits, wan2.6-t2v, texte vers video)
+          {pendingImage
+            ? "Mode image vers video active (100 credits, wan2.7-i2v) - l'image jointe sera animee"
+            : "Mode generation video active (100 credits, wan2.6-t2v, texte vers video) - joins une image pour l'animer a la place"}
         </div>
       )}
       {pendingImage && (
@@ -559,7 +562,7 @@ export default function AiPage() {
           >
             <X className="w-3 h-3" />
           </button>
-          {!selectedModelSupportsVision && (
+          {!videoMode && !selectedModelSupportsVision && (
             <p className="text-xs text-amber-500 mt-1">Le modele selectionne ne lit pas les images.</p>
           )}
         </div>
@@ -607,8 +610,8 @@ export default function AiPage() {
             size="icon"
             className="border-border/50"
             onClick={() => fileInputRef.current?.click()}
-            disabled={imageGenMode || videoMode}
-            title="Joindre une image"
+            disabled={imageGenMode}
+            title={videoMode ? "Joindre une image a animer" : "Joindre une image"}
           >
             <Paperclip className="w-4 h-4" />
           </Button>

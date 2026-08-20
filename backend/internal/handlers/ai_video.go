@@ -32,11 +32,22 @@ import (
 // not implemented as app features yet.
 
 const videoModel = "wan2.6-t2v"
+
+// imageToVideoModel animates a source image instead of generating from a
+// blank prompt - VERIFIED live 2026-08-20 against the same
+// video-generation/video-synthesis endpoint as videoModel, but a different
+// payload shape: input.media is a list of {"type":"first_frame","url":...}
+// (url must be a real fetched-by-Alibaba URL, not a data: URI, hence the
+// Cloudinary re-host below) rather than input.prompt alone. Found by trial:
+// input.img_url (string) and input.media (bare string/plain-object list)
+// all 400 with schema-specific messages before landing on this shape.
+const imageToVideoModel = "wan2.7-i2v"
 const videoCreditCost = 100
 const narrationCreditCost = 5
 
 type submitVideoRequest struct {
-	Prompt string `json:"prompt"`
+	Prompt       string `json:"prompt"`
+	ImageDataURL string `json:"imageDataUrl,omitempty"`
 }
 
 type dashscopeTaskResponse struct {
@@ -77,9 +88,31 @@ func (d *Deps) SubmitVideoJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	model := videoModel
+	input := map[string]any{"prompt": req.Prompt}
+	if req.ImageDataURL != "" {
+		if !imageDataURLRegexp.MatchString(req.ImageDataURL) {
+			httpx.WriteError(w, http.StatusBadRequest, "Image invalide")
+			return
+		}
+		// DashScope fetches input.media.*.url itself, so it must be a real
+		// reachable URL - a data: URI is rejected. Cloudinary is already the
+		// app's re-hosting path for the narration merge below.
+		imageURL, err := cloudinaryutil.UploadBase64(d.Env, req.ImageDataURL)
+		if err != nil {
+			httpx.WriteError(w, http.StatusBadGateway, "Erreur hebergement de l'image: "+err.Error())
+			return
+		}
+		model = imageToVideoModel
+		input = map[string]any{
+			"prompt": req.Prompt,
+			"media":  []map[string]any{{"type": "first_frame", "url": imageURL}},
+		}
+	}
+
 	reqBody, _ := json.Marshal(map[string]any{
-		"model":      videoModel,
-		"input":      map[string]any{"prompt": req.Prompt},
+		"model":      model,
+		"input":      input,
 		"parameters": map[string]any{},
 	})
 	dsReq, _ := http.NewRequest("POST", d.Env.DashscopeNativeBase()+"/services/aigc/video-generation/video-synthesis", bytes.NewReader(reqBody))
@@ -117,7 +150,7 @@ func (d *Deps) SubmitVideoJob(w http.ResponseWriter, r *http.Request) {
 	job := models.VideoJob{
 		ID:        primitive.NewObjectID(),
 		UserID:    userID,
-		Model:     videoModel,
+		Model:     model,
 		Prompt:    req.Prompt,
 		TaskID:    task.Output.TaskID,
 		Status:    models.VideoJobPending,

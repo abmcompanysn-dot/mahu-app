@@ -120,10 +120,12 @@ export const aiApi = {
     return response.json()
   },
 
-  submitVideo: (token: string, prompt: string) =>
+  // imageDataUrl is optional - when set, the backend animates that image
+  // (wan2.7-i2v) instead of generating from a blank prompt (wan2.6-t2v).
+  submitVideo: (token: string, prompt: string, imageDataUrl?: string) =>
     request<{ jobId: string; status: string; creditBalance: number }>(`${AI_BASE_URL}/video`, token, {
       method: "POST",
-      body: JSON.stringify({ prompt }),
+      body: JSON.stringify({ prompt, imageDataUrl }),
     }),
 
   getVideoJob: (token: string, jobId: string) =>
