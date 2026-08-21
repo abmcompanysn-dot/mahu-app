@@ -29,6 +29,7 @@ services:
     command: ["--config", "/app/config.yaml", "--port", "4001"]
     ports:
       - "127.0.0.1:4001:4001"
+      - "100.79.191.101:4001:4001"
     networks:
       - mahu_internal
 
