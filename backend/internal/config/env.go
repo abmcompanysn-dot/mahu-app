@@ -7,12 +7,12 @@ import (
 )
 
 type Env struct {
-	Port           string
-	MongoURI       string
-	RedisURL       string
-	JWTSecret      string
-	ServiceAPIKey  string
-	CORSOrigin     string
+	Port          string
+	MongoURI      string
+	RedisURL      string
+	JWTSecret     string
+	ServiceAPIKey string
+	CORSOrigin    string
 
 	FirebaseProjectID   string
 	FirebaseClientEmail string
@@ -62,16 +62,24 @@ type Env struct {
 	DashscopeAPIKey  string
 	DashscopeAPIBase string
 
+	// Hugging Face Inference API - free-tier music generation (facebook/
+	// musicgen-small), used instead of Alibaba's Fun-Music because that one
+	// turned out to be Beijing-region-only and unavailable on this account's
+	// ap-southeast-1 workspace (see ai_music.go). Free account, "Read" token,
+	// rate-limited (~1000 req/day) with a cold-start delay - acceptable given
+	// the feature already runs as an async submit/poll job.
+	HuggingFaceAPIKey string
+
 	// PawaPay - mobile money checkout (Orange Money, Wave, Free Money, etc.),
 	// coexists with PayDunya as a second payment option. Countries is the
 	// list of ISO3 country codes to offer on the hosted checkout page (all
 	// sharing PawaPayCurrency) - kept configurable rather than hardcoding
 	// "every country PawaPay supports", since actual coverage depends on
 	// which corridors PawaPay has approved for this merchant account.
-	PawaPayAPIToken string
-	PawaPayMode     string
+	PawaPayAPIToken  string
+	PawaPayMode      string
 	PawaPayCountries []string
-	PawaPayCurrency string
+	PawaPayCurrency  string
 
 	// Google OAuth - lets a Mahu USER (not the platform) connect their own
 	// Gmail account so Mahu can send email as them (e.g. following up a
@@ -197,6 +205,8 @@ func Load() (*Env, error) {
 
 		DashscopeAPIKey:  getDefault("DASHSCOPE_API_KEY", ""),
 		DashscopeAPIBase: getDefault("DASHSCOPE_API_BASE", ""),
+
+		HuggingFaceAPIKey: getDefault("HUGGINGFACE_API_KEY", ""),
 
 		PawaPayAPIToken: getDefault("PAWAPAY_API_TOKEN", ""),
 		PawaPayMode:     getDefault("PAWAPAY_MODE", "sandbox"),

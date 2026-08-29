@@ -187,9 +187,6 @@ export default function AiPage() {
   const [videoHistory, setVideoHistory] = useState<Awaited<ReturnType<typeof aiApi.listVideos>>["jobs"]>([])
   const [videoHistoryLoading, setVideoHistoryLoading] = useState(false)
   const [musicMode, setMusicMode] = useState(false)
-  // false = l'IA ecrit les paroles a partir du prompt seul ; true = l'utilisateur les fournit.
-  const [musicOwnLyrics, setMusicOwnLyrics] = useState(false)
-  const [musicLyrics, setMusicLyrics] = useState("")
   const [musicJobId, setMusicJobId] = useState<string | null>(null)
   const [musicStatus, setMusicStatus] = useState<string | null>(null)
   const [musicAudioUrl, setMusicAudioUrl] = useState<string | null>(null)
@@ -524,24 +521,22 @@ export default function AiPage() {
   const handleSubmitMusic = useCallback(async () => {
     const prompt = input.trim()
     if (!token || !prompt) return
-    if (musicOwnLyrics && !musicLyrics.trim()) return
     setMusicError(null)
     setMusicAudioUrl(null)
     setMusicStatus(null)
     setSending(true)
     try {
-      const result = await aiApi.submitMusic(token, prompt, musicOwnLyrics ? musicLyrics.trim() : undefined)
+      const result = await aiApi.submitMusic(token, prompt)
       setMusicJobId(result.jobId)
       setMusicStatus(result.status)
       setModelsInfo((prev) => (prev ? { ...prev, creditBalance: result.creditBalance } : prev))
       setInput("")
-      setMusicLyrics("")
     } catch (err) {
       setMusicError(err instanceof Error ? err.message : "Erreur de soumission")
     } finally {
       setSending(false)
     }
-  }, [token, input, musicOwnLyrics, musicLyrics])
+  }, [token, input])
 
   const openMusicHistory = useCallback(async () => {
     setMusicHistoryOpen(true)
@@ -617,45 +612,10 @@ export default function AiPage() {
         </div>
       )}
       {musicMode && (
-        <div className="flex items-center gap-2 text-xs text-primary flex-wrap">
-          <div className="flex items-center gap-1.5">
-            <Music className="w-3.5 h-3.5" />
-            Mode generation musicale active (100 credits, Fun-Music)
-          </div>
-          <div className="flex items-center gap-1 ml-auto">
-            <button
-              type="button"
-              onClick={() => setMusicOwnLyrics(false)}
-              className={`px-2 py-0.5 rounded-full border text-[11px] transition-colors ${
-                !musicOwnLyrics
-                  ? "bg-primary/15 border-primary/50 text-primary"
-                  : "border-border/50 text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              L&apos;IA ecrit les paroles
-            </button>
-            <button
-              type="button"
-              onClick={() => setMusicOwnLyrics(true)}
-              className={`px-2 py-0.5 rounded-full border text-[11px] transition-colors ${
-                musicOwnLyrics
-                  ? "bg-primary/15 border-primary/50 text-primary"
-                  : "border-border/50 text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Mes propres paroles
-            </button>
-          </div>
+        <div className="flex items-center gap-1.5 text-xs text-primary">
+          <Music className="w-3.5 h-3.5" />
+          Mode generation musicale active (100 credits, MusicGen) - instrumental uniquement, pas de paroles chantees
         </div>
-      )}
-      {musicMode && musicOwnLyrics && (
-        <textarea
-          value={musicLyrics}
-          onChange={(e) => setMusicLyrics(e.target.value)}
-          placeholder="Colle tes paroles ici (2000 caracteres max)..."
-          rows={3}
-          className="w-full resize-none bg-background/50 border border-border/50 rounded-lg text-sm placeholder:text-muted-foreground/70 outline-none px-3 py-2 focus:border-primary/40"
-        />
       )}
       {pendingImage && (
         <div className="relative w-fit">
@@ -687,9 +647,7 @@ export default function AiPage() {
           videoMode
             ? "Decris la video a generer..."
             : musicMode
-              ? musicOwnLyrics
-                ? "Decris le style musical (les paroles sont au-dessus)..."
-                : "Decris la chanson a generer (theme, style, ambiance)..."
+              ? "Decris la musique a generer (theme, style, ambiance)..."
               : editImageMode
                 ? "Decris la modification a apporter a l'image..."
                 : imageGenMode
@@ -813,7 +771,7 @@ export default function AiPage() {
               (videoMode
                 ? !input.trim()
                 : musicMode
-                  ? !input.trim() || (musicOwnLyrics && !musicLyrics.trim())
+                  ? !input.trim()
                   : editImageMode
                     ? !pendingImage
                     : !input.trim() && !pendingImage)
