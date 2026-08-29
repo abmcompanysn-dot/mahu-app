@@ -734,22 +734,10 @@ export default function AiPage() {
           >
             <Video className="w-4 h-4" />
           </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            className={`border-border/50 ${musicMode ? "bg-primary/10 border-primary/50 text-primary" : ""}`}
-            onClick={() => {
-              setMusicMode((prev) => !prev)
-              setImageGenMode(false)
-              setEditImageMode(false)
-              setVideoMode(false)
-              setPendingImage(null)
-            }}
-            title="Generer une chanson (100 credits)"
-          >
-            <Music className="w-4 h-4" />
-          </Button>
+          {/* Bouton musique masque pour l'instant - aucun provider gratuit
+              fonctionnel (Fun-Music region-locke, MusicGen retire du free
+              tier HF, voir la note dans ai_music.go). Code backend/frontend
+              intact et pret a reactiver si un provider est trouve. */}
         </div>
         <div className="flex items-center gap-2 shrink-0 ml-auto">
           {SpeechRecognitionCtor && (
@@ -947,13 +935,8 @@ export default function AiPage() {
                 <Film className="w-4 h-4" />
                 Mes videos
               </button>
-              <button
-                onClick={openMusicHistory}
-                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-muted/30 hover:text-foreground transition-colors"
-              >
-                <Music className="w-4 h-4" />
-                Mes chansons
-              </button>
+              {/* Lien "Mes chansons" masque avec le bouton de generation -
+                  voir la note plus haut. */}
               <Link
                 href="/dashboard/abonnement"
                 className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-muted/30 hover:text-foreground transition-colors"
