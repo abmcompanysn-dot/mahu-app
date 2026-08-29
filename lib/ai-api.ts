@@ -163,6 +163,31 @@ export const aiApi = {
       }>
     }>(`${AI_BASE_URL}/videos`, token),
 
+  // lyrics is optional - when set, Fun-Music composes on top of the user's
+  // own lyrics instead of writing its own from prompt alone.
+  submitMusic: (token: string, prompt: string, lyrics?: string) =>
+    request<{ jobId: string; status: string; creditBalance: number }>(`${AI_BASE_URL}/music`, token, {
+      method: "POST",
+      body: JSON.stringify({ prompt, lyrics }),
+    }),
+
+  getMusicJob: (token: string, jobId: string) =>
+    request<{ status: string; audioUrl?: string; error?: string }>(`${AI_BASE_URL}/music/${jobId}`, token),
+
+  // Historique des chansons generees, meme pattern que listVideos.
+  listMusics: (token: string) =>
+    request<{
+      jobs: Array<{
+        _id: string
+        prompt: string
+        lyrics?: string
+        status: string
+        audioUrl?: string
+        error?: string
+        createdAt: string
+      }>
+    }>(`${AI_BASE_URL}/musics`, token),
+
   // Utilitaire generique texte -> vecteur, pas rattache a une fonctionnalite
   // de recherche precise (voir la note dans ai_embed.go cote backend).
   embed: (token: string, text: string) =>

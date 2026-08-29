@@ -5,6 +5,7 @@ go 1.23
 require (
 	firebase.google.com/go/v4 v4.15.1
 	github.com/golang-jwt/jwt/v5 v5.2.1
+	github.com/pquerna/otp v1.5.0
 	github.com/redis/go-redis/v9 v9.7.0
 	go.mongodb.org/mongo-driver v1.17.1
 	golang.org/x/crypto v0.31.0
@@ -37,7 +38,6 @@ require (
 	github.com/googleapis/gax-go/v2 v2.14.0 // indirect
 	github.com/klauspost/compress v1.13.6 // indirect
 	github.com/montanaflynn/stats v0.7.1 // indirect
-	github.com/pquerna/otp v1.5.0 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.2 // indirect
 	github.com/xdg-go/stringprep v1.0.4 // indirect

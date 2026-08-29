@@ -16,6 +16,7 @@ import {
   Menu,
   Mic,
   MicOff,
+  Music,
   Paperclip,
   Plus,
   ScanFace,
@@ -185,6 +186,17 @@ export default function AiPage() {
   const [videoHistoryOpen, setVideoHistoryOpen] = useState(false)
   const [videoHistory, setVideoHistory] = useState<Awaited<ReturnType<typeof aiApi.listVideos>>["jobs"]>([])
   const [videoHistoryLoading, setVideoHistoryLoading] = useState(false)
+  const [musicMode, setMusicMode] = useState(false)
+  // false = l'IA ecrit les paroles a partir du prompt seul ; true = l'utilisateur les fournit.
+  const [musicOwnLyrics, setMusicOwnLyrics] = useState(false)
+  const [musicLyrics, setMusicLyrics] = useState("")
+  const [musicJobId, setMusicJobId] = useState<string | null>(null)
+  const [musicStatus, setMusicStatus] = useState<string | null>(null)
+  const [musicAudioUrl, setMusicAudioUrl] = useState<string | null>(null)
+  const [musicError, setMusicError] = useState<string | null>(null)
+  const [musicHistoryOpen, setMusicHistoryOpen] = useState(false)
+  const [musicHistory, setMusicHistory] = useState<Awaited<ReturnType<typeof aiApi.listMusics>>["jobs"]>([])
+  const [musicHistoryLoading, setMusicHistoryLoading] = useState(false)
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [listening, setListening] = useState(false)
@@ -225,6 +237,22 @@ export default function AiPage() {
     }, 4000)
     return () => clearInterval(interval)
   }, [token, videoJobId, videoStatus])
+
+  // Idem pour la generation musicale (Fun-Music) - meme cadence de poll que la video.
+  useEffect(() => {
+    if (!token || !musicJobId || musicStatus === "SUCCEEDED" || musicStatus === "FAILED") return
+    const interval = setInterval(async () => {
+      try {
+        const job = await aiApi.getMusicJob(token, musicJobId)
+        setMusicStatus(job.status)
+        if (job.audioUrl) setMusicAudioUrl(job.audioUrl)
+        if (job.error) setMusicError(job.error)
+      } catch (err) {
+        setMusicError(err instanceof Error ? err.message : "Erreur de suivi de la generation musicale")
+      }
+    }, 4000)
+    return () => clearInterval(interval)
+  }, [token, musicJobId, musicStatus])
 
   // Idem pour la fusion de la voix off, une fois demarree (voir handleNarrate).
   useEffect(() => {
@@ -493,6 +521,43 @@ export default function AiPage() {
     }
   }, [token])
 
+  const handleSubmitMusic = useCallback(async () => {
+    const prompt = input.trim()
+    if (!token || !prompt) return
+    if (musicOwnLyrics && !musicLyrics.trim()) return
+    setMusicError(null)
+    setMusicAudioUrl(null)
+    setMusicStatus(null)
+    setSending(true)
+    try {
+      const result = await aiApi.submitMusic(token, prompt, musicOwnLyrics ? musicLyrics.trim() : undefined)
+      setMusicJobId(result.jobId)
+      setMusicStatus(result.status)
+      setModelsInfo((prev) => (prev ? { ...prev, creditBalance: result.creditBalance } : prev))
+      setInput("")
+      setMusicLyrics("")
+    } catch (err) {
+      setMusicError(err instanceof Error ? err.message : "Erreur de soumission")
+    } finally {
+      setSending(false)
+    }
+  }, [token, input, musicOwnLyrics, musicLyrics])
+
+  const openMusicHistory = useCallback(async () => {
+    setMusicHistoryOpen(true)
+    setSidebarOpen(false)
+    if (!token) return
+    setMusicHistoryLoading(true)
+    try {
+      const { jobs } = await aiApi.listMusics(token)
+      setMusicHistory(jobs)
+    } catch {
+      // Silencieux - la liste reste vide, pas critique.
+    } finally {
+      setMusicHistoryLoading(false)
+    }
+  }, [token])
+
   if (!isAuthenticated) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -551,6 +616,47 @@ export default function AiPage() {
             : "Mode generation video active (100 credits, wan2.6-t2v, texte vers video) - joins une image pour l'animer a la place"}
         </div>
       )}
+      {musicMode && (
+        <div className="flex items-center gap-2 text-xs text-primary flex-wrap">
+          <div className="flex items-center gap-1.5">
+            <Music className="w-3.5 h-3.5" />
+            Mode generation musicale active (100 credits, Fun-Music)
+          </div>
+          <div className="flex items-center gap-1 ml-auto">
+            <button
+              type="button"
+              onClick={() => setMusicOwnLyrics(false)}
+              className={`px-2 py-0.5 rounded-full border text-[11px] transition-colors ${
+                !musicOwnLyrics
+                  ? "bg-primary/15 border-primary/50 text-primary"
+                  : "border-border/50 text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              L&apos;IA ecrit les paroles
+            </button>
+            <button
+              type="button"
+              onClick={() => setMusicOwnLyrics(true)}
+              className={`px-2 py-0.5 rounded-full border text-[11px] transition-colors ${
+                musicOwnLyrics
+                  ? "bg-primary/15 border-primary/50 text-primary"
+                  : "border-border/50 text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Mes propres paroles
+            </button>
+          </div>
+        </div>
+      )}
+      {musicMode && musicOwnLyrics && (
+        <textarea
+          value={musicLyrics}
+          onChange={(e) => setMusicLyrics(e.target.value)}
+          placeholder="Colle tes paroles ici (2000 caracteres max)..."
+          rows={3}
+          className="w-full resize-none bg-background/50 border border-border/50 rounded-lg text-sm placeholder:text-muted-foreground/70 outline-none px-3 py-2 focus:border-primary/40"
+        />
+      )}
       {pendingImage && (
         <div className="relative w-fit">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -574,24 +680,32 @@ export default function AiPage() {
         onKeyDown={(e) => {
           if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault()
-            videoMode ? handleSubmitVideo() : handleSend()
+            videoMode ? handleSubmitVideo() : musicMode ? handleSubmitMusic() : handleSend()
           }
         }}
         placeholder={
           videoMode
             ? "Decris la video a generer..."
-            : editImageMode
-              ? "Decris la modification a apporter a l'image..."
-              : imageGenMode
-                ? "Decris l'image a generer..."
-                : "Ecris ton message a AI MAHU..."
+            : musicMode
+              ? musicOwnLyrics
+                ? "Decris le style musical (les paroles sont au-dessus)..."
+                : "Decris la chanson a generer (theme, style, ambiance)..."
+              : editImageMode
+                ? "Decris la modification a apporter a l'image..."
+                : imageGenMode
+                  ? "Decris l'image a generer..."
+                  : "Ecris ton message a AI MAHU..."
         }
         rows={2}
         className="w-full resize-none bg-transparent text-foreground text-base placeholder:text-muted-foreground/70 outline-none px-1"
       />
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-1.5 flex-wrap">
-          <Select value={selectedModel} onValueChange={setSelectedModel} disabled={imageGenMode || editImageMode || videoMode}>
+          <Select
+            value={selectedModel}
+            onValueChange={setSelectedModel}
+            disabled={imageGenMode || editImageMode || videoMode || musicMode}
+          >
             <SelectTrigger size="sm" className="border-border/50 bg-background/50 max-w-32.5 sm:max-w-none">
               <SelectValue placeholder="Modele" className="truncate" />
             </SelectTrigger>
@@ -624,6 +738,7 @@ export default function AiPage() {
               setImageGenMode((prev) => !prev)
               setEditImageMode(false)
               setVideoMode(false)
+              setMusicMode(false)
               setPendingImage(null)
             }}
             title="Generer une image"
@@ -639,6 +754,7 @@ export default function AiPage() {
               setEditImageMode((prev) => !prev)
               setImageGenMode(false)
               setVideoMode(false)
+              setMusicMode(false)
             }}
             title="Editer une image (joins-en une)"
           >
@@ -653,11 +769,28 @@ export default function AiPage() {
               setVideoMode((prev) => !prev)
               setImageGenMode(false)
               setEditImageMode(false)
+              setMusicMode(false)
               setPendingImage(null)
             }}
             title="Generer une video (100 credits)"
           >
             <Video className="w-4 h-4" />
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className={`border-border/50 ${musicMode ? "bg-primary/10 border-primary/50 text-primary" : ""}`}
+            onClick={() => {
+              setMusicMode((prev) => !prev)
+              setImageGenMode(false)
+              setEditImageMode(false)
+              setVideoMode(false)
+              setPendingImage(null)
+            }}
+            title="Generer une chanson (100 credits)"
+          >
+            <Music className="w-4 h-4" />
           </Button>
         </div>
         <div className="flex items-center gap-2 shrink-0 ml-auto">
@@ -674,9 +807,16 @@ export default function AiPage() {
             </Button>
           )}
           <Button
-            onClick={() => (videoMode ? handleSubmitVideo() : handleSend())}
+            onClick={() => (videoMode ? handleSubmitVideo() : musicMode ? handleSubmitMusic() : handleSend())}
             disabled={
-              sending || (videoMode ? !input.trim() : editImageMode ? !pendingImage : !input.trim() && !pendingImage)
+              sending ||
+              (videoMode
+                ? !input.trim()
+                : musicMode
+                  ? !input.trim() || (musicOwnLyrics && !musicLyrics.trim())
+                  : editImageMode
+                    ? !pendingImage
+                    : !input.trim() && !pendingImage)
             }
             size="icon"
           >
@@ -722,6 +862,22 @@ export default function AiPage() {
         <div className="flex items-center gap-2 text-muted-foreground">
           <Loader2 className="w-4 h-4 animate-spin" />
           Generation video en cours ({videoStatus ?? "PENDING"})... cela peut prendre plusieurs minutes.
+        </div>
+      )}
+    </div>
+  )
+
+  const musicPanel = musicJobId && (
+    <div className="mb-3 rounded-xl border border-border/50 bg-card/50 p-3 text-sm space-y-3">
+      {musicError ? (
+        <p className="text-destructive">Erreur : {musicError}</p>
+      ) : musicStatus === "SUCCEEDED" && musicAudioUrl ? (
+        // eslint-disable-next-line jsx-a11y/media-has-caption
+        <audio src={musicAudioUrl} controls className="w-full" />
+      ) : (
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Loader2 className="w-4 h-4 animate-spin" />
+          Generation musicale en cours ({musicStatus ?? "PENDING"})... cela peut prendre 2 a 3 minutes.
         </div>
       )}
     </div>
@@ -833,6 +989,13 @@ export default function AiPage() {
                 <Film className="w-4 h-4" />
                 Mes videos
               </button>
+              <button
+                onClick={openMusicHistory}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-muted/30 hover:text-foreground transition-colors"
+              >
+                <Music className="w-4 h-4" />
+                Mes chansons
+              </button>
               <Link
                 href="/dashboard/abonnement"
                 className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-muted/30 hover:text-foreground transition-colors"
@@ -934,6 +1097,7 @@ export default function AiPage() {
                 )}
 
                 {videoPanel}
+                {musicPanel}
                 {composer}
                 <div className="flex flex-wrap items-center gap-2 mt-4">
                   {QUICK_SUGGESTIONS.map((suggestion) => (
@@ -1017,6 +1181,7 @@ export default function AiPage() {
 
               <div className="p-4 border-t border-border/50">
                 {videoPanel}
+                {musicPanel}
                 {composer}
               </div>
             </div>
@@ -1067,6 +1232,65 @@ export default function AiPage() {
                       </div>
                     ) : (
                       <div className="h-32 rounded-lg bg-muted/30 flex items-center justify-center gap-2 text-xs text-muted-foreground">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        En cours...
+                      </div>
+                    )}
+                    <p className="text-xs text-muted-foreground line-clamp-2">{job.prompt}</p>
+                    <p className="text-[11px] text-muted-foreground/70">
+                      {new Date(job.createdAt).toLocaleString("fr-FR")}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {musicHistoryOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+          onClick={() => setMusicHistoryOpen(false)}
+        >
+          <div
+            className="bg-card border border-border/50 rounded-2xl w-full max-w-3xl max-h-[80vh] overflow-y-auto p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold flex items-center gap-2">
+                <Music className="w-5 h-5 text-primary" />
+                Mes chansons
+              </h2>
+              <button
+                onClick={() => setMusicHistoryOpen(false)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {musicHistoryLoading ? (
+              <div className="flex items-center justify-center py-10">
+                <Loader2 className="w-6 h-6 animate-spin text-primary" />
+              </div>
+            ) : musicHistory.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-6 text-center">
+                Aucune chanson generee pour l&apos;instant.
+              </p>
+            ) : (
+              <div className="grid sm:grid-cols-2 gap-4">
+                {musicHistory.map((job) => (
+                  <div key={job._id} className="rounded-xl border border-border/50 bg-background/50 p-3 space-y-2">
+                    {job.status === "SUCCEEDED" && job.audioUrl ? (
+                      // eslint-disable-next-line jsx-a11y/media-has-caption
+                      <audio src={job.audioUrl} controls className="w-full" />
+                    ) : job.status === "FAILED" ? (
+                      <div className="h-16 rounded-lg bg-muted/30 flex items-center justify-center text-xs text-destructive px-3 text-center">
+                        Echec : {job.error || "erreur inconnue"}
+                      </div>
+                    ) : (
+                      <div className="h-16 rounded-lg bg-muted/30 flex items-center justify-center gap-2 text-xs text-muted-foreground">
                         <Loader2 className="w-4 h-4 animate-spin" />
                         En cours...
                       </div>
