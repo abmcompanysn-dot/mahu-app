@@ -156,16 +156,12 @@ model_list:
       api_base: os.environ/DASHSCOPE_API_BASE
       api_key: os.environ/DASHSCOPE_API_KEY
 
-  # Generation musicale (Fun-Music) - meme pattern que la video wan2.x : pas
-  # d'endpoint OpenAI-compatible, appele directement en tache asynchrone
-  # DashScope par le backend Go (voir handlers/ai_music.go). Declare ici pour
-  # que la cle/le cout soient visibles au meme endroit que tous les autres
-  # modeles Alibaba, meme si LiteLLM ne route pas cet appel.
-  - model_name: fun-music-v1
-    litellm_params:
-      model: openai/fun-music-v1
-      api_base: os.environ/DASHSCOPE_API_BASE
-      api_key: os.environ/DASHSCOPE_API_KEY
+  # Generation musicale : fun-music-v1 (Alibaba) a ete essaye ici mais
+  # confirme indisponible - "Model not exist." en test live 2026-08-29 sur cet
+  # espace de travail (ap-southeast-1/Singapour) - Fun-Music n'existe que sur
+  # la region Beijing, cle non transferable. Remplace par Hugging Face
+  # MusicGen (gratuit, appele directement par le backend Go, pas via LiteLLM -
+  # voir handlers/ai_music.go), donc rien a declarer ici.
 
   # Audio temps reel / omni (necessiterait un flux WebSocket, absent de l'app)
   - model_name: qwen3.5-omni-plus

@@ -163,12 +163,11 @@ export const aiApi = {
       }>
     }>(`${AI_BASE_URL}/videos`, token),
 
-  // lyrics is optional - when set, Fun-Music composes on top of the user's
-  // own lyrics instead of writing its own from prompt alone.
-  submitMusic: (token: string, prompt: string, lyrics?: string) =>
+  // MusicGen (Hugging Face, free tier) - instrumental only, no lyrics input.
+  submitMusic: (token: string, prompt: string) =>
     request<{ jobId: string; status: string; creditBalance: number }>(`${AI_BASE_URL}/music`, token, {
       method: "POST",
-      body: JSON.stringify({ prompt, lyrics }),
+      body: JSON.stringify({ prompt }),
     }),
 
   getMusicJob: (token: string, jobId: string) =>
