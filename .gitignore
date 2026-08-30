@@ -17,3 +17,8 @@ node_modules
 .DS_Store
 .vercel
 *.tsbuildinfo
+
+# Cloudflare Workers (OpenNext adapter)
+.open-next/
+.wrangler/
+.dev.vars

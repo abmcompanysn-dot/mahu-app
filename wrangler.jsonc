@@ -1,0 +1,32 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "mahu-app",
+  "main": ".open-next/worker.js",
+  // 2025-04-01+ est requis pour que les vars de wrangler.jsonc atteignent
+  // process.env - voir https://opennext.js.org/cloudflare/get-started
+  "compatibility_date": "2026-08-28",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  // Le nom ici doit correspondre exactement au nom du Worker ci-dessus -
+  // Cloudflare a echoue au premier deploiement automatique car son
+  // wrangler.jsonc auto-genere avait mis "my-project" (ancien nom generique
+  // de package.json) alors que le Worker s'appelle "mahu-app". Desormais
+  // les deux valeurs (package.json "name" et wrangler.jsonc) sont alignees.
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "mahu-app"
+    }
+  ],
+  // Bucket R2 deja cree et peuple par le premier deploiement reussi (30
+  // entrees) - reutilise le meme nom pour ne pas en creer un orphelin.
+  "r2_buckets": [
+    {
+      "binding": "NEXT_INC_CACHE_R2_BUCKET",
+      "bucket_name": "my-project-opennext-cache"
+    }
+  ]
+}
