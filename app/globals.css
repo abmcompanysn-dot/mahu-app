@@ -143,6 +143,20 @@
     animation: ai-thinking-pulse 1.5s ease-in-out infinite;
   }
 
+  /* Indicateur "generation en cours" dans le fil de discussion (3 points,
+     sans icone ni texte) - facon ChatGPT/Claude : respiration douce plutot
+     qu'un rebond, chaque point dephase pour donner un effet de vague. */
+  @keyframes thinking-pulse {
+    0%, 80%, 100% {
+      transform: scale(0.75);
+      opacity: 0.35;
+    }
+    40% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
   /* Titre hero "AI FOR ALL" : degrade anime, meme palette bleu/violet que le halo ci-dessus. */
   @keyframes ai-hero-shine {
     to {
