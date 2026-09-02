@@ -1098,21 +1098,11 @@ export default function AiPage() {
                   </div>
                 ))}
                 {sending && (
-                  <div className="flex gap-3 justify-start">
-                    <AiLogo animated size="sm" />
-                    <div className="rounded-2xl px-4 py-2 bg-muted/40 flex items-center gap-2">
-                      <span className="text-sm text-muted-foreground">
-                        {editImageMode
-                          ? "AI MAHU modifie l'image..."
-                          : imageGenMode
-                            ? "AI MAHU genere l'image..."
-                            : "AI MAHU reflechit..."}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-primary/70 animate-bounce [animation-delay:-0.3s]" />
-                        <span className="w-1.5 h-1.5 rounded-full bg-primary/70 animate-bounce [animation-delay:-0.15s]" />
-                        <span className="w-1.5 h-1.5 rounded-full bg-primary/70 animate-bounce" />
-                      </span>
+                  <div className="flex justify-start">
+                    <div className="rounded-2xl px-4 py-3 bg-muted/40 flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-primary animate-[thinking-pulse_1.2s_ease-in-out_infinite] [animation-delay:0ms]" />
+                      <span className="w-2 h-2 rounded-full bg-primary animate-[thinking-pulse_1.2s_ease-in-out_infinite] [animation-delay:180ms]" />
+                      <span className="w-2 h-2 rounded-full bg-primary animate-[thinking-pulse_1.2s_ease-in-out_infinite] [animation-delay:360ms]" />
                     </div>
                   </div>
                 )}
