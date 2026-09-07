@@ -80,6 +80,8 @@ func (d *Deps) runLegacyAction(ctx context.Context, action string, payload map[s
 		return d.legacyAdminRegisterClient(ctx, payload, user)
 	case "deleteEmployee":
 		return d.legacyDeleteEmployee(ctx, payload, user)
+	case "getTeamCards":
+		return d.legacyGetTeamCards(ctx, user)
 	case "activatePhysicalCard":
 		return d.legacyActivatePhysicalCard(ctx, payload, user)
 	case "adminGetCardsData":

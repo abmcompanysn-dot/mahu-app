@@ -13,6 +13,13 @@ const ADMIN_HOST = "mahu.mahu.cards"
 // pages legales) reste joignable normalement sur ce meme sous-domaine.
 const AI_HOST = "ai.mahu.cards"
 
+// cloud.mahu.cards est la porte d'entree du back-office entreprise : la
+// racine redirige vers /enterprise-portal. Contrairement a /admin, ce chemin
+// n'est pas verrouille aux autres domaines - c'est un espace client, pas un
+// panel interne, donc pas de raison de le bloquer ailleurs (ex: dashboard
+// principal, previews).
+const CLOUD_HOST = "cloud.mahu.cards"
+
 function isDevHost(hostname: string): boolean {
   return hostname === "localhost" || hostname === "127.0.0.1" || hostname.endsWith(".local")
 }
@@ -56,6 +63,10 @@ export function proxy(request: NextRequest) {
     // routes are fully static (confirmed via x-nextjs-cache: HIT even with
     // the rewrite header present) - a real client round-trip avoids that.
     return NextResponse.redirect(new URL("/ai", `https://${AI_HOST}`))
+  }
+
+  if (hostname === CLOUD_HOST && pathname === "/") {
+    return NextResponse.redirect(new URL("/enterprise-portal", `https://${CLOUD_HOST}`))
   }
 
   return NextResponse.next()

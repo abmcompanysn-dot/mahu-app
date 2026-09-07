@@ -258,8 +258,11 @@ export const api = {
   deleteEmployee: (token: string, email: string) =>
     callAppScript("deleteEmployee", { email }, token),
   
-  saveEnterpriseInfo: (token: string, data: { companyName: string; logo?: string }) =>
+  saveEnterpriseInfo: (token: string, data: { name: string; phone: string; address: string }) =>
     callAppScript("saveEnterpriseInfo", data, token),
+
+  getTeamCards: (token: string) =>
+    callAppScript("getTeamCards", {}, token),
   
   // Support
   contactSupport: (token: string | null, data: { email: string; sujet: string; message: string; telephone?: string }) =>

@@ -11,6 +11,40 @@ import (
 	"mahu-backend/internal/models"
 )
 
+// legacyGetTeamCards lists every employee card (User + Profile) belonging to
+// the calling enterprise account, for the enterprise back-office's team view.
+func (d *Deps) legacyGetTeamCards(ctx context.Context, adminUser *models.User) (map[string]any, error) {
+	if !isEnterpriseStaff(adminUser.Role) {
+		return map[string]any{"success": false, "error": "Action reservee aux comptes Entreprise."}, nil
+	}
+
+	cursor, err := db.Collection(models.UsersCollection).Find(ctx, bson.M{"enterpriseId": adminUser.ID.Hex()})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var employees []models.User
+	if err := cursor.All(ctx, &employees); err != nil {
+		return nil, err
+	}
+
+	cards := make([]map[string]any, 0, len(employees))
+	for _, employee := range employees {
+		profile, err := findProfileByUserID(ctx, employee.ID)
+		if err != nil {
+			return nil, err
+		}
+		card := userToMap(&employee)
+		for k, v := range profileToMap(profile) {
+			card[k] = v
+		}
+		cards = append(cards, card)
+	}
+
+	return map[string]any{"success": true, "cards": cards}, nil
+}
+
 func isEnterpriseStaff(role string) bool {
 	return role == models.RoleEntreprise || role == models.RoleAdmin
 }

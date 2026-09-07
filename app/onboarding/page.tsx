@@ -6,9 +6,8 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { 
   User, 
-  Building2, 
-  Users, 
-  MapPin, 
+  Building2,
+  MapPin,
   Briefcase, 
   Phone,
   ArrowRight,
@@ -24,10 +23,9 @@ import { api } from "@/lib/api"
 
 const steps = [
   { id: 1, title: "Informations", icon: User },
-  { id: 2, title: "Type de compte", icon: Building2 },
-  { id: 3, title: "Profil", icon: Briefcase },
-  { id: 4, title: "Partage NFC", icon: Smartphone },
-  { id: 5, title: "Termine", icon: Check },
+  { id: 2, title: "Profil", icon: Briefcase },
+  { id: 3, title: "Partage NFC", icon: Smartphone },
+  { id: 4, title: "Termine", icon: Check },
 ]
 
 export default function OnboardingPage() {
@@ -40,7 +38,6 @@ export default function OnboardingPage() {
     firstName: "",
     lastName: "",
     phone: "",
-    accountType: "individual",
     profession: "",
     company: "",
     location: "",
@@ -67,8 +64,6 @@ export default function OnboardingPage() {
         payload.Nom_Complet = `${formData.firstName} ${formData.lastName}`.trim()
         payload.Telephone = formData.phone
       } else if (currentStep === 2) {
-        payload.Role = formData.accountType === "team" ? "Admin" : "Particulier"
-      } else if (currentStep === 3) {
         payload.Profession = formData.profession
         payload.Compagnie = formData.company
         payload.Location = formData.location
@@ -87,7 +82,7 @@ export default function OnboardingPage() {
 
   const nextStep = async () => {
     const success = await saveStepData()
-    if (success && currentStep < 5) {
+    if (success && currentStep < 4) {
       setCurrentStep(prev => prev + 1)
     }
   }
@@ -232,78 +227,10 @@ export default function OnboardingPage() {
             </motion.div>
           )}
 
-          {/* Step 2: Account Type */}
+          {/* Step 2: Profile Info */}
           {currentStep === 2 && (
             <motion.div
               key="step2"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="space-y-6"
-            >
-              <div>
-                <h1 className="text-3xl font-bold text-foreground mb-2">Comment souhaitez-vous utiliser Mahu?</h1>
-                <p className="text-muted-foreground">Cela garantit que votre compte est correctement configure.</p>
-              </div>
-
-              <div className="space-y-4">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => handleInputChange("accountType", "individual")}
-                  className={`w-full p-6 rounded-2xl border-2 text-left transition-all ${
-                    formData.accountType === "individual"
-                      ? "border-primary bg-primary/5"
-                      : "border-border/50 hover:border-primary/50"
-                  }`}
-                >
-                  <div className="flex items-start gap-4">
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                      formData.accountType === "individual" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                    }`}>
-                      <User className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-foreground mb-1">Pour moi-meme</h3>
-                      <p className="text-muted-foreground text-sm">
-                        Ideal si vous avez besoin de Mahu pour vous-meme en tant qu&apos;individu.
-                      </p>
-                    </div>
-                  </div>
-                </motion.button>
-
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => handleInputChange("accountType", "team")}
-                  className={`w-full p-6 rounded-2xl border-2 text-left transition-all ${
-                    formData.accountType === "team"
-                      ? "border-primary bg-primary/5"
-                      : "border-border/50 hover:border-primary/50"
-                  }`}
-                >
-                  <div className="flex items-start gap-4">
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                      formData.accountType === "team" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                    }`}>
-                      <Users className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-foreground mb-1">Pour mon equipe</h3>
-                      <p className="text-muted-foreground text-sm">
-                        Ideal si vous souhaitez creer des cartes d&apos;affaire numeriques pour votre equipe.
-                      </p>
-                    </div>
-                  </div>
-                </motion.button>
-              </div>
-            </motion.div>
-          )}
-
-          {/* Step 3: Profile Info */}
-          {currentStep === 3 && (
-            <motion.div
-              key="step3"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
@@ -360,10 +287,10 @@ export default function OnboardingPage() {
             </motion.div>
           )}
 
-          {/* Step 4: NFC Info */}
-          {currentStep === 4 && (
+          {/* Step 3: NFC Info */}
+          {currentStep === 3 && (
             <motion.div
-              key="step4"
+              key="step3"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
@@ -408,10 +335,10 @@ export default function OnboardingPage() {
             </motion.div>
           )}
 
-          {/* Step 5: Complete */}
-          {currentStep === 5 && (
+          {/* Step 4: Complete */}
+          {currentStep === 4 && (
             <motion.div
-              key="step5"
+              key="step4"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0 }}
@@ -452,7 +379,7 @@ export default function OnboardingPage() {
             Retour
           </Button>
 
-          {currentStep < 5 ? (
+          {currentStep < 4 ? (
             <Button
               onClick={nextStep}
               disabled={isLoading || (currentStep === 1 && (!formData.firstName || !formData.lastName))}

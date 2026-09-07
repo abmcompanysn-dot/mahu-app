@@ -1,8 +1,10 @@
 "use client"
 
+import Link from "next/link"
 import { motion } from "framer-motion"
 import { Users, Building2, CreditCard, Crown, ChevronRight, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useAuth } from "@/hooks/use-auth"
 
 const features = [
   {
@@ -67,6 +69,35 @@ const plans = [
 ]
 
 export default function EnterprisePage() {
+  const { role } = useAuth()
+
+  if (role === "Entreprise") {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center max-w-lg p-8 rounded-2xl bg-gradient-to-br from-primary/15 via-primary/5 to-transparent border border-primary/20"
+        >
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-6">
+            <Crown className="w-4 h-4 text-primary" />
+            <span className="text-sm text-primary font-medium">Plan Entreprise actif</span>
+          </div>
+          <h1 className="text-2xl font-bold text-foreground mb-3">Votre back-office vous attend</h1>
+          <p className="text-muted-foreground mb-6">
+            Gerez votre equipe, vos cartes et vos informations d&apos;entreprise depuis votre espace dedie.
+          </p>
+          <Link href="/enterprise-portal">
+            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
+              Ouvrir le back-office
+              <ChevronRight className="w-4 h-4 ml-2" />
+            </Button>
+          </Link>
+        </motion.div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-12 pb-12">
       {/* Hero Section */}
