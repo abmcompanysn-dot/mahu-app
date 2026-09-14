@@ -1,0 +1,50 @@
+name: Deploy frontend to Cloudflare Workers
+
+# Runs on a Linux runner deliberately - the OpenNext Cloudflare adapter
+# bundles filesystem-lookup shims (getMiddlewareManifest, etc.) that match
+# paths with forward slashes; building on Windows produces backslash paths
+# there and the deployed Worker 500s on every request with "Dynamic require
+# of /.next/server/middleware-manifest.json is not supported" as soon as
+# proxy.ts (Next middleware) is in the build. See opennextjs/opennextjs-cloudflare#494.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "app/**"
+      - "components/**"
+      - "contexts/**"
+      - "hooks/**"
+      - "lib/**"
+      - "public/**"
+      - "styles/**"
+      - "types/**"
+      - "proxy.ts"
+      - "next.config.mjs"
+      - "open-next.config.ts"
+      - "wrangler.jsonc"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/deploy-frontend.yml"
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm run deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

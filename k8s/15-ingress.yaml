@@ -1,7 +1,6 @@
-# Mirrors the mahu VPS's current Caddy/tunnel split: ai.mahu.cards and
-# mahu.mahu.cards both hit the same Next.js app (proxy.ts gates /admin/*
-# to only the mahu.mahu.cards host, see proxy.ts at the repo root),
-# ai-api.mahu.cards goes straight to the Go backend.
+# Frontend (web) has moved to Cloudflare Workers (opennextjs-cloudflare) -
+# this ingress now only routes the Go backend API. Caddy on this host
+# terminates ai-api.mahu.cards and forwards here (see diarra-vps Caddyfile).
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -14,18 +13,6 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: ai.mahu.cards
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend: { service: { name: web, port: { number: 3000 } } }
-    - host: mahu.mahu.cards
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend: { service: { name: web, port: { number: 3000 } } }
     - host: ai-api.mahu.cards
       http:
         paths:
