@@ -38,6 +38,13 @@ type Env struct {
 	SMTPFromName  string
 	SMTPFromEmail string
 
+	// Resend - preferred email route (HTTPS API, SMTP above is the last
+	// resort). Several keys can be listed: each email tries them in order,
+	// so a revoked or rate-limited key doesn't stop the sending.
+	ResendAPIKeys   []string
+	ResendFromEmail string
+	EmailReplyTo    string
+
 	// CallMeBot - WhatsApp notifications to the admin (new orders, support
 	// messages, card activations), previously read from the 'Configuration' sheet.
 	CallMeBotPhone  string
@@ -197,6 +204,9 @@ func Load() (*Env, error) {
 		SMTPFromName:  getDefault("SMTP_FROM_NAME", "MAHU DIGITAL SYSTEM"),
 		SMTPFromEmail: getDefault("SMTP_FROM_EMAIL", ""),
 
+		ResendFromEmail: getDefault("RESEND_FROM_EMAIL", "contact@mahucards.mahu.cards"),
+		EmailReplyTo:    getDefault("EMAIL_REPLY_TO", "contact@mahu.cards"),
+
 		CallMeBotPhone:  getDefault("CALLMEBOT_PHONE", ""),
 		CallMeBotAPIKey: getDefault("CALLMEBOT_API_KEY", ""),
 
@@ -239,6 +249,12 @@ func Load() (*Env, error) {
 	}
 
 	superAdmins := getDefault("SUPER_ADMIN_EMAILS", "abmcompanysn@gmail.com")
+	for _, key := range strings.Split(getDefault("RESEND_API_KEYS", ""), ",") {
+		if key = strings.TrimSpace(key); key != "" {
+			env.ResendAPIKeys = append(env.ResendAPIKeys, key)
+		}
+	}
+
 	for _, email := range strings.Split(superAdmins, ",") {
 		email = strings.ToLower(strings.TrimSpace(email))
 		if email != "" {
