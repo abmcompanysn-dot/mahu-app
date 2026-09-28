@@ -559,7 +559,7 @@ func (p *productInput) validate() error {
 		return errors.New("Acompte invalide.")
 	}
 	switch p.Category {
-	case models.ProductCategoryNfcCard, models.ProductCategoryRfidFob, models.ProductCategoryRfidCard:
+	case models.ProductCategoryNfcCard, models.ProductCategoryRfidFob, models.ProductCategoryRfidCard, models.ProductCategoryWebCard:
 	default:
 		return errors.New("Categorie invalide.")
 	}

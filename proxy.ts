@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
+import { PUBLIC_PROFILE_HOST, PUBLIC_PROFILE_URL } from "@/lib/site"
 
 // L'espace admin (/admin/*) n'est joignable QUE via ce sous-domaine dedie -
 // sur tout autre domaine (ai.mahu.cards, previews, etc.) ces routes renvoient
@@ -55,6 +56,15 @@ export function proxy(request: NextRequest) {
   // Sur tout autre domaine, l'espace admin n'existe pas.
   if (isAdminPath) {
     return new NextResponse("Not found", { status: 404 })
+  }
+
+  // Profils publics et cartes : une seule adresse officielle (call.mahu.cards,
+  // voir lib/site.ts). Un lien ouvert sur un autre domaine Mahu y est
+  // redirige, pour que tous les liens partages et QR restent identiques.
+  const isPublicCardPath = pathname.startsWith("/p/") || pathname.startsWith("/c/")
+  if (isPublicCardPath && hostname !== PUBLIC_PROFILE_HOST && hostname.endsWith("mahu.cards")) {
+    const target = new URL(pathname + request.nextUrl.search, PUBLIC_PROFILE_URL)
+    return NextResponse.redirect(target, 308)
   }
 
   if (hostname === AI_HOST && pathname === "/") {

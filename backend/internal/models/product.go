@@ -14,6 +14,8 @@ const (
 	ProductCategoryNfcCard  = "carte_nfc"
 	ProductCategoryRfidFob  = "porte_cle_rfid"
 	ProductCategoryRfidCard = "carte_rfid"
+	// Web Card : site web dynamique (au-dela de la carte), pas un support physique.
+	ProductCategoryWebCard = "web_card"
 )
 
 // Product is one item of the shop catalogue (previously only listed as

@@ -7,10 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useAdminAuth } from "@/contexts/admin-auth-context"
 import { adminApi, type UserDetails } from "@/lib/admin-api"
 import { formatXof } from "@/lib/shop-api"
-
-// L'admin tourne sur son propre sous-domaine, ou /p/ n'est pas servi : les
-// profils s'ouvrent sur le site public (configurable, pas de domaine fige).
-const PUBLIC_SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://ai.mahu.cards"
+import { PUBLIC_PROFILE_URL } from "@/lib/site"
 
 function formatDate(value?: string) {
   return value ? new Date(value).toLocaleDateString("fr-FR") : "-"
@@ -95,7 +92,7 @@ export function UserDetailsDialog({ userId, onClose }: { userId: string | null; 
                 </div>
                 {u.profileUrl && (
                   <a
-                    href={`${PUBLIC_SITE_URL}/p/${u.profileUrl}`}
+                    href={`${PUBLIC_PROFILE_URL}/p/${u.profileUrl}`}
                     target="_blank"
                     rel="noreferrer"
                     className="inline-flex items-center gap-1 text-sm text-primary hover:underline"

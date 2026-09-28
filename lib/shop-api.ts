@@ -2,12 +2,13 @@
 // /api/backend (voir backend/internal/handlers/shop.go).
 const SHOP_BASE_URL = "/api/backend/api/shop"
 
-export type ProductCategory = "carte_nfc" | "porte_cle_rfid" | "carte_rfid"
+export type ProductCategory = "carte_nfc" | "porte_cle_rfid" | "carte_rfid" | "web_card"
 
 export const PRODUCT_CATEGORY_LABELS: Record<ProductCategory, string> = {
   carte_nfc: "Carte NFC",
   porte_cle_rfid: "Porte-cle RFID",
   carte_rfid: "Carte RFID",
+  web_card: "Web Card (site web)",
 }
 
 export interface Product {
