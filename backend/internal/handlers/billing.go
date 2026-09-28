@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -77,6 +78,19 @@ type paydunyaInvoiceResponse struct {
 	InvoiceURL   string `json:"invoice_url"`
 }
 
+// CheckoutURL is the page to send the customer to. PayDunya's live API
+// returns it in response_text on success (response_code "00"), not in
+// invoice_url - checking only invoice_url rejected every valid invoice.
+func (r paydunyaInvoiceResponse) CheckoutURL() string {
+	if r.InvoiceURL != "" {
+		return r.InvoiceURL
+	}
+	if r.ResponseCode == "00" && strings.HasPrefix(r.ResponseText, "https://") {
+		return r.ResponseText
+	}
+	return ""
+}
+
 func (d *Deps) CreateCheckout(w http.ResponseWriter, r *http.Request) {
 	var req checkoutRequest
 	if err := httpx.DecodeJSON(r, &req); err != nil || (req.Plan != "premium" && req.Plan != "pro") {
@@ -140,7 +154,7 @@ func (d *Deps) CreateCheckout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if invoiceData.ResponseCode != "00" || invoiceData.Token == "" || invoiceData.InvoiceURL == "" {
+	if invoiceData.ResponseCode != "00" || invoiceData.Token == "" || invoiceData.CheckoutURL() == "" {
 		msg := invoiceData.ResponseText
 		if msg == "" {
 			msg = "PayDunya checkout failed"
@@ -159,7 +173,7 @@ func (d *Deps) CreateCheckout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	httpx.WriteJSON(w, http.StatusOK, map[string]any{"checkoutUrl": invoiceData.InvoiceURL})
+	httpx.WriteJSON(w, http.StatusOK, map[string]any{"checkoutUrl": invoiceData.CheckoutURL()})
 }
 
 type paydunyaConfirmResponse struct {

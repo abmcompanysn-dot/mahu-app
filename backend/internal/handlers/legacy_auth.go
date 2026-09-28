@@ -128,7 +128,7 @@ func (d *Deps) legacyRegisterUser(ctx context.Context, email, password, enterpri
 		return nil, err
 	}
 	if existing != nil {
-		return map[string]any{"success": false, "error": "Cet email est deja utilise."}, nil
+		return map[string]any{"success": false, "error": signupEmailRefused}, nil
 	}
 
 	if enterpriseID == "" {

@@ -28,6 +28,11 @@ import (
 // so PaydunyaWebhook can tell it apart from an AI plan upgrade.
 const paydunyaKindSignupDeposit = "signup_deposit"
 
+// signupEmailRefused is shown for every public signup whose email already
+// has an account - deliberately vague, so the signup forms can't be used to
+// find out who has a Mahu account.
+const signupEmailRefused = "Impossible de creer un compte avec cet email. Verifiez qu'il n'y a pas d'erreur dans l'adresse, ou connectez-vous si vous avez deja un compte."
+
 // defaultProducts is the catalogue as listed on mahu.cards/Boutique, used to
 // seed an empty products collection. Prices/images are then edited in the
 // admin panel, never here.
@@ -165,7 +170,7 @@ func (d *Deps) CreateDepositCheckout(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusInternalServerError, "Erreur serveur")
 		return
 	} else if existing != nil {
-		httpx.WriteError(w, http.StatusConflict, "Cet email est deja utilise. Connectez-vous.")
+		httpx.WriteError(w, http.StatusBadRequest, signupEmailRefused)
 		return
 	}
 
@@ -228,7 +233,7 @@ func (d *Deps) startSignupCheckout(w http.ResponseWriter, r *http.Request, order
 	defer resp.Body.Close()
 
 	var invoice paydunyaInvoiceResponse
-	if err := json.NewDecoder(resp.Body).Decode(&invoice); err != nil || invoice.ResponseCode != "00" || invoice.InvoiceURL == "" {
+	if err := json.NewDecoder(resp.Body).Decode(&invoice); err != nil || invoice.ResponseCode != "00" || invoice.CheckoutURL() == "" {
 		msg := invoice.ResponseText
 		if msg == "" {
 			msg = "Le paiement PayDunya a echoue."
@@ -243,7 +248,7 @@ func (d *Deps) startSignupCheckout(w http.ResponseWriter, r *http.Request, order
 		return
 	}
 
-	httpx.WriteJSON(w, http.StatusOK, map[string]any{"checkoutUrl": invoice.InvoiceURL, "reference": order.Reference})
+	httpx.WriteJSON(w, http.StatusOK, map[string]any{"checkoutUrl": invoice.CheckoutURL(), "reference": order.Reference})
 }
 
 type codeCheckoutRequest struct {
@@ -307,7 +312,7 @@ func (d *Deps) CreateCodeCheckout(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusInternalServerError, "Erreur serveur")
 		return
 	} else if existing != nil {
-		httpx.WriteError(w, http.StatusConflict, "Cet email est deja utilise. Connectez-vous.")
+		httpx.WriteError(w, http.StatusBadRequest, signupEmailRefused)
 		return
 	}
 

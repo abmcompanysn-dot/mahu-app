@@ -170,7 +170,7 @@ func (d *Deps) legacyQuickRegisterAndActivate(ctx context.Context, payload map[s
 	if existing, err := findUserByEmail(ctx, email); err != nil {
 		return nil, err
 	} else if existing != nil {
-		return map[string]any{"success": false, "error": "Cet email est deja utilise. Connectez-vous pour activer votre carte."}, nil
+		return map[string]any{"success": false, "error": signupEmailRefused}, nil
 	}
 
 	var slugConflict models.User
