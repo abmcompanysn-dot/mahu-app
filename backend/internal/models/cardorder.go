@@ -8,9 +8,17 @@ import (
 
 const CardOrdersCollection = "card_orders"
 
-// SignupDepositXof is the deposit paid through PayDunya to sign up without
-// a card code - the rest of the product price is paid on delivery.
+// SignupDepositXof is the default deposit paid through PayDunya to sign up
+// without a card code, until the admin sets another one in /admin/pricing -
+// the rest of the product price is paid on delivery.
 const SignupDepositXof = 10000
+
+// Kind values for CardOrder.Kind (empty on orders created before code
+// activation could be paid = deposit).
+const (
+	OrderKindDeposit        = "acompte"
+	OrderKindCodeActivation = "activation_code"
+)
 
 const (
 	OrderPaymentPending = "en_attente"
@@ -31,6 +39,8 @@ const (
 type CardOrder struct {
 	ID              primitive.ObjectID  `bson:"_id,omitempty" json:"_id"`
 	Reference       string              `bson:"reference" json:"reference"`
+	Kind            string              `bson:"kind,omitempty" json:"kind,omitempty"`
+	CardCode        string              `bson:"cardCode,omitempty" json:"cardCode,omitempty"`
 	ProductID       primitive.ObjectID  `bson:"productId" json:"productId"`
 	ProductName     string              `bson:"productName" json:"productName"`
 	ProductPriceXof int                 `bson:"productPriceXof" json:"productPriceXof"`

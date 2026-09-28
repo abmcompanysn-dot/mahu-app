@@ -20,6 +20,7 @@ const EMPTY_PRODUCT: ProductInput = {
   description: "",
   priceXof: 0,
   priceIsFrom: false,
+  depositXof: 0,
   category: "carte_nfc",
   material: "",
   imageUrl: "",
@@ -128,8 +129,8 @@ export default function AdminProductsPage() {
           </Button>
         </div>
         <p className="text-sm text-muted-foreground">
-          Les produits actifs sont proposes a l&apos;inscription. L&apos;acompte est de 10 000 FCFA (ou le prix du
-          produit s&apos;il est inferieur).
+          Les produits actifs sont proposes a l&apos;inscription. Sans acompte propre, un produit utilise
+          l&apos;acompte par defaut de la page Tarifs (jamais plus que son prix).
         </p>
 
         {error && !form && <p className="text-sm text-destructive">{error}</p>}
@@ -151,6 +152,7 @@ export default function AdminProductsPage() {
                       <TableHead>Produit</TableHead>
                       <TableHead>Version</TableHead>
                       <TableHead className="text-right">Prix</TableHead>
+                      <TableHead className="text-right">Acompte</TableHead>
                       <TableHead>Actif</TableHead>
                       <TableHead />
                     </TableRow>
@@ -179,6 +181,9 @@ export default function AdminProductsPage() {
                         <TableCell className="text-right tabular-nums whitespace-nowrap">
                           {p.priceIsFrom ? "des " : ""}
                           {formatXof(p.priceXof)}
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums whitespace-nowrap text-sm">
+                          {p.depositXof ? formatXof(p.depositXof) : <span className="text-muted-foreground">par defaut</span>}
                         </TableCell>
                         <TableCell>
                           <Switch checked={p.active} onCheckedChange={(v) => toggleActive(p, v)} />
@@ -249,6 +254,17 @@ export default function AdminProductsPage() {
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="p-deposit">Acompte a l&apos;inscription (FCFA)</Label>
+                <Input
+                  id="p-deposit"
+                  type="number"
+                  min={0}
+                  value={form.depositXof || ""}
+                  onChange={(e) => setForm({ ...form, depositXof: Number(e.target.value) })}
+                  placeholder="Vide = acompte par defaut (page Tarifs)"
+                />
               </div>
               <div className="flex items-center gap-2">
                 <Switch

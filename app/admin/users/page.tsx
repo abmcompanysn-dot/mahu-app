@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useAdminAuth } from "@/contexts/admin-auth-context"
 import { adminApi, type AdminUserRow } from "@/lib/admin-api"
+import { UserDetailsDialog } from "@/components/admin/user-details-dialog"
 
 export default function AdminUsersPage() {
   const { token } = useAdminAuth()
@@ -17,6 +18,7 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [savingId, setSavingId] = useState<string | null>(null)
+  const [detailsId, setDetailsId] = useState<string | null>(null)
 
   const load = useCallback(
     async (q: string) => {
@@ -87,6 +89,7 @@ export default function AdminUsersPage() {
     <div className="p-6 md:p-10">
       <div className="max-w-5xl mx-auto space-y-6">
         <h1 className="text-2xl font-bold text-foreground">Utilisateurs</h1>
+        <p className="text-sm text-muted-foreground">Cliquez sur un email pour voir la fiche complete.</p>
 
         <div className="relative max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -124,7 +127,15 @@ export default function AdminUsersPage() {
                 <TableBody>
                   {users.map((u) => (
                     <TableRow key={u._id}>
-                      <TableCell>{u.email}</TableCell>
+                      <TableCell>
+                        <button
+                          type="button"
+                          onClick={() => setDetailsId(u._id)}
+                          className="text-left text-primary hover:underline"
+                        >
+                          {u.email}
+                        </button>
+                      </TableCell>
                       <TableCell>{u.name || "-"}</TableCell>
                       <TableCell>{u.role}</TableCell>
                       <TableCell>
@@ -165,6 +176,7 @@ export default function AdminUsersPage() {
           </CardContent>
         </Card>
       </div>
+      <UserDetailsDialog userId={detailsId} onClose={() => setDetailsId(null)} />
     </div>
   )
 }

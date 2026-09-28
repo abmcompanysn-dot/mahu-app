@@ -135,12 +135,25 @@ func (d *Deps) legacyRegisterUser(ctx context.Context, email, password, enterpri
 		if cardCode == "" {
 			return map[string]any{"success": false, "error": "Entrez le code de votre carte, ou commandez une carte avec l'acompte de 10 000 FCFA."}, nil
 		}
-		var card models.PhysicalCard
-		if err := db.Collection(models.PhysicalCardsCollection).FindOne(ctx, bson.M{"codeCarte": cardCode}).Decode(&card); err != nil {
-			return map[string]any{"success": false, "error": "Code de carte inconnu. Verifiez le code imprime sur votre carte."}, nil
+		card, err := findActivatableCard(ctx, cardCode)
+		if err != nil {
+			return nil, err
 		}
-		if card.EmailProprietaire != "" || card.Statut == models.CardStatusDeactivated {
-			return map[string]any{"success": false, "error": "Ce code de carte est deja utilise ou desactive."}, nil
+		if card == nil {
+			return map[string]any{"success": false, "error": "Code de carte inconnu, deja utilise ou desactive."}, nil
+		}
+		pricing, err := getPricing(ctx)
+		if err != nil {
+			return nil, err
+		}
+		price, err := codeActivationPrice(ctx, *card, pricing)
+		if err != nil {
+			return nil, err
+		}
+		if price > 0 {
+			// Paid activation goes through CreateCodeCheckout instead.
+			return map[string]any{"success": false, "requiresPayment": true, "priceXof": price,
+				"error": fmt.Sprintf("L'activation de cette carte coute %d FCFA.", price)}, nil
 		}
 	}
 

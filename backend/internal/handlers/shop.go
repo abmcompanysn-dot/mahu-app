@@ -82,19 +82,22 @@ func findProducts(ctx context.Context, filter bson.M) ([]models.Product, error) 
 // ListShopProducts is public (through the Next.js proxy): the active
 // catalogue, for the signup product picker.
 func (d *Deps) ListShopProducts(w http.ResponseWriter, r *http.Request) {
-	products, err := findProducts(r.Context(), bson.M{"active": true})
+	ctx := r.Context()
+	products, err := findProducts(ctx, bson.M{"active": true})
 	if err != nil {
 		httpx.WriteError(w, http.StatusInternalServerError, "Erreur serveur")
 		return
 	}
-	httpx.WriteJSON(w, http.StatusOK, map[string]any{"products": products, "depositXof": models.SignupDepositXof})
-}
-
-func depositFor(priceXof int) int {
-	if priceXof > 0 && priceXof < models.SignupDepositXof {
-		return priceXof
+	pricing, err := getPricing(ctx)
+	if err != nil {
+		httpx.WriteError(w, http.StatusInternalServerError, "Erreur serveur")
+		return
 	}
-	return models.SignupDepositXof
+	// depositXof becomes the deposit actually charged for each product.
+	for i := range products {
+		products[i].DepositXof = depositFor(products[i], pricing)
+	}
+	httpx.WriteJSON(w, http.StatusOK, map[string]any{"products": products, "depositXof": pricing.DefaultDepositXof})
 }
 
 // returnBaseURL keeps PayDunya's return/cancel links on the domain the
@@ -166,6 +169,11 @@ func (d *Deps) CreateDepositCheckout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	pricing, err := getPricing(ctx)
+	if err != nil {
+		httpx.WriteError(w, http.StatusInternalServerError, "Erreur serveur")
+		return
+	}
 	passwordHash, err := legacyauth.HashPassword(req.Password)
 	if err != nil {
 		httpx.WriteError(w, http.StatusInternalServerError, "Erreur serveur")
@@ -179,29 +187,35 @@ func (d *Deps) CreateDepositCheckout(w http.ResponseWriter, r *http.Request) {
 
 	now := time.Now()
 	order := models.CardOrder{
-		ID: primitive.NewObjectID(), Reference: reference,
+		ID: primitive.NewObjectID(), Reference: reference, Kind: models.OrderKindDeposit,
 		ProductID: product.ID, ProductName: product.Name, ProductPriceXof: product.PriceXof,
-		DepositXof: depositFor(product.PriceXof),
+		DepositXof: depositFor(product, pricing),
 		ClientName: req.ClientName, Email: req.Email, Phone: req.Phone,
 		DeliveryAddress: strings.TrimSpace(req.DeliveryAddress), PasswordHash: passwordHash,
 		PaymentStatus: models.OrderPaymentPending, DeliveryStatus: models.OrderDeliveryToPrepare,
 		CreatedAt: now, UpdatedAt: now,
 	}
 
-	base := d.returnBaseURL(req.Origin)
+	d.startSignupCheckout(w, r, order, fmt.Sprintf("Acompte carte Mahu - %s", product.Name), req.Origin)
+}
+
+// startSignupCheckout creates the PayDunya invoice for a pending signup
+// order, stores the order and returns the invoice URL to the browser.
+func (d *Deps) startSignupCheckout(w http.ResponseWriter, r *http.Request, order models.CardOrder, description, origin string) {
+	base := d.returnBaseURL(origin)
 	payload := map[string]any{
 		"invoice": map[string]any{
 			"total_amount": order.DepositXof,
-			"description":  fmt.Sprintf("Acompte carte Mahu - %s", product.Name),
+			"description":  description,
 		},
 		"store": map[string]any{"name": "Mahu"},
 		"custom_data": map[string]any{
 			"kind":     paydunyaKindSignupDeposit,
-			"orderRef": reference,
+			"orderRef": order.Reference,
 		},
 		"actions": map[string]any{
 			"callback_url": d.Env.PaydunyaWebhookURL,
-			"return_url":   base + "/register/paiement?ref=" + reference,
+			"return_url":   base + "/register/paiement?ref=" + order.Reference,
 			"cancel_url":   base + "/register?cancelled=1",
 		},
 	}
@@ -224,12 +238,100 @@ func (d *Deps) CreateDepositCheckout(w http.ResponseWriter, r *http.Request) {
 	}
 
 	order.PaydunyaToken = invoice.Token
-	if _, err := db.Collection(models.CardOrdersCollection).InsertOne(ctx, order); err != nil {
+	if _, err := db.Collection(models.CardOrdersCollection).InsertOne(r.Context(), order); err != nil {
 		httpx.WriteError(w, http.StatusInternalServerError, "Erreur serveur")
 		return
 	}
 
-	httpx.WriteJSON(w, http.StatusOK, map[string]any{"checkoutUrl": invoice.InvoiceURL, "reference": reference})
+	httpx.WriteJSON(w, http.StatusOK, map[string]any{"checkoutUrl": invoice.InvoiceURL, "reference": order.Reference})
+}
+
+type codeCheckoutRequest struct {
+	CardCode   string `json:"cardCode"`
+	ClientName string `json:"clientName"`
+	Email      string `json:"email"`
+	Phone      string `json:"phone"`
+	Password   string `json:"password"`
+	Origin     string `json:"origin"`
+}
+
+// CreateCodeCheckout is the paid version of the "J'ai un code" signup, used
+// when the card's activation price (reseller or global) isn't 0. The card is
+// only claimed once PayDunya confirms the payment (finalizeCardOrder).
+func (d *Deps) CreateCodeCheckout(w http.ResponseWriter, r *http.Request) {
+	var req codeCheckoutRequest
+	if err := httpx.DecodeJSON(r, &req); err != nil {
+		httpx.WriteError(w, http.StatusBadRequest, "Requete invalide")
+		return
+	}
+	req.Email = strings.ToLower(strings.TrimSpace(req.Email))
+	req.CardCode = strings.ToUpper(strings.TrimSpace(req.CardCode))
+	if _, err := mail.ParseAddress(req.Email); err != nil {
+		httpx.WriteError(w, http.StatusBadRequest, "Email invalide.")
+		return
+	}
+	if len(req.Password) < 6 {
+		httpx.WriteError(w, http.StatusBadRequest, "Le mot de passe doit contenir au moins 6 caracteres.")
+		return
+	}
+	if d.Env.PaydunyaMasterKey == "" {
+		httpx.WriteError(w, http.StatusServiceUnavailable, "Le paiement en ligne n'est pas encore configure.")
+		return
+	}
+
+	ctx := r.Context()
+	card, err := findActivatableCard(ctx, req.CardCode)
+	if err != nil {
+		httpx.WriteError(w, http.StatusInternalServerError, "Erreur serveur")
+		return
+	}
+	if card == nil {
+		httpx.WriteError(w, http.StatusBadRequest, "Code de carte inconnu ou deja utilise.")
+		return
+	}
+	pricing, err := getPricing(ctx)
+	if err != nil {
+		httpx.WriteError(w, http.StatusInternalServerError, "Erreur serveur")
+		return
+	}
+	price, err := codeActivationPrice(ctx, *card, pricing)
+	if err != nil {
+		httpx.WriteError(w, http.StatusInternalServerError, "Erreur serveur")
+		return
+	}
+	if price <= 0 {
+		httpx.WriteError(w, http.StatusBadRequest, "L'activation de cette carte est gratuite.")
+		return
+	}
+	if existing, err := findUserByEmail(ctx, req.Email); err != nil {
+		httpx.WriteError(w, http.StatusInternalServerError, "Erreur serveur")
+		return
+	} else if existing != nil {
+		httpx.WriteError(w, http.StatusConflict, "Cet email est deja utilise. Connectez-vous.")
+		return
+	}
+
+	passwordHash, err := legacyauth.HashPassword(req.Password)
+	if err != nil {
+		httpx.WriteError(w, http.StatusInternalServerError, "Erreur serveur")
+		return
+	}
+	reference, err := legacyauth.NewUUID()
+	if err != nil {
+		httpx.WriteError(w, http.StatusInternalServerError, "Erreur serveur")
+		return
+	}
+	now := time.Now()
+	order := models.CardOrder{
+		ID: primitive.NewObjectID(), Reference: reference, Kind: models.OrderKindCodeActivation,
+		CardCode: req.CardCode, ProductName: "Activation carte " + req.CardCode,
+		ProductPriceXof: price, DepositXof: price,
+		ClientName: strings.TrimSpace(req.ClientName), Email: req.Email, Phone: strings.TrimSpace(req.Phone),
+		PasswordHash:  passwordHash,
+		PaymentStatus: models.OrderPaymentPending, DeliveryStatus: models.OrderDeliveryDelivered,
+		CreatedAt: now, UpdatedAt: now,
+	}
+	d.startSignupCheckout(w, r, order, "Activation carte Mahu "+req.CardCode, req.Origin)
 }
 
 // GetDepositOrderStatus lets the PayDunya return page poll until the webhook
@@ -283,6 +385,17 @@ func (d *Deps) finalizeCardOrder(ctx context.Context, reference, invoiceToken st
 		return err
 	}
 
+	if order.Kind == models.OrderKindCodeActivation {
+		res, err := db.Collection(models.PhysicalCardsCollection).UpdateOne(ctx,
+			bson.M{"codeCarte": order.CardCode, "emailProprietaire": bson.M{"$in": []any{"", nil}}},
+			bson.M{"$set": bson.M{"emailProprietaire": order.Email, "dateActivation": now, "statut": models.CardStatusActive}})
+		if err != nil || res.ModifiedCount == 0 {
+			// Paid, but the card was claimed in between: the account exists,
+			// an admin has to sort out the card by hand.
+			d.logAction(ctx, "finalizeCardOrder", models.LogStatusError, "Carte "+order.CardCode+" non attribuee apres paiement", order.Email)
+		}
+	}
+
 	remaining := order.ProductPriceXof - order.DepositXof
 	go func() {
 		loginURL := d.Env.AppURL + "/login?email=" + url.QueryEscape(order.Email)
@@ -294,13 +407,22 @@ func (d *Deps) finalizeCardOrder(ctx context.Context, reference, invoiceToken st
   <p>Votre compte est actif : vous pouvez deja configurer votre profil.</p>
   <p><a href="%s" style="background:#000;color:#fff;padding:12px 24px;text-decoration:none;display:inline-block;">Acceder a mon espace</a></p>
 </div>`, order.ClientName, order.DepositXof, order.ProductName, remaining, loginURL)
-		if err := d.Email.Send(order.Email, "Acompte recu - votre carte Mahu est en preparation", html); err != nil {
+		subject := "Acompte recu - votre carte Mahu est en preparation"
+		if order.Kind == models.OrderKindCodeActivation {
+			subject = "Paiement recu - votre carte Mahu est activee"
+			html = fmt.Sprintf(activationPaidEmailHTML, order.ClientName, order.DepositXof, order.CardCode, loginURL)
+		}
+		if err := d.Email.Send(order.Email, subject, html); err != nil {
 			d.logAction(context.Background(), "finalizeCardOrder", models.LogStatusError, "Email client non envoye: "+err.Error(), order.Email)
 		}
-		summary := fmt.Sprintf("Nouvelle commande (acompte paye)\n\n%s\n%s - %s\n%s\nAcompte: %d FCFA - Reste: %d FCFA\nAdresse: %s",
+		label := "Nouvelle commande (acompte paye)"
+		if order.Kind == models.OrderKindCodeActivation {
+			label = "Activation payee (carte " + order.CardCode + ")"
+		}
+		summary := fmt.Sprintf(label+"\n\n%s\n%s - %s\n%s\nAcompte: %d FCFA - Reste: %d FCFA\nAdresse: %s",
 			order.ProductName, order.ClientName, order.Phone, order.Email, order.DepositXof, remaining, order.DeliveryAddress)
 		for _, admin := range d.Env.SuperAdminEmails {
-			_ = d.Email.Send(admin, "Nouvelle commande carte Mahu (acompte paye)", strings.ReplaceAll(summary, "\n", "<br>"))
+			_ = d.Email.Send(admin, "Mahu - "+label, strings.ReplaceAll(summary, "\n", "<br>"))
 		}
 		notify.SendWhatsApp(d.Env, summary)
 	}()
@@ -414,6 +536,7 @@ type productInput struct {
 	Description string   `json:"description"`
 	PriceXof    int      `json:"priceXof"`
 	PriceIsFrom bool     `json:"priceIsFrom"`
+	DepositXof  int      `json:"depositXof"`
 	Category    string   `json:"category"`
 	Material    string   `json:"material"`
 	ImageURL    string   `json:"imageUrl"`
@@ -424,8 +547,11 @@ type productInput struct {
 
 func (p *productInput) validate() error {
 	p.Name = strings.TrimSpace(p.Name)
-	if p.Name == "" || p.PriceXof <= 0 {
-		return errors.New("Nom et prix (> 0) sont requis.")
+	if p.Name == "" || p.PriceXof <= 0 || p.PriceXof > maxPriceXof {
+		return errors.New("Nom et prix (entre 1 et 5 000 000 FCFA) sont requis.")
+	}
+	if p.DepositXof < 0 || p.DepositXof > maxPriceXof {
+		return errors.New("Acompte invalide.")
 	}
 	switch p.Category {
 	case models.ProductCategoryNfcCard, models.ProductCategoryRfidFob, models.ProductCategoryRfidCard:
@@ -441,7 +567,7 @@ func (p *productInput) validate() error {
 func (p productInput) fields() bson.M {
 	return bson.M{
 		"name": p.Name, "description": strings.TrimSpace(p.Description), "priceXof": p.PriceXof,
-		"priceIsFrom": p.PriceIsFrom, "category": p.Category, "material": strings.TrimSpace(p.Material),
+		"priceIsFrom": p.PriceIsFrom, "depositXof": p.DepositXof, "category": p.Category, "material": strings.TrimSpace(p.Material),
 		"imageUrl": strings.TrimSpace(p.ImageURL), "features": p.Features, "active": p.Active,
 		"sortOrder": p.SortOrder, "updatedAt": time.Now(),
 	}
@@ -582,3 +708,10 @@ func (d *Deps) AdminListProspects(w http.ResponseWriter, r *http.Request) {
 	}
 	httpx.WriteJSON(w, http.StatusOK, map[string]any{"prospects": rows})
 }
+
+const activationPaidEmailHTML = `<div style="font-family:sans-serif;padding:20px;color:#1a1a1a;">
+  <h2>Votre carte Mahu est activee !</h2>
+  <p>Bonjour %s,</p>
+  <p>Nous avons bien recu votre paiement de <strong>%d FCFA</strong> pour activer la carte <strong>%s</strong>.</p>
+  <p><a href="%s" style="background:#000;color:#fff;padding:12px 24px;text-decoration:none;display:inline-block;">Configurer mon profil</a></p>
+</div>`

@@ -66,6 +66,8 @@ function RegisterForm() {
   const [depositXof, setDepositXof] = useState(10000)
   const [productId, setProductId] = useState("")
   const [productsError, setProductsError] = useState("")
+  // Prix d'activation du code saisi : null = pas encore verifie, 0 = gratuit.
+  const [codePrice, setCodePrice] = useState<number | null>(null)
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(searchParams.get("cancelled") ? "Paiement annule. Vous pouvez reessayer." : "")
@@ -83,6 +85,7 @@ function RegisterForm() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
+    if (e.target.name === "cardCode") setCodePrice(null)
     setError("")
   }
 
@@ -103,11 +106,41 @@ function RegisterForm() {
     if (!validatePasswords()) return
     setLoading(true)
     setError("")
+    const cardCode = formData.cardCode.toUpperCase().trim()
     try {
+      // Le prix depend de la carte (revendeur ou tarif global) : on le
+      // verifie avant de creer le compte.
+      let price = codePrice
+      if (price === null) {
+        const check = await shopApi.checkCode(cardCode)
+        if (!check.valid) {
+          setError("Code de carte inconnu, deja utilise ou desactive.")
+          setLoading(false)
+          return
+        }
+        price = check.priceXof ?? 0
+        setCodePrice(price)
+        if (price > 0) {
+          // Premier clic : on affiche le prix et les champs nom/telephone.
+          setLoading(false)
+          return
+        }
+      }
+      if (price > 0) {
+        const { checkoutUrl } = await shopApi.createCodeCheckout({
+          cardCode,
+          clientName: formData.clientName,
+          email: formData.email.toLowerCase().trim(),
+          phone: formData.phone,
+          password: formData.password,
+        })
+        window.location.href = checkoutUrl
+        return
+      }
       const result = await register(
         formData.email.toLowerCase().trim(),
         formData.password,
-        formData.cardCode.toUpperCase().trim()
+        cardCode
       )
       if (result.success) {
         setSuccess(true)
@@ -115,8 +148,8 @@ function RegisterForm() {
       } else {
         setError(result.error || "Erreur lors de l'inscription")
       }
-    } catch {
-      setError("Erreur de connexion au serveur")
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur de connexion au serveur")
     }
     setLoading(false)
   }
@@ -148,7 +181,7 @@ function RegisterForm() {
   }
 
   const selectedProduct = products.find((p) => p._id === productId)
-  const deposit = selectedProduct ? Math.min(selectedProduct.priceXof, depositXof) : depositXof
+  const deposit = selectedProduct ? selectedProduct.depositXof : depositXof
 
   const passwordFields = (
     <>
@@ -254,7 +287,7 @@ function RegisterForm() {
               <motion.div key="register" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                 <h1 className="text-2xl font-bold text-foreground mb-2">Creer un compte</h1>
                 <p className="text-muted-foreground mb-6">
-                  Commandez votre carte avec un acompte de {formatXof(depositXof)}, ou activez celle que vous avez deja.
+                  Commandez votre carte avec un acompte des {formatXof(Math.min(depositXof, ...products.map((p) => p.depositXof)))}, ou activez celle que vous avez deja.
                 </p>
 
                 <div className="grid grid-cols-2 gap-2 p-1 mb-6 rounded-xl bg-muted/30 border border-border/50">
@@ -298,6 +331,38 @@ function RegisterForm() {
                         autoComplete="off"
                       />
                     </Field>
+                    {!!codePrice && codePrice > 0 && (
+                      <>
+                        <div className="p-4 rounded-xl bg-primary/10 border border-primary/20 text-sm">
+                          L&apos;activation de cette carte coute <strong>{formatXof(codePrice)}</strong>, a payer
+                          maintenant via PayDunya.
+                        </div>
+                        <Field icon={User} label="Nom complet">
+                          <input
+                            type="text"
+                            name="clientName"
+                            required
+                            value={formData.clientName}
+                            onChange={handleChange}
+                            className={inputClass}
+                            placeholder="Prenom Nom"
+                            autoComplete="name"
+                          />
+                        </Field>
+                        <Field icon={Phone} label="Telephone">
+                          <input
+                            type="tel"
+                            name="phone"
+                            required
+                            value={formData.phone}
+                            onChange={handleChange}
+                            className={inputClass}
+                            placeholder="+221 ..."
+                            autoComplete="tel"
+                          />
+                        </Field>
+                      </>
+                    )}
                     {emailField}
                     {passwordFields}
                     {errorBox}
@@ -309,8 +374,10 @@ function RegisterForm() {
                       {loading ? (
                         <>
                           <Loader2 className="w-5 h-5 animate-spin" />
-                          Creation...
+                          Verification...
                         </>
+                      ) : codePrice ? (
+                        `Payer l'activation (${formatXof(codePrice)})`
                       ) : (
                         "Activer ma carte"
                       )}
@@ -362,6 +429,7 @@ function RegisterForm() {
                                 {p.priceIsFrom ? "Des " : ""}
                                 {formatXof(p.priceXof)}
                               </p>
+                              <p className="text-xs text-muted-foreground">Acompte {formatXof(p.depositXof)}</p>
                             </div>
                           </button>
                         ))}

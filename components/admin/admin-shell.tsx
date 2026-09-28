@@ -3,7 +3,7 @@
 import { useEffect } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Activity, BarChart3, Loader2, Megaphone, Shield, Sparkles, Users, Wallet, IdCard, ShoppingBag, Package, MessageSquare, Building2 } from "lucide-react"
+import { Activity, BarChart3, Loader2, Megaphone, Shield, Sparkles, Users, Wallet, IdCard, ShoppingBag, Package, MessageSquare, Building2, BadgeDollarSign } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAdminAuth } from "@/contexts/admin-auth-context"
 
@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { href: "/admin", label: "Paiements", icon: Wallet },
   { href: "/admin/orders", label: "Commandes", icon: ShoppingBag },
   { href: "/admin/products", label: "Catalogue", icon: Package },
+  { href: "/admin/pricing", label: "Tarifs", icon: BadgeDollarSign },
   { href: "/admin/contacts", label: "Messages contact", icon: MessageSquare },
   { href: "/admin/enterprise", label: "Demandes entreprise", icon: Building2 },
   { href: "/admin/users", label: "Utilisateurs", icon: Users },

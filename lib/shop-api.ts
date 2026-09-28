@@ -17,6 +17,8 @@ export interface Product {
   description: string
   priceXof: number
   priceIsFrom: boolean
+  // Catalogue public : acompte reellement demande. Admin : acompte propre au produit (0 = acompte par defaut).
+  depositXof: number
   category: ProductCategory
   material: string
   imageUrl: string
@@ -62,6 +64,30 @@ export const shopApi = {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         // Le retour PayDunya revient sur le domaine courant (ai.mahu.cards, call.mahu.cards...).
+        body: JSON.stringify({ ...data, origin: window.location.origin }),
+      })
+    ),
+
+  checkCode: async (code: string) =>
+    parse<{ valid: boolean; priceXof?: number }>(
+      await fetch(`${SHOP_BASE_URL}/check-code`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code }),
+      })
+    ),
+
+  createCodeCheckout: async (data: {
+    cardCode: string
+    clientName: string
+    email: string
+    phone: string
+    password: string
+  }) =>
+    parse<{ checkoutUrl: string; reference: string }>(
+      await fetch(`${SHOP_BASE_URL}/code-checkout`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...data, origin: window.location.origin }),
       })
     ),

@@ -111,6 +111,8 @@ export interface PhysicalCard {
 export interface CardOrder {
   _id: string
   reference: string
+  kind?: "acompte" | "activation_code"
+  cardCode?: string
   productName: string
   productPriceXof: number
   depositXof: number
@@ -154,6 +156,52 @@ export interface EnterpriseRequest {
   message: string
   status: "nouveau" | "traite"
   createdAt: string
+}
+
+export interface PricingSettings {
+  defaultDepositXof: number
+  codeActivationPriceXof: number
+}
+
+export interface ResellerPriceRow {
+  email: string
+  nomEntreprise: string
+  contactTel: string
+  totalCartes: number
+  activationPriceXof: number | null
+}
+
+export interface UserDetails {
+  user: {
+    _id: string
+    email: string
+    name: string
+    role: string
+    profileUrl?: string
+    disabled?: boolean
+    aiEnabled?: boolean
+    onboardingStatus?: string
+    hasPassword: boolean
+    providers: string[]
+    enterpriseId?: string
+    createdAt: string
+  }
+  profile: {
+    nomComplet: string
+    telephone: string
+    profession: string
+    compagnie: string
+    location: string
+    urlPhoto: string
+    leadCaptureActif: string
+    liensSociauxJson: string
+  } | null
+  plan: string
+  cards: Array<{ codeCarte: string; statut: string; vendeur?: string; dateActivation?: string }>
+  orders: CardOrder[]
+  prospectCount: number
+  prospects: Array<{ dateCapture: string; nom: string; contact: string; message: string }>
+  viewCount: number
 }
 
 type ApiCardsResponse = ApiResponse & { cards: PhysicalCard[]; isSuper: boolean }
@@ -324,6 +372,24 @@ export const adminApi = {
       method: "PATCH",
       body: JSON.stringify({ status }),
     }),
+
+  getPricing: (token: string) =>
+    request<{ pricing: PricingSettings; resellers: ResellerPriceRow[] }>(`${ADMIN_BASE_URL}/pricing`, token),
+
+  updatePricing: (token: string, data: PricingSettings) =>
+    request<{ success: boolean }>(`${ADMIN_BASE_URL}/pricing`, token, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+
+  updateResellerPrice: (token: string, email: string, activationPriceXof: number | null) =>
+    request<{ success: boolean }>(`${ADMIN_BASE_URL}/resellers/${encodeURIComponent(email)}/price`, token, {
+      method: "PATCH",
+      body: JSON.stringify({ activationPriceXof }),
+    }),
+
+  getUserDetails: (token: string, userId: string) =>
+    request<UserDetails>(`${ADMIN_BASE_URL}/users/${userId}/details`, token),
 
   listProspects: (token: string) => request<{ prospects: ProspectRow[] }>(`${ADMIN_BASE_URL}/prospects`, token),
 }

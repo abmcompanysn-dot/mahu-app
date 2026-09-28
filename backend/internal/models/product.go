@@ -25,13 +25,15 @@ type Product struct {
 	Description string             `bson:"description" json:"description"`
 	PriceXof    int                `bson:"priceXof" json:"priceXof"`
 	// PriceIsFrom marks prices shown as "A partir de" (customisable cards).
-	PriceIsFrom bool      `bson:"priceIsFrom" json:"priceIsFrom"`
-	Category    string    `bson:"category" json:"category"`
-	Material    string    `bson:"material" json:"material"`
-	ImageURL    string    `bson:"imageUrl" json:"imageUrl"`
-	Features    []string  `bson:"features" json:"features"`
-	Active      bool      `bson:"active" json:"active"`
-	SortOrder   int       `bson:"sortOrder" json:"sortOrder"`
-	CreatedAt   time.Time `bson:"createdAt" json:"createdAt"`
-	UpdatedAt   time.Time `bson:"updatedAt" json:"updatedAt"`
+	PriceIsFrom bool `bson:"priceIsFrom" json:"priceIsFrom"`
+	// DepositXof overrides the default signup deposit; 0 = use the default.
+	DepositXof int       `bson:"depositXof" json:"depositXof"`
+	Category   string    `bson:"category" json:"category"`
+	Material   string    `bson:"material" json:"material"`
+	ImageURL   string    `bson:"imageUrl" json:"imageUrl"`
+	Features   []string  `bson:"features" json:"features"`
+	Active     bool      `bson:"active" json:"active"`
+	SortOrder  int       `bson:"sortOrder" json:"sortOrder"`
+	CreatedAt  time.Time `bson:"createdAt" json:"createdAt"`
+	UpdatedAt  time.Time `bson:"updatedAt" json:"updatedAt"`
 }

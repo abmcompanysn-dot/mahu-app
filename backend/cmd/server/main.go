@@ -90,6 +90,8 @@ func main() {
 	protected.HandleFunc("GET /api/shop/products", deps.ListShopProducts)
 	protected.HandleFunc("POST /api/shop/deposit-checkout", deps.CreateDepositCheckout)
 	protected.HandleFunc("POST /api/enterprise-requests", deps.SubmitEnterpriseRequest)
+	protected.HandleFunc("POST /api/shop/check-code", deps.CheckCardCode)
+	protected.HandleFunc("POST /api/shop/code-checkout", deps.CreateCodeCheckout)
 	protected.HandleFunc("GET /api/shop/orders/{ref}", func(w http.ResponseWriter, r *http.Request) {
 		deps.GetDepositOrderStatus(w, r, r.PathValue("ref"))
 	})
@@ -128,6 +130,14 @@ func main() {
 		deps.AdminDeleteProduct(w, r, r.PathValue("id"))
 	})))
 	protected.Handle("GET /api/admin/prospects", adminOnly(http.HandlerFunc(deps.AdminListProspects)))
+	protected.Handle("GET /api/admin/pricing", adminOnly(http.HandlerFunc(deps.AdminGetPricing)))
+	protected.Handle("PUT /api/admin/pricing", adminOnly(http.HandlerFunc(deps.AdminUpdatePricing)))
+	protected.Handle("PATCH /api/admin/resellers/{email}/price", adminOnly(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		deps.AdminUpdateResellerPrice(w, r, r.PathValue("email"))
+	})))
+	protected.Handle("GET /api/admin/users/{id}/details", adminOnly(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		deps.AdminGetUserDetails(w, r, r.PathValue("id"))
+	})))
 	protected.Handle("GET /api/admin/enterprise-requests", adminOnly(http.HandlerFunc(deps.AdminListEnterpriseRequests)))
 	protected.Handle("PATCH /api/admin/enterprise-requests/{id}", adminOnly(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		deps.AdminUpdateEnterpriseRequest(w, r, r.PathValue("id"))
