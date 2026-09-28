@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 
 	"mahu-backend/internal/authutil"
@@ -50,32 +49,21 @@ func (d *Deps) SocialLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	email = strings.ToLower(email)
-	name, _ := decoded.Claims["name"].(string)
-	picture, _ := decoded.Claims["picture"].(string)
 
 	col := db.Collection(models.UsersCollection)
 
 	var user models.User
 	err = col.FindOne(ctx, bson.M{"email": email}).Decode(&user)
-	newUser := false
 
 	if err == mongo.ErrNoDocuments {
-		newUser = true
-		now := time.Now()
-		user = models.User{
-			ID:        primitive.NewObjectID(),
-			Email:     email,
-			Name:      name,
-			PhotoURL:  picture,
-			Role:      "Entreprise",
-			Providers: []models.Provider{{Provider: provider, ProviderUID: decoded.UID}},
-			CreatedAt: now,
-			UpdatedAt: now,
-		}
-		if _, err := col.InsertOne(ctx, user); err != nil {
-			httpx.WriteJSON(w, http.StatusInternalServerError, map[string]any{"success": false, "error": "Erreur serveur"})
-			return
-		}
+		// Google only signs in existing accounts: creating one here would
+		// skip the card code / deposit required by every signup (see
+		// legacyRegisterUser and CreateDepositCheckout).
+		httpx.WriteJSON(w, http.StatusForbidden, map[string]any{
+			"success": false,
+			"error":   "Aucun compte Mahu avec cet email. Creez d'abord votre compte (code de carte ou commande), puis connectez-vous avec Google.",
+		})
+		return
 	} else if err != nil {
 		httpx.WriteJSON(w, http.StatusInternalServerError, map[string]any{"success": false, "error": "Erreur serveur"})
 		return
@@ -115,6 +103,6 @@ func (d *Deps) SocialLogin(w http.ResponseWriter, r *http.Request) {
 		"success": true,
 		"token":   token,
 		"role":    user.Role,
-		"newUser": newUser,
+		"newUser": false,
 	})
 }
