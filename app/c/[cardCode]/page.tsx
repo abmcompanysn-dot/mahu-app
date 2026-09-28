@@ -29,14 +29,20 @@ export default function CardVerificationPage({ params }: { params: Promise<{ car
     getCardPublicInfo(cardCode)
       .then((info) => {
         setProfileUsername(info.profileUsername)
-        applyRedirectMode(info.redirectMode, info.profileUsername)
+        applyRedirectMode(info.redirectMode, info.profileUsername, info.redirectUrl)
       })
       .catch(() => setMode("choice"))
 
-    function applyRedirectMode(mode: CardRedirectMode, username: string | null) {
+    function applyRedirectMode(mode: CardRedirectMode, username: string | null, redirectUrl?: string) {
       setRedirectMode(mode)
       if (mode === "profile" && username) {
         router.replace(`/p/${username}`)
+        return
+      }
+      // Lien externe : navigation directe du navigateur, pas router.replace
+      // (reserve aux routes internes Next.js).
+      if (mode === "url" && redirectUrl) {
+        window.location.href = redirectUrl
         return
       }
       // "ai" saute directement a l'ecran de verification, mais la camera a

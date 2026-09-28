@@ -15,6 +15,7 @@ const REDIRECT_MODE_OPTIONS: Array<{ value: CardRedirectMode; label: string; des
   { value: "choice", label: "Laisser choisir", description: "La personne qui scanne voit les deux options et decide." },
   { value: "profile", label: "Profil uniquement", description: "Redirige directement vers ta carte de visite publique." },
   { value: "ai", label: "Assistant IA uniquement", description: "Lance directement la verification faciale." },
+  { value: "url", label: "Lien personnalise", description: "Redirige vers n'importe quelle adresse de ton choix." },
 ]
 
 export default function CarteIaPage() {
@@ -29,6 +30,8 @@ export default function CarteIaPage() {
   const [savingProfileLink, setSavingProfileLink] = useState(false)
   const [profileLinkSaved, setProfileLinkSaved] = useState(false)
   const [savingRedirectMode, setSavingRedirectMode] = useState(false)
+  const [redirectUrl, setRedirectUrl] = useState("")
+  const [savingRedirectUrl, setSavingRedirectUrl] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
 
@@ -41,6 +44,7 @@ export default function CarteIaPage() {
       .then((data) => {
         setCard(data)
         setProfileUsername(data.profileUsername || "")
+        setRedirectUrl(data.redirectUrl || "")
       })
       .catch((err) => setError(err instanceof Error ? err.message : "Erreur de chargement"))
       .finally(() => setLoading(false))
@@ -128,6 +132,7 @@ export default function CarteIaPage() {
   const changeRedirectMode = useCallback(
     async (mode: CardRedirectMode) => {
       if (!token || mode === card?.redirectMode) return
+      if (mode === "url") return // l'URL se valide via saveRedirectUrl, pas au clic sur l'option
       setSavingRedirectMode(true)
       setError(null)
       try {
@@ -141,6 +146,20 @@ export default function CarteIaPage() {
     },
     [token, card],
   )
+
+  const saveRedirectUrl = useCallback(async () => {
+    if (!token || !redirectUrl.trim()) return
+    setSavingRedirectUrl(true)
+    setError(null)
+    try {
+      const updated = await cardApi.updateRedirectMode(token, "url", redirectUrl.trim())
+      setCard(updated)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur d'enregistrement")
+    } finally {
+      setSavingRedirectUrl(false)
+    }
+  }, [token, redirectUrl])
 
   if (!isAuthenticated || loading) {
     return (
@@ -271,7 +290,7 @@ export default function CarteIaPage() {
               C&apos;est toi qui decides : profil seul, assistant IA seul, ou laisser la personne choisir entre les deux.
             </p>
           </div>
-          <div className="grid gap-2 sm:grid-cols-3">
+          <div className="grid gap-2 sm:grid-cols-4">
             {REDIRECT_MODE_OPTIONS.map((option) => {
               const disabled =
                 (option.value === "profile" && !card?.profileUsername) || (option.value === "ai" && !card?.enabled)
@@ -303,6 +322,30 @@ export default function CarteIaPage() {
                 </button>
               )
             })}
+          </div>
+
+          <div className="flex items-center gap-2 pt-2 border-t border-border/50">
+            <input
+              type="url"
+              value={redirectUrl}
+              onChange={(e) => setRedirectUrl(e.target.value)}
+              placeholder="https://exemple.com/mon-lien"
+              className="flex-1 text-sm bg-muted/30 border border-border/50 rounded-lg px-3 py-2 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50"
+            />
+            <Button
+              variant="outline"
+              className="border-border/50 shrink-0"
+              onClick={saveRedirectUrl}
+              disabled={savingRedirectUrl || !redirectUrl.trim()}
+            >
+              {savingRedirectUrl ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : card?.redirectMode === "url" ? (
+                <Check className="w-4 h-4 text-primary" />
+              ) : (
+                "Utiliser ce lien"
+              )}
+            </Button>
           </div>
         </div>
       </div>

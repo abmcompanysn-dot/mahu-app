@@ -41,6 +41,10 @@ func main() {
 		log.Fatalf("[backend] fatal startup error: indexes: %v", err)
 	}
 
+	if err := handlers.SeedProducts(context.Background()); err != nil {
+		log.Printf("[shop] product seed failed: %v", err)
+	}
+
 	deps := &handlers.Deps{Env: env, FirebaseAuth: firebaseAuth, Email: emailutil.NewSender(env)}
 
 	mux := http.NewServeMux()
@@ -81,6 +85,15 @@ func main() {
 		deps.GetCardPublicInfo(w, r, r.PathValue("cardCode"))
 	})
 
+	// Signup by deposit: public (no user yet), reached through the Next.js
+	// proxy like the legacy public actions.
+	protected.HandleFunc("GET /api/shop/products", deps.ListShopProducts)
+	protected.HandleFunc("POST /api/shop/deposit-checkout", deps.CreateDepositCheckout)
+	protected.HandleFunc("POST /api/enterprise-requests", deps.SubmitEnterpriseRequest)
+	protected.HandleFunc("GET /api/shop/orders/{ref}", func(w http.ResponseWriter, r *http.Request) {
+		deps.GetDepositOrderStatus(w, r, r.PathValue("ref"))
+	})
+
 	adminOnly := middleware.RequireAdminAuth(env.JWTSecret)
 	protected.Handle("GET /api/admin/stats", adminOnly(http.HandlerFunc(deps.GetStats)))
 	protected.Handle("GET /api/admin/consumption", adminOnly(http.HandlerFunc(deps.GetConsumption)))
@@ -102,6 +115,23 @@ func main() {
 	protected.Handle("POST /api/admin/2fa/confirm", adminOnly(http.HandlerFunc(deps.Confirm2FA)))
 	protected.Handle("POST /api/admin/2fa/disable", adminOnly(http.HandlerFunc(deps.Disable2FA)))
 	protected.Handle("GET /api/admin/beta-signups", adminOnly(http.HandlerFunc(deps.ListBetaSignups)))
+	protected.Handle("GET /api/admin/card-orders", adminOnly(http.HandlerFunc(deps.AdminListCardOrders)))
+	protected.Handle("PATCH /api/admin/card-orders/{id}", adminOnly(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		deps.AdminUpdateCardOrder(w, r, r.PathValue("id"))
+	})))
+	protected.Handle("GET /api/admin/products", adminOnly(http.HandlerFunc(deps.AdminListProducts)))
+	protected.Handle("POST /api/admin/products", adminOnly(http.HandlerFunc(deps.AdminCreateProduct)))
+	protected.Handle("PUT /api/admin/products/{id}", adminOnly(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		deps.AdminUpdateProduct(w, r, r.PathValue("id"))
+	})))
+	protected.Handle("DELETE /api/admin/products/{id}", adminOnly(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		deps.AdminDeleteProduct(w, r, r.PathValue("id"))
+	})))
+	protected.Handle("GET /api/admin/prospects", adminOnly(http.HandlerFunc(deps.AdminListProspects)))
+	protected.Handle("GET /api/admin/enterprise-requests", adminOnly(http.HandlerFunc(deps.AdminListEnterpriseRequests)))
+	protected.Handle("PATCH /api/admin/enterprise-requests/{id}", adminOnly(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		deps.AdminUpdateEnterpriseRequest(w, r, r.PathValue("id"))
+	})))
 
 	userOnly := middleware.RequireUserAuth(env.JWTSecret)
 	protected.Handle("GET /api/ai/models", userOnly(http.HandlerFunc(deps.ListModels)))

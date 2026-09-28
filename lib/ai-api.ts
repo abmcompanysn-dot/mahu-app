@@ -210,13 +210,14 @@ export const billingApi = {
     }),
 }
 
-export type CardRedirectMode = "choice" | "profile" | "ai"
+export type CardRedirectMode = "choice" | "profile" | "ai" | "url"
 
 export interface BiometricCardInfo {
   cardCode: string
   enabled: boolean
   profileUsername: string
   redirectMode: CardRedirectMode
+  redirectUrl?: string
 }
 
 export const cardApi = {
@@ -236,10 +237,10 @@ export const cardApi = {
       body: JSON.stringify({ profileUsername }),
     }),
 
-  updateRedirectMode: (token: string, redirectMode: CardRedirectMode) =>
+  updateRedirectMode: (token: string, redirectMode: CardRedirectMode, redirectUrl?: string) =>
     request<BiometricCardInfo>(`${AI_BASE_URL}/card/redirect-mode`, token, {
       method: "PATCH",
-      body: JSON.stringify({ redirectMode }),
+      body: JSON.stringify({ redirectMode, redirectUrl }),
     }),
 }
 
@@ -261,7 +262,7 @@ export async function verifyFace(
 // de la carte a choisi de sauter l'ecran de choix.
 export async function getCardPublicInfo(
   cardCode: string,
-): Promise<{ profileUsername: string | null; redirectMode: CardRedirectMode }> {
+): Promise<{ profileUsername: string | null; redirectMode: CardRedirectMode; redirectUrl?: string }> {
   const response = await fetch(`${AUTH_BASE_URL}/card-info/${cardCode}`)
   return response.json()
 }

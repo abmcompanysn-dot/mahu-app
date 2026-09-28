@@ -18,7 +18,6 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'fr_FR',
-    url: 'https://mahu.cards/',
     title: 'Mahu - Votre Carte de Visite Numérique',
     description: 'Créez et partagez votre carte de visite numérique NFC, moderne et écologique.',
     siteName: 'Mahu',

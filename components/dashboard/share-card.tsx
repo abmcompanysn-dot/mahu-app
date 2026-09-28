@@ -4,6 +4,7 @@ import { motion } from "framer-motion"
 import { useState } from "react"
 import { Check, QrCode, X } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
+import { useSiteOrigin } from "@/hooks/use-site-origin"
 
 interface ShareOption {
   icon: LucideIcon
@@ -20,7 +21,8 @@ export function ShareCard({ options, username = "" }: ShareCardProps) {
   const [copiedLink, setCopiedLink] = useState(false)
   const [showQR, setShowQR] = useState(false)
 
-  const profileUrl = `https://ai.mahu.cards/p/${username}`
+  const { origin, host } = useSiteOrigin()
+  const profileUrl = `${origin}/p/${username}`
 
   const handleAction = (action: string) => {
     switch (action) {
@@ -91,7 +93,7 @@ export function ShareCard({ options, username = "" }: ShareCardProps) {
         {/* Quick link display */}
         <div className="mt-4 flex items-center gap-2 p-3 rounded-xl bg-muted/30 border border-border/50">
           <span className="flex-1 text-sm text-muted-foreground truncate">
-            ai.mahu.cards/p/{username}
+            {host}/p/{username}
           </span>
           <motion.button
             whileHover={{ scale: 1.05 }}
@@ -143,7 +145,7 @@ export function ShareCard({ options, username = "" }: ShareCardProps) {
               </div>
               
               <p className="text-sm text-muted-foreground">
-                ai.mahu.cards/p/{username}
+                {host}/p/{username}
               </p>
             </div>
           </motion.div>

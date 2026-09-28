@@ -3,6 +3,7 @@
 // v6 - Supports both Profile and UserProfile types
 import { motion } from "framer-motion"
 import { Linkedin, Mail, Phone, Globe, MapPin, Instagram, Twitter, Facebook, Youtube, Github, MessageCircle, Link as LinkIcon } from "lucide-react"
+import { useSiteOrigin } from "@/hooks/use-site-origin"
 
 const socialIcons: Record<string, React.ComponentType<{ className?: string; style?: React.CSSProperties }>> = {
   linkedin: Linkedin,
@@ -82,6 +83,7 @@ export function PhonePreview({ profile, profileUrl }: PhonePreviewProps) {
   const company = profile?.Compagnie || profile?.company || ""
   const location = profile?.Location || profile?.location || ""
   const username = profileUrl || ""
+  const { host } = useSiteOrigin()
   const profilePicture = profile?.URL_Photo || profile?.profilePicture
   const coverImage = profile?.URL_Couverture || profile?.coverImage
   const accentColor = profile?.Couleur_Theme || "#007AFF"
@@ -245,7 +247,7 @@ export function PhonePreview({ profile, profileUrl }: PhonePreviewProps) {
                   </div>
                   <div className="text-left">
                     <p className="text-xs font-medium text-foreground">Scanner pour sauvegarder</p>
-                    <p className="text-xs text-muted-foreground">ai.mahu.cards/p/{username}</p>
+                    <p className="text-xs text-muted-foreground">{host}/p/{username}</p>
                   </div>
                 </div>
               </motion.div>

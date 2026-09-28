@@ -78,7 +78,7 @@ func (d *Deps) legacyCreateEmployee(ctx context.Context, payload map[string]any,
 		return map[string]any{"success": true, "message": "Utilisateur existant ajoute a votre equipe avec succes."}, nil
 	}
 
-	registerResult, err := d.legacyRegisterUser(ctx, email, password, adminUser.ID.Hex())
+	registerResult, err := d.legacyRegisterUser(ctx, email, password, adminUser.ID.Hex(), "")
 	if err != nil {
 		return nil, err
 	}

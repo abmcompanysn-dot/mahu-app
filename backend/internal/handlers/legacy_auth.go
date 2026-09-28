@@ -63,8 +63,62 @@ func resetEmailHTML(resetURL string) (string, string) {
 	return html, text
 }
 
-func (d *Deps) legacyRegisterUser(ctx context.Context, email, password, enterpriseID string) (map[string]any, error) {
+// createLegacyAccount inserts a user and its empty profile - shared by the
+// email/password signup (legacyRegisterUser) and the deposit-paid signup
+// (finalizeCardOrder), which already holds a hashed password.
+func createLegacyAccount(ctx context.Context, email, passwordHash, enterpriseID, name, phone string) (*models.User, error) {
+	role := models.RoleEntreprise
+	if enterpriseID != "" {
+		role = models.RoleEmploye
+	}
+
+	now := time.Now()
+	user := models.User{
+		ID:               primitive.NewObjectID(),
+		Email:            email,
+		Role:             role,
+		PasswordHash:     passwordHash,
+		EnterpriseID:     enterpriseID,
+		ProfileURL:       slugify(emailPrefix(email)) + fmt.Sprintf("%d", rand.Intn(1000)),
+		NfcCardIDs:       []string{},
+		OnboardingStatus: models.OnboardingStarted,
+		CreatedAt:        now,
+		UpdatedAt:        now,
+	}
+	if _, err := db.Collection(models.UsersCollection).InsertOne(ctx, user); err != nil {
+		return nil, err
+	}
+
+	if name == "" {
+		name = emailPrefix(email)
+	}
+	// Contact form on by default: visitors can reach the card holder, who
+	// gets each message by email (see legacyHandleLeadCapture).
+	profile := models.Profile{
+		ID:               primitive.NewObjectID(),
+		UserID:           user.ID,
+		Email:            email,
+		NomComplet:       name,
+		Telephone:        phone,
+		LiensSociauxJSON: "[]",
+		LeadCaptureActif: "OUI",
+		ServicesJSON:     "[]",
+		CreatedAt:        now,
+		UpdatedAt:        now,
+	}
+	if _, err := db.Collection(models.ProfilesCollection).InsertOne(ctx, profile); err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+// legacyRegisterUser is the "J'ai un code de carte" signup. Without a code,
+// a self-signup must go through the deposit checkout instead
+// (CreateDepositCheckout) - only employees invited by their enterprise
+// (enterpriseID) skip both.
+func (d *Deps) legacyRegisterUser(ctx context.Context, email, password, enterpriseID, cardCode string) (map[string]any, error) {
 	email = strings.ToLower(strings.TrimSpace(email))
+	cardCode = strings.ToUpper(strings.TrimSpace(cardCode))
 	if email == "" || password == "" {
 		return nil, errors.New("L'email et le mot de passe sont requis.")
 	}
@@ -77,48 +131,42 @@ func (d *Deps) legacyRegisterUser(ctx context.Context, email, password, enterpri
 		return map[string]any{"success": false, "error": "Cet email est deja utilise."}, nil
 	}
 
+	if enterpriseID == "" {
+		if cardCode == "" {
+			return map[string]any{"success": false, "error": "Entrez le code de votre carte, ou commandez une carte avec l'acompte de 10 000 FCFA."}, nil
+		}
+		var card models.PhysicalCard
+		if err := db.Collection(models.PhysicalCardsCollection).FindOne(ctx, bson.M{"codeCarte": cardCode}).Decode(&card); err != nil {
+			return map[string]any{"success": false, "error": "Code de carte inconnu. Verifiez le code imprime sur votre carte."}, nil
+		}
+		if card.EmailProprietaire != "" || card.Statut == models.CardStatusDeactivated {
+			return map[string]any{"success": false, "error": "Ce code de carte est deja utilise ou desactive."}, nil
+		}
+	}
+
 	storedPassword, err := legacyauth.HashPassword(password)
 	if err != nil {
 		return nil, err
 	}
 
-	role := models.RoleEntreprise
-	if enterpriseID != "" {
-		role = models.RoleEmploye
-	}
-
-	profileURL := slugify(emailPrefix(email)) + fmt.Sprintf("%d", rand.Intn(1000))
-
-	now := time.Now()
-	user := models.User{
-		ID:               primitive.NewObjectID(),
-		Email:            email,
-		Role:             role,
-		PasswordHash:     storedPassword,
-		EnterpriseID:     enterpriseID,
-		ProfileURL:       profileURL,
-		NfcCardIDs:       []string{},
-		OnboardingStatus: models.OnboardingStarted,
-		CreatedAt:        now,
-		UpdatedAt:        now,
-	}
-	if _, err := db.Collection(models.UsersCollection).InsertOne(ctx, user); err != nil {
+	user, err := createLegacyAccount(ctx, email, storedPassword, enterpriseID, "", "")
+	if err != nil {
 		return nil, err
 	}
 
-	profile := models.Profile{
-		ID:               primitive.NewObjectID(),
-		UserID:           user.ID,
-		Email:            email,
-		NomComplet:       emailPrefix(email),
-		LiensSociauxJSON: "[]",
-		LeadCaptureActif: "NON",
-		ServicesJSON:     "[]",
-		CreatedAt:        now,
-		UpdatedAt:        now,
-	}
-	if _, err := db.Collection(models.ProfilesCollection).InsertOne(ctx, profile); err != nil {
-		return nil, err
+	if cardCode != "" {
+		now := time.Now()
+		// Guarded on the owner still being empty, so two signups racing on
+		// the same code can't both claim it.
+		res, err := db.Collection(models.PhysicalCardsCollection).UpdateOne(ctx,
+			bson.M{"codeCarte": cardCode, "emailProprietaire": bson.M{"$in": []any{"", nil}}},
+			bson.M{"$set": bson.M{"emailProprietaire": email, "dateActivation": now, "statut": models.CardStatusActive}})
+		if err != nil {
+			return nil, err
+		}
+		if res.ModifiedCount == 0 {
+			d.logAction(ctx, "registerUser", models.LogStatusError, "Code carte "+cardCode+" deja pris pendant l'inscription", email)
+		}
 	}
 
 	token, err := authutil.SignUserToken(d.Env.JWTSecret, user.ID.Hex(), user.Email, user.Role)

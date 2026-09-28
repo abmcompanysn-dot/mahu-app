@@ -165,8 +165,10 @@ func (d *Deps) CreateCheckout(w http.ResponseWriter, r *http.Request) {
 type paydunyaConfirmResponse struct {
 	Status     string `json:"status"`
 	CustomData struct {
-		UserID string `json:"userId"`
-		Plan   string `json:"plan"`
+		UserID   string `json:"userId"`
+		Plan     string `json:"plan"`
+		Kind     string `json:"kind"`
+		OrderRef string `json:"orderRef"`
 	} `json:"custom_data"`
 }
 
@@ -225,6 +227,14 @@ func (d *Deps) PaydunyaWebhook(w http.ResponseWriter, r *http.Request) {
 
 	var confirmData paydunyaConfirmResponse
 	if err := json.NewDecoder(resp.Body).Decode(&confirmData); err != nil {
+		httpx.WriteJSON(w, http.StatusOK, map[string]any{"received": true})
+		return
+	}
+
+	if confirmData.Status == "completed" && confirmData.CustomData.Kind == paydunyaKindSignupDeposit {
+		if err := d.finalizeCardOrder(r.Context(), confirmData.CustomData.OrderRef, token); err != nil {
+			d.logAction(r.Context(), "paydunyaWebhook", models.LogStatusError, "Finalisation commande "+confirmData.CustomData.OrderRef+": "+err.Error(), "paydunya")
+		}
 		httpx.WriteJSON(w, http.StatusOK, map[string]any{"received": true})
 		return
 	}

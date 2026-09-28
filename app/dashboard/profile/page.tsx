@@ -12,6 +12,7 @@ import { PhonePreview } from "@/components/dashboard/phone-preview"
 import { useAuth } from "@/hooks/use-auth"
 import { api } from "@/lib/api"
 import { uploadToCloudinary } from "@/lib/cloudinary"
+import { useSiteOrigin } from "@/hooks/use-site-origin"
 
 const tabs = [
   { id: "images", label: "Images du profil", icon: Camera },
@@ -53,6 +54,7 @@ interface SocialLink {
 export default function ProfilePage() {
   const { token, dashboardData, fetchDashboardData } = useAuth()
   const [activeTab, setActiveTab] = useState("images")
+  const { host } = useSiteOrigin()
   const [saving, setSaving] = useState(false)
   const [saveSuccess, setSaveSuccess] = useState(false)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
@@ -420,7 +422,7 @@ export default function ProfilePage() {
                   <label className="block text-sm font-medium text-muted-foreground mb-2">URL personnalisee</label>
                   <div className="flex">
                     <span className="px-4 py-3 rounded-l-xl bg-muted/50 border border-r-0 border-border/50 text-muted-foreground text-sm">
-                      ai.mahu.cards/p/
+                      {host}/p/
                     </span>
                     <input
                       type="text"

@@ -1,8 +1,9 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { Users, Building2, CreditCard, Crown, ChevronRight, Sparkles } from "lucide-react"
+import { Users, Building2, ShieldCheck, Crown, ChevronRight, CheckCircle2, Loader2, Send } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/hooks/use-auth"
 
@@ -18,53 +19,9 @@ const features = [
     description: "Appliquez automatiquement votre charte graphique a toutes les cartes de votre entreprise.",
   },
   {
-    icon: CreditCard,
-    title: "Facturation centralisee",
-    description: "Une seule facture pour toute votre organisation, avec des prix degressifs.",
-  },
-]
-
-const plans = [
-  {
-    name: "Starter",
-    price: "29",
-    period: "/mois",
-    description: "Pour les petites equipes",
-    features: [
-      "Jusqu'a 5 utilisateurs",
-      "Cartes personnalisees",
-      "Statistiques de base",
-      "Support email",
-    ],
-  },
-  {
-    name: "Business",
-    price: "79",
-    period: "/mois",
-    description: "Pour les entreprises en croissance",
-    popular: true,
-    features: [
-      "Jusqu'a 25 utilisateurs",
-      "Cartes premium",
-      "Statistiques avancees",
-      "Support prioritaire",
-      "API access",
-      "Branding personnalise",
-    ],
-  },
-  {
-    name: "Enterprise",
-    price: "Sur mesure",
-    period: "",
-    description: "Pour les grandes organisations",
-    features: [
-      "Utilisateurs illimites",
-      "Tout Business inclus",
-      "SSO & SCIM",
-      "Account manager dedie",
-      "SLA garanti",
-      "Integration sur mesure",
-    ],
+    icon: ShieldCheck,
+    title: "Vos donnees chez vous",
+    description: "Le systeme est installe sur votre infrastructure : vos donnees ne sont pas gerees par Mahu.",
   },
 ]
 
@@ -114,7 +71,8 @@ export default function EnterprisePage() {
           Equipez toute votre equipe avec Mahu
         </h1>
         <p className="text-lg text-muted-foreground">
-          Deployez des cartes de visite numeriques pour tous vos collaborateurs et centralisez la gestion de votre reseau professionnel.
+          L&apos;offre entreprise est un systeme sur mesure, installe chez vous : vos donnees restent dans votre
+          entreprise et ne sont pas gerees par Mahu. Decrivez votre besoin, nous revenons vers vous avec une proposition.
         </p>
       </motion.div>
 
@@ -131,7 +89,6 @@ export default function EnterprisePage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 + index * 0.1 }}
-            whileHover={{ y: -5 }}
             className="p-6 rounded-2xl bg-card/50 border border-border/50 backdrop-blur-sm"
           >
             <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
@@ -143,98 +100,103 @@ export default function EnterprisePage() {
         ))}
       </motion.div>
 
-      {/* Pricing */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
       >
-        <h2 className="text-2xl font-bold text-foreground text-center mb-8">
-          Choisissez votre plan
-        </h2>
-        
-        <div className="grid md:grid-cols-3 gap-6">
-          {plans.map((plan, index) => (
-            <motion.div
-              key={plan.name}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 + index * 0.1 }}
-              whileHover={{ y: -5 }}
-              className={`relative p-6 rounded-2xl backdrop-blur-sm ${
-                plan.popular
-                  ? "bg-primary/10 border-2 border-primary"
-                  : "bg-card/50 border border-border/50"
-              }`}
-            >
-              {plan.popular && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-medium">
-                    <Sparkles className="w-3 h-3" />
-                    Populaire
-                  </span>
-                </div>
-              )}
-
-              <div className="text-center mb-6">
-                <h3 className="text-lg font-semibold text-foreground mb-1">{plan.name}</h3>
-                <p className="text-sm text-muted-foreground mb-4">{plan.description}</p>
-                <div className="flex items-baseline justify-center gap-1">
-                  <span className="text-4xl font-bold text-foreground">
-                    {plan.price.includes("Sur") ? "" : "€"}{plan.price}
-                  </span>
-                  {plan.period && (
-                    <span className="text-muted-foreground">{plan.period}</span>
-                  )}
-                </div>
-              </div>
-
-              <ul className="space-y-3 mb-6">
-                {plan.features.map((feature) => (
-                  <li key={feature} className="flex items-center gap-3 text-sm">
-                    <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                      <svg className="w-3 h-3 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
-                    <span className="text-muted-foreground">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-
-              <Button
-                className={`w-full ${
-                  plan.popular
-                    ? "bg-primary hover:bg-primary/90 text-primary-foreground"
-                    : "bg-muted/50 hover:bg-muted text-foreground"
-                }`}
-              >
-                {plan.price.includes("Sur") ? "Nous contacter" : "Commencer"}
-                <ChevronRight className="w-4 h-4 ml-2" />
-              </Button>
-            </motion.div>
-          ))}
-        </div>
-      </motion.div>
-
-      {/* CTA */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
-        className="text-center p-8 rounded-2xl bg-gradient-to-br from-primary/20 via-primary/10 to-transparent border border-primary/20"
-      >
-        <h3 className="text-xl font-semibold text-foreground mb-2">
-          Besoin d&apos;une solution personnalisee ?
-        </h3>
-        <p className="text-muted-foreground mb-6">
-          Notre equipe commerciale est disponible pour discuter de vos besoins specifiques.
-        </p>
-        <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
-          Prendre rendez-vous
-          <ChevronRight className="w-4 h-4 ml-2" />
-        </Button>
+        <EnterpriseContactForm />
       </motion.div>
     </div>
+  )
+}
+
+const inputClass =
+  "w-full px-4 py-3 rounded-xl bg-muted/30 border border-border/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
+
+function EnterpriseContactForm() {
+  const [form, setForm] = useState({
+    company: "",
+    contactName: "",
+    email: "",
+    phone: "",
+    employeeCount: "",
+    message: "",
+  })
+  const [sending, setSending] = useState(false)
+  const [sent, setSent] = useState(false)
+  const [error, setError] = useState("")
+
+  const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    setForm({ ...form, [key]: e.target.value })
+    setError("")
+  }
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSending(true)
+    setError("")
+    try {
+      const response = await fetch("/api/backend/api/enterprise-requests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      })
+      if (!response.ok) {
+        const data = await response.json().catch(() => null)
+        throw new Error(data?.error || "Envoi impossible, reessayez.")
+      }
+      setSent(true)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Envoi impossible, reessayez.")
+    }
+    setSending(false)
+  }
+
+  if (sent) {
+    return (
+      <div className="max-w-2xl mx-auto text-center p-8 rounded-2xl bg-card/50 border border-border/50">
+        <CheckCircle2 className="w-12 h-12 mx-auto mb-4 text-primary" />
+        <h2 className="text-xl font-semibold text-foreground mb-2">Demande envoyee</h2>
+        <p className="text-muted-foreground">Merci ! Notre equipe vous recontacte rapidement.</p>
+      </div>
+    )
+  }
+
+  return (
+    <form
+      onSubmit={submit}
+      className="max-w-2xl mx-auto p-6 md:p-8 rounded-2xl bg-card/50 border border-border/50 space-y-4"
+    >
+      <div className="text-center mb-2">
+        <h2 className="text-2xl font-bold text-foreground mb-1">Demander une proposition</h2>
+        <p className="text-muted-foreground">Reponse sous 48 h ouvrees.</p>
+      </div>
+      <div className="grid sm:grid-cols-2 gap-4">
+        <input required className={inputClass} placeholder="Nom de l'entreprise" value={form.company} onChange={set("company")} autoComplete="organization" />
+        <input required className={inputClass} placeholder="Votre nom" value={form.contactName} onChange={set("contactName")} autoComplete="name" />
+        <input required type="email" className={inputClass} placeholder="Email professionnel" value={form.email} onChange={set("email")} autoComplete="email" />
+        <input required type="tel" className={inputClass} placeholder="Telephone" value={form.phone} onChange={set("phone")} autoComplete="tel" />
+      </div>
+      <select className={inputClass} value={form.employeeCount} onChange={set("employeeCount")} aria-label="Nombre de collaborateurs">
+        <option value="">Nombre de collaborateurs</option>
+        <option value="1-10">1 a 10</option>
+        <option value="11-50">11 a 50</option>
+        <option value="51-200">51 a 200</option>
+        <option value="200+">Plus de 200</option>
+      </select>
+      <textarea
+        rows={4}
+        className={inputClass}
+        placeholder="Decrivez votre besoin (nombre de cartes, controle d'acces, integration a vos outils...)"
+        value={form.message}
+        onChange={set("message")}
+      />
+      {error && <p className="text-sm text-destructive text-center">{error}</p>}
+      <Button type="submit" disabled={sending} className="w-full py-6 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground">
+        {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+        Envoyer ma demande
+      </Button>
+    </form>
   )
 }

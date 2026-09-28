@@ -1,11 +1,13 @@
 import { defineCloudflareConfig } from "@opennextjs/cloudflare"
-import r2IncrementalCache from "@opennextjs/cloudflare/overrides/incremental-cache/r2-incremental-cache"
+import staticAssetsIncrementalCache from "@opennextjs/cloudflare/overrides/incremental-cache/static-assets-incremental-cache"
 
 // Cette app n'utilise aucune ISR (pas de generateStaticParams/revalidate/
-// unstable_cache nulle part), donc ce cache R2 sert surtout au cache de
-// build interne d'OpenNext lui-meme. Le bucket (voir wrangler.jsonc) a deja
-// ete cree et peuple par le premier deploiement reussi - garde le meme
-// override pour rester coherent avec ce qui tourne deja en prod.
+// unstable_cache nulle part) : les pages prerendues sont servies directement
+// depuis les assets statiques du Worker, au lieu d'une lecture R2 a chaque
+// requete, et enableCacheInterception les renvoie sans demarrer Next.js.
+// Si une page avec `revalidate` est ajoutee un jour, revenir au cache R2
+// (r2-incremental-cache) : ce cache-ci est en lecture seule.
 export default defineCloudflareConfig({
-  incrementalCache: r2IncrementalCache,
+  incrementalCache: staticAssetsIncrementalCache,
+  enableCacheInterception: true,
 })

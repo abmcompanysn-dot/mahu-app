@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"math"
 	"net/http"
+	"net/url"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -38,6 +39,7 @@ func cardResponse(card *models.BiometricCard) map[string]any {
 		"enabled":         card.Enabled,
 		"profileUsername": card.ProfileUsername,
 		"redirectMode":    card.RedirectMode,
+		"redirectUrl":     card.RedirectURL,
 	}
 }
 
@@ -111,16 +113,19 @@ func (d *Deps) GetCardPublicInfo(w http.ResponseWriter, r *http.Request, cardCod
 
 	profileUsername := any(nil)
 	redirectMode := "choice"
+	redirectURL := ""
 	if err == nil {
 		if card.ProfileUsername != "" {
 			profileUsername = card.ProfileUsername
 		}
 		redirectMode = card.RedirectMode
+		redirectURL = card.RedirectURL
 	}
 
 	httpx.WriteJSON(w, http.StatusOK, map[string]any{
 		"profileUsername": profileUsername,
 		"redirectMode":    redirectMode,
+		"redirectUrl":     redirectURL,
 	})
 }
 
@@ -160,6 +165,20 @@ func (d *Deps) UpdateProfileLink(w http.ResponseWriter, r *http.Request) {
 
 type redirectModeRequest struct {
 	RedirectMode string `json:"redirectMode"`
+	RedirectURL  string `json:"redirectUrl"`
+}
+
+// isSafeRedirectURL only allows http(s) links - blocks javascript:, data:,
+// and other schemes a scanned QR code should never be allowed to open.
+func isSafeRedirectURL(raw string) bool {
+	if len(raw) == 0 || len(raw) > 2000 {
+		return false
+	}
+	parsed, err := url.Parse(raw)
+	if err != nil || parsed.Host == "" {
+		return false
+	}
+	return parsed.Scheme == "http" || parsed.Scheme == "https"
 }
 
 func (d *Deps) UpdateRedirectMode(w http.ResponseWriter, r *http.Request) {
@@ -168,7 +187,7 @@ func (d *Deps) UpdateRedirectMode(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusBadRequest, "Invalid payload")
 		return
 	}
-	if req.RedirectMode != "choice" && req.RedirectMode != "profile" && req.RedirectMode != "ai" {
+	if req.RedirectMode != "choice" && req.RedirectMode != "profile" && req.RedirectMode != "ai" && req.RedirectMode != "url" {
 		httpx.WriteError(w, http.StatusBadRequest, "Invalid payload")
 		return
 	}
@@ -192,11 +211,20 @@ func (d *Deps) UpdateRedirectMode(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusBadRequest, "Active d'abord la reconnaissance faciale avant de choisir ce mode")
 		return
 	}
+	if req.RedirectMode == "url" && !isSafeRedirectURL(req.RedirectURL) {
+		httpx.WriteError(w, http.StatusBadRequest, "Lien invalide - utilise une URL http(s) complete")
+		return
+	}
 
 	card.RedirectMode = req.RedirectMode
+	update := bson.M{"redirectMode": card.RedirectMode, "updatedAt": time.Now()}
+	if req.RedirectMode == "url" {
+		card.RedirectURL = req.RedirectURL
+		update["redirectUrl"] = card.RedirectURL
+	}
 	if _, err := db.Collection(models.BiometricCardsCollection).UpdateOne(ctx,
 		bson.M{"_id": card.ID},
-		bson.M{"$set": bson.M{"redirectMode": card.RedirectMode, "updatedAt": time.Now()}},
+		bson.M{"$set": update},
 	); err != nil {
 		httpx.WriteError(w, http.StatusInternalServerError, "Erreur serveur")
 		return

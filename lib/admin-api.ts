@@ -2,6 +2,7 @@
 // (voir app/api/backend/[...path]/route.ts). Le token admin est distinct du
 // token utilisateur normal (type "admin" cote backend, cle localStorage separee).
 import { callAppScript, type ApiResponse } from "@/lib/api"
+import type { Product } from "@/lib/shop-api"
 
 const AUTH_BASE_URL = "/api/backend/api/auth"
 const ADMIN_BASE_URL = "/api/backend/api/admin"
@@ -105,6 +106,54 @@ export interface PhysicalCard {
   Vendeur?: string
   Commentaire?: string
   Tag_URL: string
+}
+
+export interface CardOrder {
+  _id: string
+  reference: string
+  productName: string
+  productPriceXof: number
+  depositXof: number
+  clientName: string
+  email: string
+  phone: string
+  deliveryAddress: string
+  paymentStatus: "en_attente" | "acompte_paye" | "solde"
+  deliveryStatus: "a_preparer" | "expediee" | "livree" | "annulee"
+  adminNote?: string
+  paidAt?: string
+  createdAt: string
+}
+
+export interface CardOrdersResponse {
+  orders: CardOrder[]
+  totals: { paidCount: number; depositsXof: number; remainingXof: number }
+}
+
+export type ProductInput = Omit<Product, "_id" | "slug">
+
+export interface ProspectRow {
+  _id: string
+  dateCapture: string
+  nom: string
+  contact: string
+  message: string
+  noteEtoiles?: number
+  canal: string
+  ownerEmail: string
+  ownerSlug: string
+}
+
+export interface EnterpriseRequest {
+  _id: string
+  company: string
+  contactName: string
+  email: string
+  phone: string
+  employeeCount: string
+  message: string
+  status: "nouveau" | "traite"
+  createdAt: string
 }
 
 type ApiCardsResponse = ApiResponse & { cards: PhysicalCard[]; isSuper: boolean }
@@ -237,4 +286,44 @@ export const adminApi = {
     }),
 
   getBetaSignups: (token: string) => request<{ signups: BetaSignup[] }>(`${ADMIN_BASE_URL}/beta-signups`, token),
+
+  listCardOrders: (token: string) => request<CardOrdersResponse>(`${ADMIN_BASE_URL}/card-orders`, token),
+
+  updateCardOrder: (
+    token: string,
+    id: string,
+    data: { deliveryStatus?: CardOrder["deliveryStatus"]; paymentStatus?: "acompte_paye" | "solde"; adminNote?: string }
+  ) =>
+    request<{ success: boolean }>(`${ADMIN_BASE_URL}/card-orders/${id}`, token, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    }),
+
+  listProducts: (token: string) => request<{ products: Product[] }>(`${ADMIN_BASE_URL}/products`, token),
+
+  createProduct: (token: string, data: ProductInput) =>
+    request<{ success: boolean; _id: string }>(`${ADMIN_BASE_URL}/products`, token, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  updateProduct: (token: string, id: string, data: ProductInput) =>
+    request<{ success: boolean }>(`${ADMIN_BASE_URL}/products/${id}`, token, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+
+  deleteProduct: (token: string, id: string) =>
+    request<{ success: boolean }>(`${ADMIN_BASE_URL}/products/${id}`, token, { method: "DELETE" }),
+
+  listEnterpriseRequests: (token: string) =>
+    request<{ requests: EnterpriseRequest[] }>(`${ADMIN_BASE_URL}/enterprise-requests`, token),
+
+  updateEnterpriseRequest: (token: string, id: string, status: EnterpriseRequest["status"]) =>
+    request<{ success: boolean }>(`${ADMIN_BASE_URL}/enterprise-requests/${id}`, token, {
+      method: "PATCH",
+      body: JSON.stringify({ status }),
+    }),
+
+  listProspects: (token: string) => request<{ prospects: ProspectRow[] }>(`${ADMIN_BASE_URL}/prospects`, token),
 }

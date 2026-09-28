@@ -14,7 +14,9 @@ import (
 func (d *Deps) runLegacyAction(ctx context.Context, action string, payload map[string]any, user *models.User) (any, error) {
 	switch action {
 	case "registerUser":
-		return d.legacyRegisterUser(ctx, str(payload, "email"), str(payload, "password"), str(payload, "enterpriseId"))
+		// enterpriseId is only set internally (legacyCreateEmployee) - accepting it
+		// here would let a public signup skip the card code / deposit check.
+		return d.legacyRegisterUser(ctx, str(payload, "email"), str(payload, "password"), "", str(payload, "cardCode"))
 	case "loginUser":
 		return d.legacyLoginUser(ctx, str(payload, "email"), str(payload, "password"))
 	case "forgotPassword":

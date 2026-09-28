@@ -74,6 +74,9 @@ func EnsureIndexes(ctx context.Context) error {
 		{models.PhysicalCardsCollection, bson.D{{Key: "codeCarte", Value: 1}}, true, false},
 		{models.PawaPayCheckoutsCollection, bson.D{{Key: "checkoutId", Value: 1}}, true, false},
 		{models.GmailConnectionsCollection, bson.D{{Key: "userId", Value: 1}}, true, false},
+		{models.CardOrdersCollection, bson.D{{Key: "reference", Value: 1}}, true, false},
+		{models.ProductsCollection, bson.D{{Key: "slug", Value: 1}}, true, false},
+		{models.ProspectsCollection, bson.D{{Key: "dateCapture", Value: -1}}, false, false},
 		{models.SocialConnectionsCollection, bson.D{{Key: "userId", Value: 1}, {Key: "provider", Value: 1}}, true, false},
 	}
 

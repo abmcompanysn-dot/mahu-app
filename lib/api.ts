@@ -192,8 +192,8 @@ export const api = {
   login: (email: string, password: string) =>
     callAppScript("loginUser", { email, password }),
   
-  register: (email: string, password: string, enterpriseId?: string) =>
-    callAppScript("registerUser", { email, password, enterpriseId }),
+  register: (email: string, password: string, cardCode?: string) =>
+    callAppScript("registerUser", { email, password, cardCode }),
   
   forgotPassword: (email: string) =>
     callAppScript("forgotPassword", { email }),

@@ -60,7 +60,7 @@ interface AuthContextValue {
   dashboardData: AppScriptDashboardData | null
   user: AppScriptUser | null
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string; newUser?: boolean }>
-  register: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
+  register: (email: string, password: string, cardCode?: string) => Promise<{ success: boolean; error?: string }>
   socialLogin: (provider: "google" | "facebook") => Promise<{ success: boolean; error?: string; newUser?: boolean }>
   hydrateFromToken: (token: string, role: string) => void
   logout: () => void
@@ -152,10 +152,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   // Register
-  const register = useCallback(async (email: string, password: string) => {
+  const register = useCallback(async (email: string, password: string, cardCode?: string) => {
     setIsLoading(true)
 
-    const result = await api.register(email, password)
+    const result = await api.register(email, password, cardCode)
 
     if (result.success && result.token) {
       localStorage.setItem("mahu_token", result.token)

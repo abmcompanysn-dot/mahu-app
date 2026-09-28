@@ -14,6 +14,7 @@ type BiometricCard struct {
 	CardCode        string             `bson:"cardCode" json:"cardCode"`
 	ProfileUsername string             `bson:"profileUsername" json:"profileUsername"`
 	RedirectMode    string             `bson:"redirectMode" json:"redirectMode"`
+	RedirectURL     string             `bson:"redirectUrl,omitempty" json:"redirectUrl,omitempty"`
 	FaceDescriptor  []float64          `bson:"faceDescriptor" json:"faceDescriptor"`
 	Enabled         bool               `bson:"enabled" json:"enabled"`
 	CreatedAt       time.Time          `bson:"createdAt" json:"createdAt"`
