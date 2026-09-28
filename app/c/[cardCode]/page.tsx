@@ -35,6 +35,10 @@ export default function CardVerificationPage({ params }: { params: Promise<{ car
 
     function applyRedirectMode(mode: CardRedirectMode, username: string | null, redirectUrl?: string) {
       setRedirectMode(mode)
+      if (mode === "activate") {
+        router.replace(`/register?code=${encodeURIComponent(cardCode)}`)
+        return
+      }
       if (mode === "profile" && username) {
         router.replace(`/p/${username}`)
         return

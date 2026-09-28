@@ -210,7 +210,8 @@ export const billingApi = {
     }),
 }
 
-export type CardRedirectMode = "choice" | "profile" | "ai" | "url"
+// "activate" : carte imprimee pas encore activee -> inscription avec le code.
+export type CardRedirectMode = "choice" | "profile" | "ai" | "url" | "activate"
 
 export interface BiometricCardInfo {
   cardCode: string

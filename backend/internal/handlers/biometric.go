@@ -7,6 +7,7 @@ import (
 	"math"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -120,6 +121,16 @@ func (d *Deps) GetCardPublicInfo(w http.ResponseWriter, r *http.Request, cardCod
 		}
 		redirectMode = card.RedirectMode
 		redirectURL = card.RedirectURL
+	} else if physical, perr := physicalCardRedirect(r.Context(), cardCode); perr == nil && physical != "" {
+		// Printed NFC cards (codes from /admin/cards) point here too: an
+		// activated card opens its owner's profile, a new one the signup
+		// page with the code pre-filled.
+		if physical == "activate" {
+			redirectMode = "activate"
+		} else {
+			redirectMode = "profile"
+			profileUsername = physical
+		}
 	}
 
 	httpx.WriteJSON(w, http.StatusOK, map[string]any{
@@ -358,4 +369,26 @@ func (d *Deps) FaceVerify(w http.ResponseWriter, r *http.Request) {
 	}
 
 	httpx.WriteJSON(w, http.StatusOK, map[string]any{"success": true, "token": token, "role": user.Role})
+}
+
+// physicalCardRedirect returns the owner's profile slug for an activated
+// printed card, "activate" for a card nobody has claimed yet, or "" when the
+// code isn't a printed card (or was deactivated).
+func physicalCardRedirect(ctx context.Context, cardCode string) (string, error) {
+	var card models.PhysicalCard
+	err := db.Collection(models.PhysicalCardsCollection).FindOne(ctx, bson.M{"codeCarte": strings.ToUpper(cardCode)}).Decode(&card)
+	if err != nil {
+		return "", err
+	}
+	if card.Statut == models.CardStatusDeactivated {
+		return "", nil
+	}
+	if card.EmailProprietaire == "" {
+		return "activate", nil
+	}
+	owner, err := findUserByEmail(ctx, card.EmailProprietaire)
+	if err != nil || owner == nil || owner.ProfileURL == "" {
+		return "", err
+	}
+	return owner.ProfileURL, nil
 }
