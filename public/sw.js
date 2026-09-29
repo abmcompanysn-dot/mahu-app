@@ -1,8 +1,8 @@
 // Service worker minimal pour rendre Mahu installable (PWA) : app-shell en
 // cache pour un chargement instantane au retour, sans essayer de mettre en
 // cache les reponses d'API (donnees toujours fraiches).
-const CACHE_NAME = "mahu-shell-v2"
-const APP_SHELL = ["/", "/dashboard", "/icon.svg"]
+const CACHE_NAME = "mahu-shell-v3"
+const APP_SHELL = ["/", "/dashboard", "/icons/icon-192.png"]
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

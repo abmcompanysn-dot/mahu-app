@@ -203,3 +203,25 @@ func (d *Deps) legacyUpdateProspectStatus(ctx context.Context, payload map[strin
 	}
 	return map[string]any{"success": true}, nil
 }
+
+// legacyDeleteProspects deletes contacts from the owner's list - only their
+// own (the profileOwnerId filter makes other people's ids a no-op).
+func (d *Deps) legacyDeleteProspects(ctx context.Context, payload map[string]any, user *models.User) (map[string]any, error) {
+	raw, _ := payload["prospectIds"].([]any)
+	ids := make([]primitive.ObjectID, 0, len(raw))
+	for _, v := range raw {
+		s, _ := v.(string)
+		if id, err := primitive.ObjectIDFromHex(s); err == nil {
+			ids = append(ids, id)
+		}
+	}
+	if len(ids) == 0 || len(ids) > 500 {
+		return map[string]any{"success": false, "error": "Aucun contact valide a supprimer."}, nil
+	}
+	res, err := db.Collection(models.ProspectsCollection).DeleteMany(ctx,
+		bson.M{"_id": bson.M{"$in": ids}, "profileOwnerId": user.ID})
+	if err != nil {
+		return nil, err
+	}
+	return map[string]any{"success": true, "deleted": res.DeletedCount}, nil
+}

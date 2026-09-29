@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { motion } from "framer-motion"
 import { Eye, Download, MousePointer, UserPlus } from "lucide-react"
 
@@ -84,9 +85,9 @@ export function RecentActivity({ activities }: RecentActivityProps) {
     >
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-foreground">Activite recente</h3>
-        <button className="text-sm text-primary hover:text-primary/80 transition-colors">
-          Voir tout
-        </button>
+        <Link href="/dashboard/contacts" className="text-sm text-primary hover:text-primary/80 transition-colors">
+          Voir mes contacts
+        </Link>
       </div>
 
       <div className="space-y-3">
@@ -100,8 +101,7 @@ export function RecentActivity({ activities }: RecentActivityProps) {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.6 + index * 0.1 }}
-              whileHover={{ x: 4 }}
-              className="group flex items-center gap-4 p-3 rounded-xl hover:bg-muted/30 transition-all cursor-pointer"
+              className="group flex items-center gap-4 p-3 rounded-xl"
             >
               <div className={`p-2.5 rounded-xl ${colors.bg} group-hover:scale-110 transition-transform`}>
                 <Icon className={`w-4 h-4 ${colors.text}`} />

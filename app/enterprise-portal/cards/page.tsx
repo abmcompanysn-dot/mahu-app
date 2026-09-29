@@ -51,7 +51,7 @@ export default function EnterprisePortalCardsPage() {
               <p className="text-sm text-muted-foreground mb-4">{card.Profession || "—"}</p>
               {card.URL_Profil && (
                 <a
-                  href={`/${card.URL_Profil}`}
+                  href={`/p/${card.URL_Profil}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 text-sm text-primary hover:underline"

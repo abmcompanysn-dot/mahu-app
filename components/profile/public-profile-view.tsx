@@ -70,6 +70,7 @@ export function PublicProfileView({
   const [leadForm, setLeadForm] = useState({ name: "", contact: "", message: "", rating: 0 })
   const [leadSubmitting, setLeadSubmitting] = useState(false)
   const [leadSuccess, setLeadSuccess] = useState(false)
+  const [leadError, setLeadError] = useState("")
 
   useEffect(() => {
     async function loadProfile() {
@@ -135,19 +136,21 @@ END:VCARD`
   const handleLeadSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLeadSubmitting(true)
+    setLeadError("")
 
     try {
-      await api.handleLeadCapture({
+      const result = await api.handleLeadCapture({
         profileUrl: username,
         name: leadForm.name,
         contact: leadForm.contact,
         message: leadForm.message,
         rating: leadForm.rating || undefined,
       })
+      if (!result.success) throw new Error(result.error)
       setLeadSuccess(true)
       setLeadForm({ name: "", contact: "", message: "", rating: 0 })
     } catch {
-      // Silent fail
+      setLeadError("Le message n'a pas pu etre envoye. Verifiez votre connexion et reessayez.")
     }
 
     setLeadSubmitting(false)
@@ -223,7 +226,7 @@ END:VCARD`
               <div 
                 className="w-28 h-28 rounded-full border-4 bg-cover bg-center"
                 style={{ 
-                  backgroundImage: `url(${profile.URL_Photo ? optimizedImage(profile.URL_Photo, 240) : "/placeholder-avatar.png"})`,
+                  backgroundImage: `url(${profile.URL_Photo ? optimizedImage(profile.URL_Photo, 240) : "/placeholder-user.jpg"})`,
                   borderColor: accentColor
                 }}
               />
@@ -420,6 +423,7 @@ END:VCARD`
                         onChange={(e) => setLeadForm({ ...leadForm, message: e.target.value })}
                         className="w-full p-3 rounded-xl bg-muted/30 border border-border/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 min-h-[80px]"
                       />
+                      {leadError && <p className="text-sm text-destructive">{leadError}</p>}
                       <Button
                         type="submit"
                         disabled={leadSubmitting}

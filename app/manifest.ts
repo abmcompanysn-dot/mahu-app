@@ -2,19 +2,27 @@ import type { MetadataRoute } from "next"
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Mahu - Carte de visite numerique",
+    id: "/dashboard",
+    name: "Mahu - Smart Card",
     short_name: "Mahu",
     description:
-      "Creez et partagez votre carte de visite numerique NFC, moderne et ecologique. Gerez vos contacts et analysez vos performances.",
+      "Votre carte de visite NFC : partagez votre profil en un tap, recevez et triez vos contacts, suivez vos statistiques.",
     start_url: "/dashboard",
+    scope: "/",
     display: "standalone",
+    orientation: "portrait",
     background_color: "#0a0a0a",
     theme_color: "#0a0a0a",
     lang: "fr",
+    categories: ["business", "productivity"],
     icons: [
-      { src: "/icon.svg", sizes: "any", type: "image/svg+xml", purpose: "any" },
-      { src: "/icon-light-32x32.png", sizes: "32x32", type: "image/png" },
-      { src: "/icon-dark-32x32.png", sizes: "32x32", type: "image/png" },
+      { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+      { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+      { src: "/icons/icon-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+    ],
+    shortcuts: [
+      { name: "Mes contacts", url: "/dashboard/contacts", icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }] },
+      { name: "Modifier ma carte", url: "/dashboard/profile", icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }] },
     ],
   }
 }

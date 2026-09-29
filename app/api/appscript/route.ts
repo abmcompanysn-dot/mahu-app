@@ -29,6 +29,16 @@ export async function POST(request: NextRequest) {
       cache: "no-store",
     })
 
+    // exportLeadsAsCSV repond en texte brut (CSV), pas en JSON : on le
+    // transmet tel quel au lieu de le perdre dans response.json().
+    const contentType = response.headers.get("content-type") || ""
+    if (!contentType.includes("application/json")) {
+      return new NextResponse(await response.text(), {
+        status: response.status,
+        headers: { "content-type": contentType || "text/plain; charset=utf-8" },
+      })
+    }
+
     const data = await response.json().catch(() => null)
     return NextResponse.json(data, { status: response.status })
   } catch (error) {

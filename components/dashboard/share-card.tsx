@@ -1,7 +1,8 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import QRCode from "qrcode"
 import { Check, QrCode, X } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import { useSiteOrigin } from "@/hooks/use-site-origin"
@@ -23,6 +24,14 @@ export function ShareCard({ options, username = "" }: ShareCardProps) {
 
   const { origin, host } = useSiteOrigin()
   const profileUrl = `${origin}/p/${username}`
+  // Vrai QR code vers le profil (le ?source=QR Code alimente la stat "Scans").
+  const [qrDataUrl, setQrDataUrl] = useState("")
+  useEffect(() => {
+    if (!username) return
+    QRCode.toDataURL(`${profileUrl}?source=${encodeURIComponent("QR Code")}`, { margin: 1, width: 400 })
+      .then(setQrDataUrl)
+      .catch(() => setQrDataUrl(""))
+  }, [profileUrl, username])
 
   const handleAction = (action: string) => {
     switch (action) {
@@ -138,15 +147,28 @@ export function ShareCard({ options, username = "" }: ShareCardProps) {
               
               {/* QR Code */}
               <div className="bg-white p-4 rounded-xl mx-auto w-fit mb-4">
-                <svg viewBox="0 0 41 41" className="w-48 h-48">
-                  <rect fill="white" width="41" height="41"/>
-                  <path d="M0,0h7v7H0V0zm1,1v5h5v-5H1zm1,1h3v3H2V2zm32,0h7v7h-7V0zm1,1v5h5v-5h-5zm1,1h3v3h-3V2zM0,34h7v7H0v-7zm1,1v5h5v-5H1zm1,1h3v3H2v-3zM8,0h1v2H8V0zm2,0h3v1h-3V0zm5,0h1v2h-1V0zm2,0h1v1h1v1h-1v1h-1V2h-1V1h1V0zm4,0h1v1h-1V0zm2,0h5v1h-1v1h-3V1h-1V0zm6,0h1v3h-1V0zm-20,1h1v1h1v1H9V2h1V1zm4,0h1v2h-1V1zm10,0h2v1h-2V1zM8,2h1v1H8V2zm4,0h1v2h1v1h-2V4h-1V3h1V2zm4,0h1v1h-1V2zm8,0h1v1h-1V2zm-16,1h1v2h1V4h1v1h-2V4h-1V3zm4,0h1v1h-1V3zm2,0h1v1h-1V3zm12,0h1v1h-1V3zm-14,1h1v1h-1V4zm4,0h1v2h-1V4zm5,0h1v1h-1V4zm4,0h1v1h-1V4zm-9,1h1v1h-1V5zm5,0h2v1h-2V5zm5,0h1v1h-1V5zM8,6h1v1H8V6zm2,0h1v1h-1V6zm5,0h1v1h-1V6zm3,0h1v1h-1V6zm3,0h1v1h-1V6zm4,0h1v2h2v1h-1v1h-1V9h-1V6zm-17,1h1v1H8V7zm4,0h1v1h-1V7zm4,0h1v1h-1V7zm2,0h2v1h-2V7zm7,0h1v1h-1V7zM0,8h1v1H0V8zm2,0h2v1H2V8zm3,0h2v1H5V8zm5,0h1v2h2V9h1v1h-1v1h-1v-1h-2v1H8v1H7V8h1v1h2V8zm7,0h1v1h-1V8zm2,0h1v2h-1V8zm2,0h1v1h1v1h-2V8zm6,0h1v2h-1V8zm-22,1h1v1H7V9zm6,0h1v1h-1V9zm5,0h1v1h-1V9zm2,0h1v1h-1V9zm2,0h1v1h-1V9zm6,0h4v1h-1v1h-1v-1h-2V9zM0,10h1v1h1v1H0v-2zm3,0h2v1H3v-1zm8,0h1v1h-1v-1zm4,0h2v1h-2v-1zm8,0h1v1h-1v-1zm-15,1h1v3h-1v-3zm4,0h1v1h-1v-1zm3,0h1v1h-1v-1zm6,0h1v1h-1v-1zm6,0h1v1h-1v-1zm-20,1h1v1h-1v-1zm2,0h1v1h-1v-1zm6,0h1v1h-1v-1zm3,0h1v1h-1v-1zm10,0h1v1h-1v-1zM0,13h2v1H0v-1zm3,0h1v1H3v-1zm5,0h1v1H8v-1zm5,0h2v1h-2v-1zm4,0h1v1h-1v-1zm10,0h1v1h-1v-1zm-25,1h1v1H7v-1zm2,0h1v1H9v-1zm4,0h2v1h-2v-1zm6,0h1v1h-1v-1zm2,0h2v2h-1v-1h-1v-1zm4,0h1v2h1v1h-2v-3zm5,0h1v3h-1v-3zM0,15h1v2H0v-2zm2,0h3v1H2v-1zm5,0h3v2h1v-1h1v3h-1v-1h-1v1H9v-1H8v-2H7v-1zm8,0h1v3h-1v-3zm3,0h1v1h1v1h-2v-2zm3,0h1v1h-1v-1zm2,0h1v1h-1v-1zM2,16h2v1H2v-1zm11,0h1v1h-1v-1zm4,0h1v1h-1v-1zm10,0h1v1h-1v-1zm-19,1h1v1H8v-1zm3,0h1v1h-1v-1zm2,0h1v1h-1v-1zm6,0h1v1h-1v-1zm4,0h1v1h-1v-1zM0,18h1v1H0v-1zm2,0h1v1H2v-1zm5,0h1v1H7v-1zm4,0h2v1h-2v-1zm4,0h1v1h-1v-1zm3,0h1v1h-1v-1zm2,0h1v2h-1v-2zm4,0h1v1h-1v-1zm-18,1h1v1H8v-1zm5,0h1v1h-1v-1zm9,0h1v1h-1v-1zm-15,1h3v1h1v1H9v-1H7v-1zm6,0h1v1h-1v-1zm5,0h1v1h-1v-1zm2,0h1v1h-1v-1zm5,0h1v1h-1v-1zM0,21h3v1H0v-1zm5,0h1v2h1v-1h1v2H7v1H6v2H5v-1H4v-1h1v-1H4v-2h1zm5,0h2v1h-2v-1zm5,0h1v2h-1v-2zm2,0h1v1h1v1h-1v1h-1v1h1v2h-1v-1h-1v-1h1v-1h-1v1h-1v-2h2v-1zm10,0h1v1h-1v-1zm-25,1h1v1H2v-1zm6,0h1v1h1v1H9v1H8v-3zm8,0h1v1h-1v-1zm3,0h1v3h-2v-1h1v-2zm3,0h1v2h-1v-2zm3,0h1v1h-1v-1zm-18,1h1v1H7v-1zm19,0h1v1h-1v-1zm-24,1h1v2H2v-2zm4,0h1v2H6v-2zm2,0h1v2H8v-2zm5,0h1v1h-1v-1zm2,0h1v2h-1v-2zm9,0h2v1h-2v-1zm-23,1h1v2H3v-2zm6,0h1v1H9v-1zm2,0h1v1h-1v-1zm3,0h1v1h-1v-1zm4,0h1v1h-1v-1zm5,0h2v1h-2v-1zm-13,1h2v1h-2v-1zm12,0h1v1h-1v-1zM0,27h1v1H0v-1zm4,0h1v1H4v-1zm2,0h1v1H6v-1zm4,0h1v1h-1v-1zm3,0h1v1h-1v-1zm2,0h2v1h-2v-1zm3,0h1v1h-1v-1zm2,0h1v2h-1v-2zm4,0h1v3h-1v-3zm4,0h2v2h-2v-2zm-27,1h1v1H3v-1zm4,0h1v1H7v-1zm5,0h1v1h-1v-1zm3,0h1v1h1v1h-2v-2zm10,0h1v1h-1v-1zM0,29h1v1H0v-1zm5,0h2v1H5v-1zm3,0h2v1H8v-1zm5,0h1v2h-1v-2zm3,0h1v2h-1v-2zm6,0h1v1h-1v-1zm3,0h1v1h-1v-1zm-17,1h2v1h1v3h-1v-1h-1v-2h-1v-1zm5,0h1v1h-1v-1zm8,0h1v2h-1v-2zm5,0h1v1h-1v-1zM8,31h4v1H8v-1zm10,0h1v1h-1v-1zm6,0h1v3h1v-1h1v2h-3v-4zM0,32h1v2h1v-1h2v1H3v2H2v-1H1v1H0v-4zm4,0h1v1H4v-1zm5,0h1v1H9v-1zm4,0h2v1h-2v-1zm4,0h1v1h-1v-1zm4,0h1v1h-1v-1zm3,0h1v1h-1v-1zm3,0h1v1h-1v-1zM8,33h2v1h1v-1h2v1h-1v1h2v1h-2v2h-1v-1H9v1H8v-4zm6,0h1v1h-1v-1zm5,0h1v1h-1v-1zm8,0h1v1h-1v-1zm-24,1h1v1H3v-1zm3,0h1v1H6v-1zm9,0h1v2h-1v-2zm2,0h1v1h-1v-1zm2,0h1v1h-1v-1zm2,0h1v2h-1v-2zm4,0h1v1h-1v-1zM4,35h1v1H4v-1zm9,0h1v1h-1v-1zm4,0h1v1h-1v-1zm4,0h1v2h1v1h-1v1h-1v-4zm2,0h1v1h-1v-1zm4,0h1v1h-1v-1zm-19,1h1v1H8v-1zm3,0h1v1h-1v-1zm4,0h1v1h-1v-1zm12,0h1v1h-1v-1zM0,37h2v1H0v-1zm4,0h4v1H4v-1zm5,0h1v2H9v-2zm4,0h1v1h-1v-1zm2,0h1v1h-1v-1zm2,0h1v1h-1v-1zm6,0h1v1h-1v-1zm5,0h1v1h1v1h-2v-2zm-25,1h1v3H8v-3zm3,0h2v1h-2v-1zm3,0h1v1h-1v-1zm5,0h1v1h-1v-1zm10,0h1v1h-1v-1zM0,39h1v2H0v-2zm2,0h3v1H2v-1zm10,0h1v1h-1v-1zm2,0h2v2h-2v-2zm6,0h1v1h-1v-1zm6,0h1v2h-1v-2zm-24,1h1v1H2v-1zm7,0h1v1H9v-1zm2,0h1v1h-1v-1zm5,0h1v1h-1v-1zm2,0h1v1h-1v-1zm5,0h1v1h-1v-1zm2,0h1v1h-1v-1z" fill="black"/>
-                </svg>
+                {qrDataUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={qrDataUrl} alt={`QR code vers ${profileUrl}`} className="w-48 h-48" />
+                ) : (
+                  <div className="w-48 h-48 flex items-center justify-center text-sm text-muted-foreground">
+                    Generation...
+                  </div>
+                )}
               </div>
               
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground mb-4">
                 {host}/p/{username}
               </p>
+              {qrDataUrl && (
+                <a
+                  href={qrDataUrl}
+                  download={`qr-${username || "mahu"}.png`}
+                  className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium"
+                >
+                  Telecharger le QR code
+                </a>
+              )}
             </div>
           </motion.div>
         </motion.div>

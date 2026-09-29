@@ -8,7 +8,7 @@ const features = [
   {
     icon: LayoutDashboard,
     title: "Tableau de Bord Intuitif",
-    description: "Suivez en temps reel les performances de votre carte : nombre de vues, clics sur vos liens, et prospects generes. Prenez des decisions basees sur des donnees concretes.",
+    description: "Suivez en temps reel les performances de votre carte : nombre de vues, scans de votre carte et contacts recus. Prenez des decisions basees sur des donnees concretes.",
     gradient: "from-primary/20 via-primary/10 to-transparent",
   },
   {

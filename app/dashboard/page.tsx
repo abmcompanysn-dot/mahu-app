@@ -71,10 +71,10 @@ export default function DashboardPage() {
   const statsData = data?.stats // { labels: [...], data: [...] }
   
   // Calculer les stats depuis les donnees AppScript
+  // stats.data = vues par source [NFC, QR Code, Lien] (legacy_dashboard.go)
   const nfcViews = statsData?.data?.[0] || 0
   const qrViews = statsData?.data?.[1] || 0
-  const linkViews = statsData?.data?.[2] || 0
-  const totalClicks = nfcViews + qrViews + linkViews
+  const cardScans = nfcViews + qrViews
   
   const conversionRate = totalViews > 0 ? ((totalProspects / totalViews) * 100).toFixed(1) : "0"
 
@@ -82,28 +82,24 @@ export default function DashboardPage() {
     { 
       label: "Vues totales", 
       value: totalViews.toLocaleString(), 
-      change: "+12%", 
       icon: Eye, 
       color: "text-primary" 
     },
     { 
-      label: "Clics liens", 
-      value: totalClicks.toLocaleString(), 
-      change: "+8%", 
+      label: "Scans de la carte", 
+      value: cardScans.toLocaleString(), 
       icon: MousePointer, 
       color: "text-emerald-500" 
     },
     { 
       label: "Contacts generes", 
       value: totalProspects.toLocaleString(), 
-      change: "+15%", 
       icon: UserPlus, 
       color: "text-amber-500" 
     },
     { 
       label: "Taux conversion", 
       value: `${conversionRate}%`, 
-      change: "+2%", 
       icon: TrendingUp, 
       color: "text-cyan-500" 
     },

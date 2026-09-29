@@ -226,8 +226,20 @@ export const api = {
   handleLeadCapture: (data: { profileUrl: string; name: string; contact: string; message?: string; rating?: number }) =>
     callAppScript("handleLeadCapture", data),
   
-  exportLeadsAsCSV: (token: string) =>
-    callAppScript("exportLeadsAsCSV", {}, token),
+  // Reponse en texte CSV brut (pas le format JSON des autres actions).
+  exportLeadsAsCSV: async (token: string): Promise<string> => {
+    const response = await fetch(API_PROXY_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "exportLeadsAsCSV", token }),
+    })
+    const text = await response.text()
+    if (!response.ok || text.trimStart().startsWith("{")) throw new Error("Export impossible")
+    return text
+  },
+
+  deleteProspects: (token: string, prospectIds: string[]) =>
+    callAppScript("deleteProspects", { prospectIds }, token),
   
   // Documents
   saveDocument: (token: string, data: { type: string; name: string; url: string }) =>
@@ -272,7 +284,8 @@ export const api = {
     callAppScript("getTeamProspects", {}, token),
   
   // Support
-  contactSupport: (token: string | null, data: { email: string; sujet: string; message: string; telephone?: string }) =>
+  // Champs attendus par legacyContactSupport : email, phone, subject, message.
+  contactSupport: (token: string | null, data: { email: string; subject: string; message: string; phone?: string }) =>
     token ? callAppScript("contactSupport", data, token) : callAppScript("contactSupport", data),
 }
 

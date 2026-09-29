@@ -187,29 +187,22 @@ export function PhonePreview({ profile, profileUrl }: PhonePreviewProps) {
                 className="px-5 mt-5"
               >
                 <div className="grid grid-cols-2 gap-2">
-                  {(socialLinks.length > 0 ? socialLinks : [
-                    { type: "linkedin", label: "LinkedIn", url: "#" },
-                    { type: "email", label: "Email", url: "#" },
-                    { type: "phone", label: "Telephone", url: "#" },
-                    { type: "website", label: "Site web", url: "#" },
-                  ]).slice(0, 4).map((link, index) => {
+                  {socialLinks.slice(0, 4).map((link, index) => {
                     const IconComponent = socialIcons[link.type?.toLowerCase()] || socialIcons.default
                     const color = socialColors[link.type?.toLowerCase()] || socialColors.default
                     return (
-                      <motion.button
+                      <motion.div
                         key={link.type + index}
                         initial={{ opacity: 0, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: 0.7 + index * 0.1 }}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-muted/50 border border-border/50 hover:border-primary/30 transition-all"
+                        className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-muted/50 border border-border/50"
                       >
                         <IconComponent className="w-4 h-4" style={{ color }} />
                         <span className="text-xs font-medium text-foreground truncate">
                           {link.label || link.type}
                         </span>
-                      </motion.button>
+                      </motion.div>
                     )
                   })}
                 </div>
@@ -222,12 +215,12 @@ export function PhonePreview({ profile, profileUrl }: PhonePreviewProps) {
                 transition={{ delay: 0.9 }}
                 className="px-5 mt-4"
               >
-                <button 
-                  className="w-full py-3 rounded-xl text-white font-medium text-sm transition-colors"
+                <div
+                  className="w-full py-3 rounded-xl text-white font-medium text-sm text-center"
                   style={{ backgroundColor: accentColor }}
                 >
                   Enregistrer le contact
-                </button>
+                </div>
               </motion.div>
 
               {/* QR Section */}
@@ -238,15 +231,8 @@ export function PhonePreview({ profile, profileUrl }: PhonePreviewProps) {
                 className="absolute bottom-0 left-0 right-0 px-5 py-4 bg-muted/30 backdrop-blur-sm border-t border-border/50"
               >
                 <div className="flex items-center justify-center gap-3">
-                  <div className="w-12 h-12 rounded-lg bg-white p-1.5 flex items-center justify-center">
-                    {/* QR Code Pattern - deterministic */}
-                    <svg viewBox="0 0 21 21" className="w-full h-full">
-                      <rect fill="white" width="21" height="21"/>
-                      <path d="M0,0h7v7H0V0zm1,1v5h5v-5H1zm1,1h3v3H2V2zm10,0h7v7h-7V0zm1,1v5h5v-5h-5zm1,1h3v3h-3V2zM0,14h7v7H0v-7zm1,1v5h5v-5H1zm1,1h3v3H2v-3zm8-8h1v1H10V8zm2,0h1v1h-1V8zm2,0h2v1h-2V8zm3,0h1v3h-1V8zm-7,1h1v1h-1V9zm4,0h1v1h-1V9zm-4,1h1v1h-1v-1zm2,0h1v3h-1v-3zm4,0h1v1h-1v-1zm-6,1h1v1h-1v-1zm2,0h1v1h-1v-1zm6,0h1v1h-1v-1zM8,12h1v1H8v-1zm4,0h1v1h-1v-1zm-4,1h3v1H8v-1zm4,0h1v3h-1v-3zm4,0h2v1h-2v-1zm3,0h1v1h-1v-1zM8,14h1v1H8v-1zm2,0h2v1h-2v-1zm7,0h1v3h-1v-3zm2,0h1v1h-1v-1zM8,15h1v2H8v-2zm2,0h1v1h-1v-1zm2,0h1v1h-1v-1zm6,0h1v1h-1v-1zm-7,1h1v1h-1v-1zm2,0h1v1h-1v-1zm6,0h1v2h-1v-2zM9,17h1v1H9v-1zm2,0h3v1h-3v-1zm4,0h1v1h-1v-1zm-5,1h1v2h-1v-2zm2,0h1v1h-1v-1zm4,0h1v1h-1v-1zm-4,1h3v1h-3v-1zm5,0h2v1h-2v-1z" fill="black"/>
-                    </svg>
-                  </div>
                   <div className="text-left">
-                    <p className="text-xs font-medium text-foreground">Scanner pour sauvegarder</p>
+                    <p className="text-xs font-medium text-foreground">Votre carte en ligne</p>
                     <p className="text-xs text-muted-foreground">{host}/p/{username}</p>
                   </div>
                 </div>

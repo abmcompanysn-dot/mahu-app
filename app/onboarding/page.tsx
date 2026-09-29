@@ -222,7 +222,15 @@ export default function OnboardingPage() {
               </div>
 
               <p className="text-xs text-muted-foreground">
-                En continuant, vous acceptez nos Conditions d&apos;utilisation et notre Politique de confidentialite.
+                En continuant, vous acceptez nos{" "}
+                <Link href="/conditions-utilisation" className="underline hover:text-foreground">
+                  Conditions d&apos;utilisation
+                </Link>{" "}
+                et notre{" "}
+                <Link href="/confidentialite" className="underline hover:text-foreground">
+                  Politique de confidentialite
+                </Link>
+                .
               </p>
             </motion.div>
           )}

@@ -34,7 +34,7 @@ const STATUS_LABELS: Record<ContactStatus, string> = {
 }
 
 export default function ContactsPage() {
-  const { dashboardData, token, isAuthenticated } = useAuth()
+  const { dashboardData, token, isAuthenticated, fetchDashboardData } = useAuth()
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedContacts, setSelectedContacts] = useState<string[]>([])
   const [showFilters, setShowFilters] = useState(false)
@@ -50,6 +50,33 @@ export default function ContactsPage() {
   const [statusFilter, setStatusFilter] = useState<"all" | ContactStatus>("all")
   const [statusOverrides, setStatusOverrides] = useState<Record<string, ContactStatus>>({})
   const [statusError, setStatusError] = useState("")
+  const [period, setPeriod] = useState<"all" | "7" | "30" | "year">("all")
+  const [removedIds, setRemovedIds] = useState<string[]>([])
+  const [deleting, setDeleting] = useState(false)
+
+  const inPeriod = (c: Contact) => {
+    if (period === "all") return true
+    const d = new Date(c.date)
+    const now = new Date()
+    if (period === "year") return d.getFullYear() === now.getFullYear()
+    return now.getTime() - d.getTime() <= Number(period) * 24 * 60 * 60 * 1000
+  }
+
+  const deleteContacts = async (ids: string[]) => {
+    if (!token || ids.length === 0) return
+    if (!confirm(ids.length > 1 ? `Supprimer ces ${ids.length} contacts ?` : "Supprimer ce contact ?")) return
+    setDeleting(true)
+    setStatusError("")
+    const res = await api.deleteProspects(token, ids).catch(() => null)
+    if (res?.success) {
+      setRemovedIds((prev) => [...prev, ...ids])
+      setSelectedContacts((prev) => prev.filter((id) => !ids.includes(id)))
+      fetchDashboardData()
+    } else {
+      setStatusError("La suppression a echoue, reessayez.")
+    }
+    setDeleting(false)
+  }
 
   const statusOf = (c: Contact): ContactStatus =>
     statusOverrides[c.id] || (c.statut as ContactStatus) || "nouveau"
@@ -94,6 +121,8 @@ export default function ContactsPage() {
 
   const filteredContacts = contacts.filter(
     (contact) =>
+      !removedIds.includes(contact.id) &&
+      inPeriod(contact) &&
       (statusFilter === "all" || statusOf(contact) === statusFilter) &&
       (contact.nom?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       contact.contact?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -118,10 +147,10 @@ export default function ContactsPage() {
     if (!token) return
     setExporting(true)
     try {
-      const result = await api.exportLeadsAsCSV(token)
-      if (result.success && result.data) {
+      const csv = await api.exportLeadsAsCSV(token)
+      {
         // Create download link
-        const blob = new Blob([result.data as string], { type: 'text/csv' })
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
         const url = URL.createObjectURL(blob)
         const a = document.createElement('a')
         a.href = url
@@ -129,8 +158,8 @@ export default function ContactsPage() {
         a.click()
         URL.revokeObjectURL(url)
       }
-    } catch (error) {
-      console.error("Export error:", error)
+    } catch {
+      setStatusError("L'export CSV a echoue, reessayez.")
     }
     setExporting(false)
   }
@@ -270,11 +299,15 @@ export default function ContactsPage() {
             <div className="flex flex-wrap gap-4">
               <div>
                 <label className="block text-sm font-medium text-muted-foreground mb-2">Periode</label>
-                <select className="px-4 py-2 rounded-lg bg-muted/30 border border-border/50 text-foreground">
-                  <option>Tout</option>
-                  <option>7 derniers jours</option>
-                  <option>30 derniers jours</option>
-                  <option>Cette annee</option>
+                <select
+                  value={period}
+                  onChange={(e) => setPeriod(e.target.value as typeof period)}
+                  className="px-4 py-2 rounded-lg bg-muted/30 border border-border/50 text-foreground"
+                >
+                  <option value="all">Tout</option>
+                  <option value="7">7 derniers jours</option>
+                  <option value="30">30 derniers jours</option>
+                  <option value="year">Cette annee</option>
                 </select>
               </div>
             </div>
@@ -295,7 +328,13 @@ export default function ContactsPage() {
               {selectedContacts.length} contact(s) selectionne(s)
             </span>
             <div className="flex-1" />
-            <Button variant="outline" size="sm" className="border-destructive/50 text-destructive hover:bg-destructive/10">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={deleting}
+              onClick={() => deleteContacts(selectedContacts)}
+              className="border-destructive/50 text-destructive hover:bg-destructive/10"
+            >
               <Trash2 className="w-4 h-4 mr-2" />
               Supprimer
             </Button>
@@ -447,6 +486,8 @@ export default function ContactsPage() {
                           <motion.button
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
+                            onClick={() => deleteContacts([contact.id])}
+                            disabled={deleting}
                             className="p-2 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
                             title="Supprimer"
                           >

@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import { AuthProvider } from '@/contexts/auth-context'
 import { PwaRegister } from '@/components/pwa-register'
+import { InstallPrompt } from '@/components/install-prompt'
+import { PUBLIC_PROFILE_URL } from '@/lib/site'
 import './globals.css'
 
 const inter = Inter({ 
@@ -10,6 +12,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(PUBLIC_PROFILE_URL),
   title: 'Mahu - Votre Carte de Visite Numérique',
   description: 'Créez et partagez votre carte de visite numérique NFC, moderne et écologique. Gérez vos contacts et analysez vos performances.',
   keywords: 'carte de visite numérique, carte de visite NFC, networking, Mahu, carte de visite connectée, profil numérique, gestion de contacts',
@@ -20,7 +23,14 @@ export const metadata: Metadata = {
     title: 'Mahu - Votre Carte de Visite Numérique',
     description: 'Créez et partagez votre carte de visite numérique NFC, moderne et écologique.',
     siteName: 'Mahu',
+    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'Mahu' }],
   },
+  // favicon.ico est servi par app/favicon.ico ; icones d'app dans public/icons.
+  icons: {
+    icon: [{ url: '/icons/favicon-64.png', sizes: '64x64', type: 'image/png' }],
+    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180' }],
+  },
+  appleWebApp: { capable: true, title: 'Mahu', statusBarStyle: 'black-translucent' },
   twitter: {
     card: 'summary_large_image',
     title: 'Mahu - Votre Carte de Visite Numérique',
@@ -47,6 +57,7 @@ export default function RootLayout({
           {children}
         </AuthProvider>
         <PwaRegister />
+        <InstallPrompt />
       </body>
     </html>
   )

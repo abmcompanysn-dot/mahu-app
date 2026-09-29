@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { X, Send, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
+import { api } from "@/lib/api"
 
 interface SupportModalProps {
   open: boolean
@@ -13,6 +14,7 @@ interface SupportModalProps {
 export function SupportModal({ open, onOpenChange }: SupportModalProps) {
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [error, setError] = useState("")
   const [formData, setFormData] = useState({
     email: "",
     phone: "",
@@ -23,11 +25,15 @@ export function SupportModal({ open, onOpenChange }: SupportModalProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500))
-    
+    setError("")
+
+    const token = typeof window !== "undefined" ? localStorage.getItem("mahu_token") : null
+    const result = await api.contactSupport(token, formData)
     setLoading(false)
+    if (!result.success) {
+      setError(result.error || "Envoi impossible. Ecrivez-nous a contact@mahu.cards.")
+      return
+    }
     setSuccess(true)
     
     setTimeout(() => {
@@ -151,6 +157,7 @@ export function SupportModal({ open, onOpenChange }: SupportModalProps) {
                     />
                   </div>
                   
+                  {error && <p className="text-sm text-destructive">{error}</p>}
                   <Button
                     type="submit"
                     disabled={loading}

@@ -119,9 +119,9 @@ export function Hero() {
               className="mt-12 grid grid-cols-3 gap-8 max-w-md mx-auto lg:mx-0"
             >
               {[
-                { value: "10K+", label: "Utilisateurs" },
-                { value: "50K+", label: "Cartes partagees" },
-                { value: "99%", label: "Satisfaction" },
+                { value: "1,5 s", label: "Profil affiche" },
+                { value: "0", label: "Application a installer" },
+                { value: "13 900", label: "FCFA, une seule fois" },
               ].map((stat, i) => (
                 <div key={i} className="text-center lg:text-left">
                   <p className="text-2xl md:text-3xl font-bold text-foreground">{stat.value}</p>

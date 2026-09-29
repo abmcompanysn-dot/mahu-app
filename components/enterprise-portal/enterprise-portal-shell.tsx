@@ -3,7 +3,7 @@
 import { useEffect } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Building2, Contact, IdCard, LayoutDashboard, Loader2, Users } from "lucide-react"
+import { ArrowLeft, Building2, Contact, IdCard, LayoutDashboard, Loader2, Users } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/hooks/use-auth"
 
@@ -61,6 +61,13 @@ export function EnterprisePortalShell({ children }: { children: React.ReactNode 
               </Link>
             )
           })}
+          <Link
+            href="/dashboard"
+            className="ml-auto flex items-center gap-2 px-4 py-4 text-sm font-medium whitespace-nowrap text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Mon dashboard
+          </Link>
         </div>
       </nav>
       <main className="max-w-6xl mx-auto px-4 md:px-6 py-8">{children}</main>
