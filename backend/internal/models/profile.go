@@ -14,24 +14,27 @@ const ProfilesCollection = "profiles"
 // frontend (lib/api.ts Profile interface) needs zero changes - see
 // handlers/legacy.go's profileToMap.
 type Profile struct {
-	ID                  primitive.ObjectID `bson:"_id,omitempty"`
-	UserID              primitive.ObjectID `bson:"userId"`
-	Email               string             `bson:"email"`
-	NomComplet          string             `bson:"nomComplet"`
-	Telephone           string             `bson:"telephone"`
-	Profession          string             `bson:"profession"`
-	Compagnie           string             `bson:"compagnie"`
-	Location            string             `bson:"location"`
-	URLPhoto            string             `bson:"urlPhoto"`
-	URLCouverture       string             `bson:"urlCouverture"`
-	LiensSociauxJSON    string             `bson:"liensSociauxJson"`
-	LeadCaptureActif    string             `bson:"leadCaptureActif"`
-	ServicesJSON        string             `bson:"servicesJson"`
-	MiseEnPage          string             `bson:"miseEnPage"`
-	CouleurTheme        string             `bson:"couleurTheme"`
-	CacherMarque        string             `bson:"cacherMarque"`
-	Langue              string             `bson:"langue"`
-	RedirectionSiteWeb  string             `bson:"redirectionSiteWeb"`
-	CreatedAt           time.Time          `bson:"createdAt"`
-	UpdatedAt           time.Time          `bson:"updatedAt"`
+	ID                 primitive.ObjectID `bson:"_id,omitempty"`
+	UserID             primitive.ObjectID `bson:"userId"`
+	Email              string             `bson:"email"`
+	NomComplet         string             `bson:"nomComplet"`
+	Telephone          string             `bson:"telephone"`
+	Profession         string             `bson:"profession"`
+	Compagnie          string             `bson:"compagnie"`
+	Location           string             `bson:"location"`
+	URLPhoto           string             `bson:"urlPhoto"`
+	URLCouverture      string             `bson:"urlCouverture"`
+	LiensSociauxJSON   string             `bson:"liensSociauxJson"`
+	LeadCaptureActif   string             `bson:"leadCaptureActif"`
+	ServicesJSON       string             `bson:"servicesJson"`
+	MiseEnPage         string             `bson:"miseEnPage"`
+	CouleurTheme       string             `bson:"couleurTheme"`
+	CacherMarque       string             `bson:"cacherMarque"`
+	Langue             string             `bson:"langue"`
+	RedirectionSiteWeb string             `bson:"redirectionSiteWeb"`
+	// ModeConfidentiel "OUI": the public card shows only photo, name, title
+	// and company plus the contact form - see publicProfileView.
+	ModeConfidentiel string    `bson:"modeConfidentiel,omitempty"`
+	CreatedAt        time.Time `bson:"createdAt"`
+	UpdatedAt        time.Time `bson:"updatedAt"`
 }

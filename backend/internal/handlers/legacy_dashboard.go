@@ -84,7 +84,7 @@ func (d *Deps) legacyGetDashboardData(ctx context.Context, user *models.User) (m
 
 	// Prospects
 	prospectCursor, err := db.Collection(models.ProspectsCollection).Find(ctx,
-		bson.M{"profileOwnerId": user.ID}, options.Find().SetSort(bson.D{{Key: "dateCapture", Value: -1}}).SetLimit(10))
+		bson.M{"profileOwnerId": user.ID}, options.Find().SetSort(bson.D{{Key: "dateCapture", Value: -1}}).SetLimit(500))
 	if err != nil {
 		return nil, err
 	}
@@ -93,8 +93,8 @@ func (d *Deps) legacyGetDashboardData(ctx context.Context, user *models.User) (m
 	userProspects := make([]map[string]any, 0, len(prospects))
 	for _, p := range prospects {
 		userProspects = append(userProspects, map[string]any{
-			"id": p.ProfileOwnerID.Hex(), "date": p.DateCapture, "nom": p.Nom,
-			"contact": p.Contact, "note": p.Message, "rating": p.NoteEtoiles, "canal": p.Canal,
+			"id": p.ID.Hex(), "date": p.DateCapture, "nom": p.Nom,
+			"contact": p.Contact, "note": p.Message, "rating": p.NoteEtoiles, "canal": p.Canal, "statut": p.Statut,
 		})
 	}
 	totalProspectsCount, err := db.Collection(models.ProspectsCollection).CountDocuments(ctx, bson.M{"profileOwnerId": user.ID})

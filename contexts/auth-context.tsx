@@ -29,6 +29,7 @@ export interface AppScriptProfile {
   URL_Couverture: string
   Liens_Sociaux_JSON: string
   Lead_Capture_Actif: string
+  Mode_Confidentiel?: string
   Services_JSON: string
   Mise_En_Page?: string
   Couleur_Theme?: string

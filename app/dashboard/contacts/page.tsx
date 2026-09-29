@@ -20,6 +20,17 @@ interface Contact {
   rating?: number
   date: string
   source?: string
+  statut?: string
+}
+
+type ContactStatus = "nouveau" | "a_rappeler" | "ignore"
+
+// Tri des contacts recus : qui rappeler, qui ignorer (utile surtout en mode
+// confidentiel, ou l'on choisit a qui repondre).
+const STATUS_LABELS: Record<ContactStatus, string> = {
+  nouveau: "Nouveau",
+  a_rappeler: "A rappeler",
+  ignore: "Ignore",
 }
 
 export default function ContactsPage() {
@@ -36,6 +47,24 @@ export default function ContactsPage() {
   const [sendError, setSendError] = useState<string | null>(null)
 
   const contacts: Contact[] = dashboardData?.prospects || []
+  const [statusFilter, setStatusFilter] = useState<"all" | ContactStatus>("all")
+  const [statusOverrides, setStatusOverrides] = useState<Record<string, ContactStatus>>({})
+  const [statusError, setStatusError] = useState("")
+
+  const statusOf = (c: Contact): ContactStatus =>
+    statusOverrides[c.id] || (c.statut as ContactStatus) || "nouveau"
+
+  const setContactStatus = async (c: Contact, statut: ContactStatus) => {
+    if (!token) return
+    const previous = statusOf(c)
+    setStatusOverrides((prev) => ({ ...prev, [c.id]: statut }))
+    setStatusError("")
+    const res = await api.updateProspectStatus(token, c.id, statut).catch(() => null)
+    if (!res?.success) {
+      setStatusOverrides((prev) => ({ ...prev, [c.id]: previous }))
+      setStatusError("Le statut n'a pas pu etre enregistre.")
+    }
+  }
 
   useEffect(() => {
     if (!token) return
@@ -65,9 +94,10 @@ export default function ContactsPage() {
 
   const filteredContacts = contacts.filter(
     (contact) =>
-      contact.nom?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (statusFilter === "all" || statusOf(contact) === statusFilter) &&
+      (contact.nom?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       contact.contact?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      contact.note?.toLowerCase().includes(searchQuery.toLowerCase())
+      contact.note?.toLowerCase().includes(searchQuery.toLowerCase()))
   )
 
   const toggleSelectContact = (id: string) => {
@@ -203,6 +233,30 @@ export default function ContactsPage() {
           Filtres
         </Button>
       </motion.div>
+
+      {/* Status filter */}
+      {contacts.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {(["all", "nouveau", "a_rappeler", "ignore"] as const).map((key) => {
+            const count = key === "all" ? contacts.length : contacts.filter((c) => statusOf(c) === key).length
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setStatusFilter(key)}
+                className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
+                  statusFilter === key
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-muted/30 border-border/50 text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {key === "all" ? "Tous" : STATUS_LABELS[key]} ({count})
+              </button>
+            )
+          })}
+          {statusError && <span className="text-sm text-destructive self-center">{statusError}</span>}
+        </div>
+      )}
 
       {/* Filters Panel */}
       <AnimatePresence>
@@ -345,6 +399,18 @@ export default function ContactsPage() {
                       </td>
                       <td className="p-4">
                         <div className="flex items-center justify-end gap-2">
+                          <select
+                            value={statusOf(contact)}
+                            onChange={(e) => setContactStatus(contact, e.target.value as ContactStatus)}
+                            aria-label="Statut du contact"
+                            className="px-2 py-1.5 rounded-lg bg-muted/30 border border-border/50 text-sm text-foreground"
+                          >
+                            {(Object.keys(STATUS_LABELS) as ContactStatus[]).map((k) => (
+                              <option key={k} value={k}>
+                                {STATUS_LABELS[k]}
+                              </option>
+                            ))}
+                          </select>
                           {contactType === 'email' && (
                             <motion.a
                               href={`mailto:${contact.contact}`}

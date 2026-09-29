@@ -57,6 +57,7 @@ export interface Profile {
   URL_Couverture: string
   Liens_Sociaux_JSON: string
   Lead_Capture_Actif: string
+  Mode_Confidentiel?: string
   Services_JSON: string
   Mise_En_Page: string
   Couleur_Theme: string
@@ -263,6 +264,9 @@ export const api = {
 
   getTeamCards: (token: string) =>
     callAppScript("getTeamCards", {}, token),
+
+  updateProspectStatus: (token: string, prospectId: string, statut: "nouveau" | "a_rappeler" | "ignore") =>
+    callAppScript("updateProspectStatus", { prospectId, statut }, token),
 
   getTeamProspects: (token: string) =>
     callAppScript("getTeamProspects", {}, token),

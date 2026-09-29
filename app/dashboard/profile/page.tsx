@@ -9,7 +9,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { PhonePreview } from "@/components/dashboard/phone-preview"
-import { LeadCaptureToggle } from "@/components/dashboard/lead-capture-toggle"
+import { ConfidentialModeToggle, LeadCaptureToggle } from "@/components/dashboard/lead-capture-toggle"
 import { useAuth } from "@/hooks/use-auth"
 import { api } from "@/lib/api"
 import { uploadToCloudinary } from "@/lib/cloudinary"
@@ -229,6 +229,7 @@ export default function ProfilePage() {
         </motion.div>
 
         <LeadCaptureToggle />
+        <ConfidentialModeToggle />
 
         {/* Tabs Navigation */}
         <motion.div

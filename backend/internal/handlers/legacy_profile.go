@@ -44,6 +44,7 @@ func applyProfileFields(profile *models.Profile, payload map[string]any) {
 	set("Cacher_Marque", &profile.CacherMarque)
 	set("Langue", &profile.Langue)
 	set("Redirection_Site_Web", &profile.RedirectionSiteWeb)
+	set("Mode_Confidentiel", &profile.ModeConfidentiel)
 }
 
 func cacheProfileForUser(ctx context.Context, user *models.User, profile *models.Profile) {
@@ -129,6 +130,7 @@ func (d *Deps) legacySaveProfile(ctx context.Context, payload map[string]any, us
 		"cacherMarque":       profile.CacherMarque,
 		"langue":             profile.Langue,
 		"redirectionSiteWeb": profile.RedirectionSiteWeb,
+		"modeConfidentiel":   profile.ModeConfidentiel,
 		"updatedAt":          now,
 	}
 	if _, err := db.Collection(models.ProfilesCollection).UpdateOne(ctx, bson.M{"_id": profile.ID}, bson.M{"$set": update}); err != nil {
@@ -191,7 +193,7 @@ func (d *Deps) legacyGetProfileData(ctx context.Context, profileURL string) (map
 	}
 
 	if cached, err := db.GetCache[map[string]any](ctx, profileCacheKey(profileURL)); err == nil && cached != nil {
-		return *cached, nil
+		return publicProfileView(*cached), nil
 	}
 
 	slugLower := strings.ToLower(profileURL)
@@ -229,7 +231,7 @@ func (d *Deps) legacyGetProfileData(ctx context.Context, profileURL string) (map
 	}
 
 	_ = db.SetCache(ctx, profileCacheKey(profileURL), data, profileCacheSeconds)
-	return data, nil
+	return publicProfileView(data), nil
 }
 
 func (d *Deps) legacyGetPublicProfileUrl(user *models.User) map[string]any {
@@ -273,4 +275,37 @@ func (d *Deps) legacySetModuleState(ctx context.Context, moduleName string, isEn
 		value = "OUI"
 	}
 	_, _ = d.legacySaveProfile(ctx, map[string]any{moduleName: value}, user)
+}
+
+// confidentialPublicFields are the only profile fields a card in
+// confidential mode sends to visitors: enough to recognise the person and
+// write to them through the contact form, nothing to contact them directly.
+var confidentialPublicFields = []string{
+	"Nom_Complet", "Profession", "Compagnie", "URL_Photo", "URL_Couverture",
+	"Couleur_Theme", "Cacher_Marque", "Mise_En_Page", "Langue", "URL_Profil",
+}
+
+// publicProfileView strips a confidential profile down to
+// confidentialPublicFields before it leaves the server - hiding them only
+// in the page would still ship them to the visitor's browser. The contact
+// form is forced on, since it's the only way left to reach the person.
+func publicProfileView(data map[string]any) map[string]any {
+	if data["Mode_Confidentiel"] != "OUI" {
+		return data
+	}
+	view := map[string]any{
+		"Mode_Confidentiel":  "OUI",
+		"Lead_Capture_Actif": "OUI",
+		"Email":              "",
+		"Telephone":          "",
+		"Location":           "",
+		"Liens_Sociaux_JSON": "[]",
+		"Services_JSON":      "[]",
+	}
+	for _, field := range confidentialPublicFields {
+		if v, ok := data[field]; ok {
+			view[field] = v
+		}
+	}
+	return view
 }

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"mahu-backend/internal/db"
 	"mahu-backend/internal/models"
@@ -177,4 +178,28 @@ func (d *Deps) legacyExportLeadsAsCSV(ctx context.Context, user *models.User) (s
 	}
 
 	return b.String(), nil
+}
+
+// legacyUpdateProspectStatus lets the card owner triage a contact (new, to
+// call back, ignored) - only their own contacts.
+func (d *Deps) legacyUpdateProspectStatus(ctx context.Context, payload map[string]any, user *models.User) (map[string]any, error) {
+	id, err := primitive.ObjectIDFromHex(str(payload, "prospectId"))
+	if err != nil {
+		return map[string]any{"success": false, "error": "Contact invalide."}, nil
+	}
+	statut := str(payload, "statut")
+	switch statut {
+	case "nouveau", "a_rappeler", "ignore":
+	default:
+		return map[string]any{"success": false, "error": "Statut invalide."}, nil
+	}
+	res, err := db.Collection(models.ProspectsCollection).UpdateOne(ctx,
+		bson.M{"_id": id, "profileOwnerId": user.ID}, bson.M{"$set": bson.M{"statut": statut}})
+	if err != nil {
+		return nil, err
+	}
+	if res.MatchedCount == 0 {
+		return map[string]any{"success": false, "error": "Contact introuvable."}, nil
+	}
+	return map[string]any{"success": true}, nil
 }

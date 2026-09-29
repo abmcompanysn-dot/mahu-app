@@ -12,12 +12,14 @@ const ProspectsCollection = "prospects"
 // through a profile's contact form (Canal "Profil") or the embeddable
 // widget on a user's own website (Canal "Widget Site").
 type Prospect struct {
-	ID           primitive.ObjectID `bson:"_id,omitempty"`
+	ID             primitive.ObjectID `bson:"_id,omitempty"`
 	ProfileOwnerID primitive.ObjectID `bson:"profileOwnerId"`
-	DateCapture  time.Time          `bson:"dateCapture"`
-	Nom          string             `bson:"nom"`
-	Contact      string             `bson:"contact"`
-	Message      string             `bson:"message"`
-	NoteEtoiles  int                `bson:"noteEtoiles,omitempty"`
-	Canal        string             `bson:"canal"`
+	DateCapture    time.Time          `bson:"dateCapture"`
+	Nom            string             `bson:"nom"`
+	Contact        string             `bson:"contact"`
+	Message        string             `bson:"message"`
+	NoteEtoiles    int                `bson:"noteEtoiles,omitempty"`
+	Canal          string             `bson:"canal"`
+	// Statut is the owner's triage: "" / "nouveau", "a_rappeler", "ignore".
+	Statut string `bson:"statut,omitempty"`
 }

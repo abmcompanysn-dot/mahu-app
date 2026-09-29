@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { 
   Phone, Mail, MapPin, Download, Copy, Check, Send,
   Linkedin, Twitter, Instagram, Facebook, Globe, Github,
-  MessageCircle, Youtube, Music, Link2
+  MessageCircle, Youtube, Music, Link2, Lock
 } from "lucide-react"
 import { api } from "@/lib/api"
 import { Button } from "@/components/ui/button"
@@ -28,6 +28,7 @@ export interface ProfileData {
   URL_Couverture: string
   Liens_Sociaux_JSON: string
   Lead_Capture_Actif: string
+  Mode_Confidentiel?: string
   Services_JSON: string
   Couleur_Theme: string
   Cacher_Marque: string
@@ -190,6 +191,7 @@ END:VCARD`
     )
   }
 
+  const confidential = profile.Mode_Confidentiel === "OUI"
   const socialLinks = parseSocialLinks(profile.Liens_Sociaux_JSON)
   const services = (() => {
     try {
@@ -266,7 +268,17 @@ END:VCARD`
               )}
             </div>
 
-            {/* Action Buttons */}
+            {/* Mode confidentiel : ni coordonnees ni reseaux (le serveur ne les
+                envoie pas), seulement le formulaire ci-dessous. */}
+            {confidential ? (
+              <div className="mt-6 flex items-start gap-3 p-4 rounded-xl bg-muted/30 border border-border/50 text-sm">
+                <Lock className="w-5 h-5 shrink-0 mt-0.5" style={{ color: accentColor }} />
+                <p className="text-muted-foreground">
+                  <span className="font-semibold text-foreground">Profil confidentiel.</span> Laissez votre nom et
+                  vos coordonnees ci-dessous : {profile.Nom_Complet?.split(" ")[0] || "je"} vous recontactera.
+                </p>
+              </div>
+            ) : (
             <div className="grid grid-cols-2 gap-3 mt-6">
               <Button
                 onClick={downloadVCard}
@@ -305,6 +317,7 @@ END:VCARD`
                 Contact
               </Button>
             </div>
+            )}
 
             {/* Social Links */}
             {socialLinks.length > 0 && (
