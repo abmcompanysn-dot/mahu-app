@@ -59,12 +59,19 @@ func (d *Deps) legacyHandleLeadCapture(ctx context.Context, payload map[string]a
 		return nil, errors.New("Profil source introuvable.")
 	}
 
+	// Optional 1-5 star opinion (on the card holder's products/services).
+	rating := intField(payload, "rating", 0)
+	if rating < 1 || rating > 5 {
+		rating = 0
+	}
+
 	prospect := models.Prospect{
 		ProfileOwnerID: owner.ID,
 		DateCapture:    time.Now(),
 		Nom:            name,
 		Contact:        contact,
 		Message:        message,
+		NoteEtoiles:    rating,
 		Canal:          "Profil",
 	}
 	if _, err := db.Collection(models.ProspectsCollection).InsertOne(ctx, prospect); err != nil {
@@ -75,7 +82,11 @@ func (d *Deps) legacyHandleLeadCapture(ctx context.Context, payload map[string]a
 		go func() {
 			connectionURL := d.Env.AppURL + "/login?email=" + owner.Email
 			subject := fmt.Sprintf("Nouvelle opportunite - %s vous a laisse ses coordonnees", name)
-			if err := d.Email.Send(owner.Email, subject, leadNotificationHTML(name, contact, message, connectionURL)); err != nil {
+			body := message
+			if rating > 0 {
+				body = strings.TrimSpace(fmt.Sprintf("Avis : %s (%d/5) %s", strings.Repeat("★", rating), rating, message))
+			}
+			if err := d.Email.Send(owner.Email, subject, leadNotificationHTML(name, contact, body, connectionURL)); err != nil {
 				d.logAction(context.Background(), "handleLeadCapture", models.LogStatusError, "Erreur envoi email prospect: "+err.Error(), owner.Email)
 			}
 		}()

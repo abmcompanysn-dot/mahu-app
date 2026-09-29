@@ -3,13 +3,14 @@
 import { useEffect } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Building2, IdCard, LayoutDashboard, Loader2, Users } from "lucide-react"
+import { Building2, Contact, IdCard, LayoutDashboard, Loader2, Users } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/hooks/use-auth"
 
 const NAV_ITEMS = [
   { href: "/enterprise-portal", label: "Vue d'ensemble", icon: LayoutDashboard },
   { href: "/enterprise-portal/team", label: "Equipe", icon: Users },
+  { href: "/enterprise-portal/contacts", label: "Contacts de l'equipe", icon: Contact },
   { href: "/enterprise-portal/cards", label: "Cartes", icon: IdCard },
   { href: "/enterprise-portal/settings", label: "Entreprise", icon: Building2 },
 ]

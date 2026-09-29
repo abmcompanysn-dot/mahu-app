@@ -66,7 +66,7 @@ export function PublicProfileView({
   const [error, setError] = useState("")
   const [copied, setCopied] = useState<string | null>(null)
   const [showLeadForm, setShowLeadForm] = useState(false)
-  const [leadForm, setLeadForm] = useState({ name: "", contact: "", message: "" })
+  const [leadForm, setLeadForm] = useState({ name: "", contact: "", message: "", rating: 0 })
   const [leadSubmitting, setLeadSubmitting] = useState(false)
   const [leadSuccess, setLeadSuccess] = useState(false)
 
@@ -141,9 +141,10 @@ END:VCARD`
         name: leadForm.name,
         contact: leadForm.contact,
         message: leadForm.message,
+        rating: leadForm.rating || undefined,
       })
       setLeadSuccess(true)
-      setLeadForm({ name: "", contact: "", message: "" })
+      setLeadForm({ name: "", contact: "", message: "", rating: 0 })
     } catch {
       // Silent fail
     }
@@ -381,8 +382,27 @@ END:VCARD`
                         onChange={(e) => setLeadForm({ ...leadForm, contact: e.target.value })}
                         className="w-full p-3 rounded-xl bg-muted/30 border border-border/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50"
                       />
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-1">Votre avis (optionnel)</p>
+                        <div className="flex gap-1" role="radiogroup" aria-label="Votre avis">
+                          {[1, 2, 3, 4, 5].map((n) => (
+                            <button
+                              key={n}
+                              type="button"
+                              role="radio"
+                              aria-checked={leadForm.rating === n}
+                              aria-label={`${n} sur 5`}
+                              onClick={() => setLeadForm({ ...leadForm, rating: leadForm.rating === n ? 0 : n })}
+                              className="text-2xl leading-none transition-transform hover:scale-110"
+                              style={{ color: n <= leadForm.rating ? "#f5b301" : "rgba(128,128,128,.4)" }}
+                            >
+                              ★
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                       <textarea
-                        placeholder="Message (optionnel)"
+                        placeholder="Message ou avis sur nos produits (optionnel)"
                         value={leadForm.message}
                         onChange={(e) => setLeadForm({ ...leadForm, message: e.target.value })}
                         className="w-full p-3 rounded-xl bg-muted/30 border border-border/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 min-h-[80px]"

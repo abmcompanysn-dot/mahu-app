@@ -17,6 +17,7 @@ interface Contact {
   nom: string
   contact: string
   note: string
+  rating?: number
   date: string
   source?: string
 }
@@ -331,7 +332,12 @@ export default function ContactsPage() {
                       </td>
                       <td className="p-4 hidden md:table-cell">
                         <p className="text-foreground text-sm truncate max-w-xs" title={contact.note}>
-                          {contact.note || "-"}
+                          {contact.rating ? (
+                            <span className="text-amber-500 mr-1" aria-label={`${contact.rating} sur 5`}>
+                              {"★".repeat(contact.rating)}
+                            </span>
+                          ) : null}
+                          {contact.note || (contact.rating ? "" : "-")}
                         </p>
                       </td>
                       <td className="p-4 hidden lg:table-cell text-sm text-muted-foreground">

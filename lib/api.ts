@@ -222,7 +222,7 @@ export const api = {
     callAppScriptGet<Profile & { error?: string }>("getProfileData", { user: profileUrl }),
   
   // Contacts / Leads
-  handleLeadCapture: (data: { profileUrl: string; name: string; contact: string; message?: string }) =>
+  handleLeadCapture: (data: { profileUrl: string; name: string; contact: string; message?: string; rating?: number }) =>
     callAppScript("handleLeadCapture", data),
   
   exportLeadsAsCSV: (token: string) =>
@@ -263,6 +263,9 @@ export const api = {
 
   getTeamCards: (token: string) =>
     callAppScript("getTeamCards", {}, token),
+
+  getTeamProspects: (token: string) =>
+    callAppScript("getTeamProspects", {}, token),
   
   // Support
   contactSupport: (token: string | null, data: { email: string; sujet: string; message: string; telephone?: string }) =>
