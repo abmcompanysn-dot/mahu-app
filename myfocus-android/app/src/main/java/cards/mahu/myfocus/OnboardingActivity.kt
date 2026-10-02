@@ -310,6 +310,15 @@ class OnboardingActivity : Activity() {
         if (!a11y) {
             card1.addView(Ui.body(this, "Dans la page qui s'ouvre : Applis installees (ou Services telecharges) > MyFocus > Activer.", Ui.MUTED, 14f))
             card1.addView(Ui.button(this, "Activer") { startActivity(Permissions.accessibilitySettingsIntent()) })
+            if (Build.VERSION.SDK_INT >= 33) {
+                card1.addView(Ui.body(this,
+                    "Grise ou \"Parametre restreint\" ? Android bloque ce reglage pour les applis installees hors Play Store. " +
+                        "Ouvre les infos de MyFocus, touche le menu ⋮ en haut a droite, puis \"Autoriser les parametres restreints\", et reviens ici.",
+                    0xFFFFB020.toInt(), 14f))
+                card1.addView(Ui.button(this, "Ouvrir les infos de MyFocus", primary = false) {
+                    startActivity(Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName")))
+                })
+            }
         }
         col.addView(card1)
 

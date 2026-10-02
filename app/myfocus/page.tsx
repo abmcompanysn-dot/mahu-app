@@ -11,7 +11,7 @@ export const metadata = {
 }
 
 const APK_URL = "/myfocus/MyFocus.apk"
-const APK_VERSION = "1.0.0"
+const APK_VERSION = "1.0.1"
 
 const steps = [
   { icon: Nfc, title: "Ta carte devient ta cle", text: "Tu enregistres ta carte Mahu dans l'appli. Seule cette puce-la pourra deverrouiller tes applis." },
@@ -28,8 +28,10 @@ const features = [
 const install = [
   "Telecharge l'appli avec le bouton ci-dessus, depuis ton telephone Android.",
   "Ouvre le fichier MyFocus.apk. Si Android le demande, autorise l'installation depuis ton navigateur (\"Sources inconnues\").",
+  "Si Google Play Protect affiche \"Appli bloquee\" : touche \"Plus de details\" puis \"Installer quand meme\". MyFocus est signale par prudence car il utilise l'accessibilite, comme toutes les applis de controle parental installees hors Play Store.",
   "Ouvre MyFocus et suis la configuration : carte, applis a bloquer, horaires, email d'alerte.",
-  "Active la protection dans Accessibilite (l'appli t'y emmene) et la protection anti-desinstallation.",
+  "Active la protection dans Accessibilite (l'appli t'y emmene). Si Android affiche \"Parametre restreint\" : Parametres > Applications > MyFocus > menu ⋮ en haut > \"Autoriser les parametres restreints\", puis reessaie.",
+  "Active enfin la protection anti-desinstallation (recommande).",
 ]
 
 export default function MyFocusPage() {
