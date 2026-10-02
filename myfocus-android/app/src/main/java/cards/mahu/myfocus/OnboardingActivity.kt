@@ -117,6 +117,7 @@ class OnboardingActivity : Activity() {
 
     private fun welcome(col: LinearLayout) {
         col.addView(Ui.title(this, "Bienvenue dans MyFocus", 30f))
+        col.addView(Ui.body(this, "Version ${BuildConfig.VERSION_NAME}", Ui.MUTED, 12f))
         col.addView(Ui.body(this,
             "Zero scrolling pendant la journee.\n\n" +
                 "1. Ta carte Mahu devient ta cle.\n" +

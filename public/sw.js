@@ -1,7 +1,7 @@
 // Service worker minimal pour rendre Mahu installable (PWA) : app-shell en
 // cache pour un chargement instantane au retour, sans essayer de mettre en
 // cache les reponses d'API (donnees toujours fraiches).
-const CACHE_NAME = "mahu-shell-v3"
+const CACHE_NAME = "mahu-shell-v4"
 const APP_SHELL = ["/", "/dashboard", "/icons/icon-192.png"]
 
 self.addEventListener("install", (event) => {
@@ -27,6 +27,9 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url)
   // Ne jamais mettre en cache les appels API - toujours des donnees fraiches.
   if (url.pathname.startsWith("/api/")) return
+  // Jamais de cache pour les telechargements (APK MyFocus...) : un vieux
+  // fichier en cache etait redonne apres chaque nouvelle version.
+  if (/\.(apk|zip|pdf)$/i.test(url.pathname)) return
 
   // Navigations (chargement d'une page HTML) : toujours le reseau en
   // premier. Cache-first sur une navigation servait une page perimee -

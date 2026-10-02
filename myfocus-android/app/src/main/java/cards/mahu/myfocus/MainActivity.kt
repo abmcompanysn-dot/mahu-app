@@ -47,6 +47,7 @@ class MainActivity : Activity() {
         val locked = Focus.isLocked(prefs)
 
         col.addView(Ui.title(this, "MyFocus", 30f))
+        col.addView(Ui.body(this, "Version ${BuildConfig.VERSION_NAME}", Ui.MUTED, 12f))
 
         val status = Ui.card(this)
         if (locked) {

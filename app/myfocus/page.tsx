@@ -10,8 +10,9 @@ export const metadata = {
   openGraph: { images: [{ url: "/myfocus/icon-512.png", width: 512, height: 512 }] },
 }
 
-const APK_URL = "/myfocus/MyFocus.apk"
-const APK_VERSION = "1.0.2"
+const APK_VERSION = "1.0.3"
+// ?v= : chaque version a sa propre adresse, aucun cache ne peut redonner l'ancienne.
+const APK_URL = `/myfocus/MyFocus.apk?v=${APK_VERSION}`
 
 const steps = [
   { icon: Nfc, title: "Ta carte devient ta cle", text: "Tu enregistres ta carte Mahu dans l'appli. Seule cette puce-la pourra deverrouiller tes applis." },
@@ -57,7 +58,7 @@ export default function MyFocusPage() {
         <div className="mt-8 flex flex-col sm:flex-row gap-3 sm:items-center">
           <a
             href={APK_URL}
-            download="MyFocus.apk"
+            download={`MyFocus-${APK_VERSION}.apk`}
             className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#007AFF] px-6 py-4 text-lg font-bold hover:bg-[#0a84ff]"
           >
             <Download className="w-5 h-5" />
