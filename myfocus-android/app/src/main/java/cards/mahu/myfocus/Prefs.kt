@@ -71,6 +71,19 @@ class Prefs(context: Context) {
         get() = sp.getBoolean("service_off_alerted", false)
         set(v) = sp.edit().putBoolean("service_off_alerted", v).apply()
 
+    // Diagnostic : derniere appli vue par la protection et connexion du service.
+    var diagLastPackage: String?
+        get() = sp.getString("diag_last_pkg", null)
+        set(v) = sp.edit().putString("diag_last_pkg", v).apply()
+
+    var diagLastEventAt: Long
+        get() = sp.getLong("diag_last_at", 0L)
+        set(v) = sp.edit().putLong("diag_last_at", v).apply()
+
+    var diagServiceConnectedAt: Long
+        get() = sp.getLong("diag_service_at", 0L)
+        set(v) = sp.edit().putLong("diag_service_at", v).apply()
+
     fun getInt(key: String): Int = sp.getInt(key, -1)
     fun putInt(key: String, value: Int) = sp.edit().putInt(key, value).apply()
     fun increment(key: String) = sp.edit().putInt(key, (sp.getInt(key, 0)) + 1).apply()

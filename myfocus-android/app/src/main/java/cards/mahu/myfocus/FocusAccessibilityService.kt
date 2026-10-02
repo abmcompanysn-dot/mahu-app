@@ -3,6 +3,7 @@ package cards.mahu.myfocus
 import android.accessibilityservice.AccessibilityService
 import android.content.Intent
 import android.os.SystemClock
+import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 
 /**
@@ -12,11 +13,18 @@ import android.view.accessibility.AccessibilityEvent
  */
 class FocusAccessibilityService : AccessibilityService() {
 
+    companion object {
+        const val TAG = "MyFocus"
+    }
+
     private var lastLaunch = 0L
 
     override fun onServiceConnected() {
         super.onServiceConnected()
-        Prefs(this).serviceOffAlerted = false
+        val p = Prefs(this)
+        p.serviceOffAlerted = false
+        p.diagServiceConnectedAt = System.currentTimeMillis()
+        Log.i(TAG, "service connecte")
         Api.flushPending(this)
     }
 
@@ -26,7 +34,13 @@ class FocusAccessibilityService : AccessibilityService() {
         if (pkg == packageName) return
 
         val p = Prefs(this)
-        if (!Focus.isLocked(p) || pkg !in p.blockedPackages) return
+        // Diagnostic visible dans l'appli : la protection recoit-elle bien les ouvertures ?
+        p.diagLastPackage = pkg
+        p.diagLastEventAt = System.currentTimeMillis()
+        val locked = Focus.isLocked(p)
+        val blocked = pkg in p.blockedPackages
+        Log.i(TAG, "ouverture $pkg verrouille=$locked bloquee=$blocked")
+        if (!locked || !blocked) return
 
         // Une appli emet plusieurs evenements a l'ouverture : un seul ecran.
         val now = SystemClock.elapsedRealtime()

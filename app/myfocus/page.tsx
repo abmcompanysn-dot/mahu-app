@@ -10,7 +10,7 @@ export const metadata = {
   openGraph: { images: [{ url: "/myfocus/icon-512.png", width: 512, height: 512 }] },
 }
 
-const APK_VERSION = "1.0.3"
+const APK_VERSION = "1.0.4"
 // ?v= : chaque version a sa propre adresse, aucun cache ne peut redonner l'ancienne.
 const APK_URL = `/myfocus/MyFocus.apk?v=${APK_VERSION}`
 

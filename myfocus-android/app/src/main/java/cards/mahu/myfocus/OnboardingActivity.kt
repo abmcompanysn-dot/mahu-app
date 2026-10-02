@@ -20,7 +20,7 @@ import kotlin.concurrent.thread
  */
 class OnboardingActivity : Activity() {
 
-    enum class Step { WELCOME, CONSENT, CARD, APPS, SCHEDULE, EMAIL, PERMISSIONS, DONE }
+    enum class Step { WELCOME, CONSENT, PERMISSIONS, CARD, APPS, SCHEDULE, EMAIL, DONE }
 
     companion object {
         const val EXTRA_STEP = "step"
@@ -42,7 +42,7 @@ class OnboardingActivity : Activity() {
         single = intent.getBooleanExtra(EXTRA_SINGLE_STEP, false)
         step = intent.getStringExtra(EXTRA_STEP)?.let { runCatching { Step.valueOf(it) }.getOrNull() }
             ?: savedInstanceState?.getString(EXTRA_STEP)?.let { Step.valueOf(it) }
-            ?: if (prefs.consentAccepted) Step.CARD else Step.WELCOME
+            ?: if (prefs.consentAccepted) Step.PERMISSIONS else Step.WELCOME
         codeRequested = prefs.deviceId != null && !prefs.emailVerified
     }
 

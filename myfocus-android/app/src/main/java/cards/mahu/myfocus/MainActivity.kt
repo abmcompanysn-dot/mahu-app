@@ -70,6 +70,8 @@ class MainActivity : Activity() {
             col.addView(warn)
         }
 
+        col.addView(diagnostic(locked))
+
         // Suivi
         val stats = Ui.card(this)
         stats.addView(Ui.body(this, "TON SUIVI", Ui.BLUE, 13f))
@@ -102,6 +104,35 @@ class MainActivity : Activity() {
             Focus.lockNow(prefs)
             render()
         })
+    }
+
+    /**
+     * Verification en un coup d'oeil : la protection recoit-elle les
+     * ouvertures d'applis, et quelles applis sont bloquees.
+     */
+    private fun diagnostic(locked: Boolean): LinearLayout {
+        val card = Ui.card(this)
+        card.addView(Ui.body(this, "VERIFICATION", Ui.BLUE, 13f))
+
+        val a11y = Permissions.accessibilityEnabled(this)
+        val lastAt = prefs.diagLastEventAt
+        val receiving = a11y && lastAt > 0 && lastAt >= prefs.diagServiceConnectedAt
+        card.addView(Ui.status(this, a11y, if (a11y) "Protection activee dans Android" else "Protection desactivee dans Android"))
+        card.addView(
+            if (receiving) {
+                val label = prefs.diagLastPackage?.let { appLabel(packageManager, it) ?: it } ?: "?"
+                Ui.status(this, true, "Detection OK : derniere appli vue \"$label\" a ${Focus.formatTime(lastAt)}")
+            } else {
+                Ui.status(this, false, "Aucune ouverture d'appli detectee pour l'instant. Ouvre une appli quelconque puis reviens ici.")
+            }
+        )
+        val names = prefs.blockedPackages.mapNotNull { appLabel(packageManager, it) }.sorted()
+        card.addView(Ui.status(this, names.isNotEmpty(),
+            if (names.isEmpty()) "Aucune appli bloquee installee sur ce telephone" else "Bloquees : " + names.joinToString(", ")))
+        if (locked && names.isNotEmpty()) {
+            card.addView(Ui.body(this, "Test : ouvre ${names.first()}, l'ecran \"Concentration en cours\" doit apparaitre.", Ui.MUTED, 14f))
+        }
+        return card
     }
 
     private fun statLine(label: String, value: String): LinearLayout = LinearLayout(this).apply {
