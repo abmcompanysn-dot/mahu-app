@@ -11,7 +11,7 @@ export const metadata = {
 }
 
 const APK_URL = "/myfocus/MyFocus.apk"
-const APK_VERSION = "1.0.1"
+const APK_VERSION = "1.0.2"
 
 const steps = [
   { icon: Nfc, title: "Ta carte devient ta cle", text: "Tu enregistres ta carte Mahu dans l'appli. Seule cette puce-la pourra deverrouiller tes applis." },
@@ -20,7 +20,7 @@ const steps = [
 ]
 
 const features = [
-  { icon: BellRing, title: "Alerte d'intrusion", text: "5 badges rates, protection coupee ou tentative de desinstallation : un email d'urgence part aussitot (a toi ou a un parent)." },
+  { icon: BellRing, title: "Alerte d'intrusion", text: "5 badges rates ou protection coupee : un email d'urgence part aussitot (a toi ou a un parent)." },
   { icon: BarChart3, title: "Ton suivi", text: "Series de journees reussies et tentatives bloquees, jour par jour." },
   { icon: ShieldCheck, title: "Respect de ta vie privee", text: "MyFocus voit seulement le nom de l'appli ouverte. Il ne lit ni ton ecran, ni tes messages." },
 ]
@@ -31,7 +31,6 @@ const install = [
   "Si Google Play Protect affiche \"Appli bloquee\" : touche \"Plus de details\" puis \"Installer quand meme\". MyFocus est signale par prudence car il utilise l'accessibilite, comme toutes les applis de controle parental installees hors Play Store.",
   "Ouvre MyFocus et suis la configuration : carte, applis a bloquer, horaires, email d'alerte.",
   "Active la protection dans Accessibilite (l'appli t'y emmene). Si Android affiche \"Parametre restreint\" : Parametres > Applications > MyFocus > menu ⋮ en haut > \"Autoriser les parametres restreints\", puis reessaie.",
-  "Active enfin la protection anti-desinstallation (recommande).",
 ]
 
 export default function MyFocusPage() {

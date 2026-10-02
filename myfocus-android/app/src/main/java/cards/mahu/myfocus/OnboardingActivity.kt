@@ -239,7 +239,7 @@ class OnboardingActivity : Activity() {
     private fun email(col: LinearLayout) {
         col.addView(Ui.title(this, "Alerte d'intrusion"))
         col.addView(Ui.body(this,
-            "Si quelqu'un rate 5 fois le badge, coupe la protection ou essaie de desinstaller MyFocus, " +
+            "Si quelqu'un rate 5 fois le badge ou coupe la protection de MyFocus, " +
                 "un email d'urgence part a cette adresse (la tienne, ou celle d'un parent).", 0xFFFFFFFF.toInt(), 16f))
 
         if (prefs.emailVerified) {
@@ -302,7 +302,7 @@ class OnboardingActivity : Activity() {
 
     private fun permissions(col: LinearLayout) {
         col.addView(Ui.title(this, "Autorisations"))
-        col.addView(Ui.body(this, "Active chaque protection. Les deux premieres sont indispensables.", 0xFFFFFFFF.toInt(), 16f))
+        col.addView(Ui.body(this, "Active ces deux protections : elles sont indispensables.", 0xFFFFFFFF.toInt(), 16f))
 
         val a11y = Permissions.accessibilityEnabled(this)
         val card1 = Ui.card(this)
@@ -328,14 +328,6 @@ class OnboardingActivity : Activity() {
         if (!battery) card2.addView(Ui.button(this, "Autoriser") { startActivity(Permissions.batteryIntent(this)) })
         col.addView(card2)
 
-        val admin = Permissions.adminActive(this)
-        val card3 = Ui.card(this)
-        card3.addView(Ui.status(this, admin, "Protection anti-desinstallation"))
-        if (!admin) {
-            card3.addView(Ui.body(this, "Recommande : impossible de desinstaller MyFocus sans retirer d'abord cette protection (et l'alerte part).", Ui.MUTED, 14f))
-            card3.addView(Ui.button(this, "Activer", primary = false) { startActivity(Permissions.adminIntent(this)) })
-        }
-        col.addView(card3)
 
         if (Build.MANUFACTURER.equals("Xiaomi", true) || Build.MANUFACTURER.equals("Tecno", true) ||
             Build.MANUFACTURER.equals("Infinix", true) || Build.MANUFACTURER.equals("itel", true)) {

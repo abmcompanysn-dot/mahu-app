@@ -65,17 +65,5 @@
                 android:resource="@xml/focus_accessibility_service" />
         </service>
 
-        <!-- Protection contre la desinstallation (administrateur de l'appareil). -->
-        <receiver
-            android:name=".AdminReceiver"
-            android:exported="true"
-            android:permission="android.permission.BIND_DEVICE_ADMIN">
-            <meta-data
-                android:name="android.app.device_admin"
-                android:resource="@xml/device_admin" />
-            <intent-filter>
-                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
-            </intent-filter>
-        </receiver>
     </application>
 </manifest>

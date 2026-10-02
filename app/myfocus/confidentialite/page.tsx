@@ -28,7 +28,7 @@ const sections: Array<{ title: string; items: string[] }> = [
     items: [
       "L'adresse email d'alerte que vous saisissez, pour vous envoyer le code de verification puis les alertes.",
       "Le modele du telephone (par ex. \"Samsung SM-A155F\"), pour vous dire quel appareil a declenche une alerte.",
-      "Lors d'une alerte : son type (badges incorrects, protection coupee, protection anti-desinstallation retiree), le nombre d'essais et l'heure.",
+      "Lors d'une alerte : son type (badges incorrects ou protection coupee), le nombre d'essais et l'heure.",
       "Rien d'autre : ni vos applis, ni votre position, ni vos contacts, ni votre activite.",
     ],
   },
@@ -38,7 +38,6 @@ const sections: Array<{ title: string; items: string[] }> = [
       "NFC : lire votre carte-cle.",
       "Internet : envoyer les alertes.",
       "Accessibilite : detecter l'ouverture d'une appli bloquee (voir plus haut).",
-      "Administrateur de l'appareil (facultatif) : empecher la desinstallation de MyFocus sans retirer d'abord cette protection. Aucune autre politique n'est utilisee (pas d'effacement, pas de verrouillage du telephone).",
       "Ignorer l'optimisation de la batterie : eviter qu'Android arrete la protection.",
     ],
   },

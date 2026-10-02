@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Aucune politique demandee : le role d'administrateur sert uniquement a
-     empecher une desinstallation sans d'abord retirer la protection. -->
-<device-admin>
-    <uses-policies />
-</device-admin>
