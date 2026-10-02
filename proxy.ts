@@ -21,6 +21,11 @@ const AI_HOST = "ai.mahu.cards"
 // principal, previews).
 const CLOUD_HOST = "cloud.mahu.cards"
 
+// myfocus.mahu.cards : page de l'appli Android MyFocus (app/myfocus). Le lien
+// de confidentialite affiche dans l'appli pointe sur /confidentialite.
+const MYFOCUS_HOST = "myfocus.mahu.cards"
+const MYFOCUS_PATHS: Record<string, string> = { "/": "/myfocus", "/confidentialite": "/myfocus/confidentialite" }
+
 function isDevHost(hostname: string): boolean {
   return hostname === "localhost" || hostname === "127.0.0.1" || hostname.endsWith(".local")
 }
@@ -73,6 +78,10 @@ export function proxy(request: NextRequest) {
     // routes are fully static (confirmed via x-nextjs-cache: HIT even with
     // the rewrite header present) - a real client round-trip avoids that.
     return NextResponse.redirect(new URL("/ai", `https://${AI_HOST}`))
+  }
+
+  if (hostname === MYFOCUS_HOST && MYFOCUS_PATHS[pathname]) {
+    return NextResponse.redirect(new URL(MYFOCUS_PATHS[pathname], `https://${MYFOCUS_HOST}`))
   }
 
   if (hostname === CLOUD_HOST && pathname === "/") {

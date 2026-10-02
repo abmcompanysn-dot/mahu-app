@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">MyFocus</string>
+    <string name="a11y_label">MyFocus - protection concentration</string>
+    <string name="a11y_description">MyFocus detecte uniquement le nom de l\'application que vous ouvrez, pour afficher l\'ecran de concentration devant les applications que vous avez choisi de bloquer. MyFocus ne lit pas le contenu de l\'ecran, ne voit pas ce que vous tapez et n\'envoie aucune donnee de navigation.</string>
+    <string name="admin_description">Empeche la desinstallation de MyFocus sans retirer d\'abord la protection.</string>
+</resources>

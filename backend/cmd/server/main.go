@@ -62,6 +62,13 @@ func main() {
 	mux.HandleFunc("POST /api/billing/webhook/paydunya", deps.PaydunyaWebhook)
 	mux.HandleFunc("POST /api/billing/webhook/pawapay", deps.PawaPayWebhook)
 
+	// MyFocus Android app (myfocus-android/) calls these directly from the
+	// phone - no service key. Guarded by email verification + HMAC-signed
+	// alerts instead, see handlers/myfocus.go.
+	mux.HandleFunc("POST /api/myfocus/register", deps.MyFocusRegister)
+	mux.HandleFunc("POST /api/myfocus/verify", deps.MyFocusVerify)
+	mux.HandleFunc("POST /api/myfocus/alert", deps.MyFocusAlert)
+
 	// Google redirects the user's browser here directly after OAuth consent -
 	// no Mahu session cookie/header exists on that request, so this must stay
 	// ahead of requireServiceKey too. CSRF-protected via the single-use
