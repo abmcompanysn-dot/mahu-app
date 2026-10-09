@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Loader2, Send, Star, Upload } from "lucide-react"
+import { Eye, Loader2, Send, Star, Upload } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -21,11 +22,9 @@ import { parseRecipientFile, parseRecipientText, type OutreachRecipientInput } f
 const DEFAULT_SUBJECT = "{prenom}, votre avis sur votre carte Mahu ?"
 const DEFAULT_BODY = `Bonjour {prenom},
 
-Vous utilisez votre Smart Card Mahu depuis quelque temps et nous aimerions savoir ce que vous en pensez.
+Vous utilisez votre Smart Card Mahu depuis quelque temps et nous aimerions sincèrement savoir ce que vous en pensez.
 
-Qu'est-ce qui vous plait ? Qu'est-ce que nous devrions ameliorer ? Votre retour nous aide directement a faire evoluer la carte.
-
-Cela prend 30 secondes : cliquez sur une note ci-dessous, ou repondez simplement a cet email.
+Qu'est-ce qui vous plaît ? Qu'est-ce que nous devrions améliorer ? Chaque retour nous aide directement à faire évoluer la carte.
 
 Merci pour votre confiance,`
 
@@ -53,6 +52,7 @@ export default function AdminEmailingPage() {
   const [testTo, setTestTo] = useState("")
   const [busy, setBusy] = useState<"" | "test" | "send">("")
   const [notice, setNotice] = useState("")
+  const [preview, setPreview] = useState<{ subject: string; html: string } | null>(null)
 
   useEffect(() => {
     if (admin?.email) setTestTo((v) => v || admin.email)
@@ -88,6 +88,16 @@ export default function AdminEmailingPage() {
       setFileRecipients(null)
       setFileName("")
       setError(err instanceof Error ? err.message : "Fichier illisible")
+    }
+  }
+
+  const showPreview = async () => {
+    if (!token) return
+    setError("")
+    try {
+      setPreview(await adminApi.outreachPreview(token, draft))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Apercu impossible")
     }
   }
 
@@ -303,6 +313,10 @@ export default function AdminEmailingPage() {
                     <Label htmlFor="testTo">Email de test</Label>
                     <Input id="testTo" value={testTo} onChange={(e) => setTestTo(e.target.value)} className="sm:w-72" />
                   </div>
+                  <Button variant="outline" onClick={showPreview} disabled={!!busy || !senderEmail}>
+                    <Eye className="w-4 h-4 mr-2" />
+                    Apercu
+                  </Button>
                   <Button variant="outline" onClick={sendTest} disabled={!!busy || !senderEmail || !testTo}>
                     {busy === "test" && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                     M&apos;envoyer un test
@@ -317,6 +331,21 @@ export default function AdminEmailingPage() {
                 </p>
               </CardContent>
             </Card>
+
+            <Dialog open={!!preview} onOpenChange={(open) => !open && setPreview(null)}>
+              <DialogContent className="max-w-3xl p-0 overflow-hidden">
+                <DialogHeader className="px-5 pt-5">
+                  <DialogTitle className="text-base">
+                    <span className="text-muted-foreground font-normal">Objet : </span>
+                    {preview?.subject}
+                  </DialogTitle>
+                  <p className="text-xs text-muted-foreground">Exemple avec la cliente « Awa Diop ».</p>
+                </DialogHeader>
+                {preview && (
+                  <iframe title="Apercu de l'email" srcDoc={preview.html} sandbox="" className="w-full h-[70vh] border-t bg-white" />
+                )}
+              </DialogContent>
+            </Dialog>
           </>
         )}
       </div>

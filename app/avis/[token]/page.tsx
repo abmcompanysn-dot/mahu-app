@@ -18,7 +18,7 @@ interface Info {
   test?: boolean
 }
 
-const LABELS = ["", "Pas satisfait", "Peu satisfait", "Correct", "Satisfait", "Tres satisfait"]
+const LABELS = ["", "Pas satisfait", "Peu satisfait", "Correct", "Satisfait", "Très satisfait"]
 
 async function call<T>(path: string, body?: unknown): Promise<T> {
   const res = await fetch(`/api/backend/api/outreach/${path}`, {
@@ -27,7 +27,7 @@ async function call<T>(path: string, body?: unknown): Promise<T> {
     body: body === undefined ? undefined : JSON.stringify(body),
   })
   const data = await res.json().catch(() => ({}))
-  if (!res.ok) throw new Error(data?.error || "Une erreur est survenue, reessayez.")
+  if (!res.ok) throw new Error(data?.error || "Une erreur est survenue, réessayez.")
   return data as T
 }
 
@@ -133,7 +133,7 @@ export default function AvisPage() {
         <div className="text-center">
           <p className="font-semibold">Ne plus recevoir nos emails ?</p>
           <p className="mt-1 text-sm text-[#52606d]">
-            Vous ne recevrez plus les messages de l&apos;equipe Mahu. Votre carte et votre profil continuent de
+            Vous ne recevrez plus les messages de l&apos;équipe Mahu. Votre carte et votre profil continuent de
             fonctionner normalement.
           </p>
           {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
@@ -142,7 +142,7 @@ export default function AvisPage() {
             disabled={saving}
             className="mt-5 w-full rounded-xl bg-[#1f2933] py-3 font-semibold text-white disabled:opacity-60"
           >
-            {saving ? "..." : "Me desinscrire"}
+            {saving ? "..." : "Me désinscrire"}
           </button>
         </div>
       )
@@ -155,7 +155,7 @@ export default function AvisPage() {
         <Check className="mx-auto h-10 w-10 text-green-600" />
         <p className="mt-3 font-semibold">Merci{info.firstName ? ` ${info.firstName}` : ""} !</p>
         <p className="mt-1 text-sm text-[#52606d]">
-          Votre avis a bien ete transmis a {info.senderName}. Il nous aide vraiment a ameliorer Mahu.
+          Votre avis a bien été transmis à {info.senderName}. Il nous aide vraiment à améliorer Mahu.
         </p>
       </div>
     )
@@ -167,7 +167,7 @@ export default function AvisPage() {
       <p className="text-center text-lg font-semibold">
         {info.firstName ? `${info.firstName}, que` : "Que"} pensez-vous de votre carte Mahu ?
       </p>
-      {info.test && <p className="mt-1 text-center text-xs text-amber-600">Lien de test : rien n&apos;est enregistre.</p>}
+      {info.test && <p className="mt-1 text-center text-xs text-amber-600">Lien de test : rien n&apos;est enregistré.</p>}
 
       <div className="mt-5 flex justify-center gap-1" onMouseLeave={() => setHover(0)}>
         {[1, 2, 3, 4, 5].map((n) => (
@@ -185,7 +185,7 @@ export default function AvisPage() {
       </div>
       <p className="mt-1 h-5 text-center text-sm text-[#52606d]">{LABELS[shown]}</p>
       {savedRating && rating > 0 && !hover && (
-        <p className="text-center text-xs text-green-700">Note enregistree. Un commentaire nous aiderait encore plus :</p>
+        <p className="text-center text-xs text-green-700">Note enregistrée. Un petit commentaire nous aiderait encore plus :</p>
       )}
 
       <textarea
@@ -194,7 +194,7 @@ export default function AvisPage() {
         rows={4}
         maxLength={3000}
         placeholder={
-          rating && rating <= 3 ? "Qu'est-ce qui ne va pas ? Nous voulons le corriger." : "Ce qui vous plait, ce qu'on peut ameliorer..."
+          rating && rating <= 3 ? "Qu'est-ce qui ne va pas ? Nous voulons le corriger." : "Ce qui vous plaît, ce que nous pouvons améliorer…"
         }
         className="mt-4 w-full rounded-xl border border-[#d9e2ec] p-3 text-sm outline-none focus:border-[#007AFF]"
       />
@@ -204,9 +204,9 @@ export default function AvisPage() {
         disabled={saving || rating < 1}
         className="mt-3 w-full rounded-xl bg-[#007AFF] py-3 font-semibold text-white disabled:opacity-50"
       >
-        {saving ? "Envoi..." : "Envoyer mon avis"}
+        {saving ? "Envoi…" : "Envoyer mon avis"}
       </button>
-      <p className="mt-3 text-center text-xs text-[#9aa5b1]">Vous pouvez aussi repondre directement a l&apos;email.</p>
+      <p className="mt-3 text-center text-xs text-[#9aa5b1]">Vous pouvez aussi répondre directement à l&apos;email.</p>
     </div>
   )
 }

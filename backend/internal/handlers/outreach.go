@@ -70,34 +70,20 @@ func (d *Deps) outreachMessage(c models.OutreachCampaign, rcpt models.OutreachRe
 	base := d.Env.PublicSiteURL + "/avis/" + rcpt.Token
 	unsub := base + "?desinscription=1"
 
-	var h strings.Builder
-	h.WriteString(`<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#1f2933;max-width:560px">`)
-	for _, para := range strings.Split(strings.ReplaceAll(body, "\r\n", "\n"), "\n\n") {
-		if strings.TrimSpace(para) == "" {
-			continue
-		}
-		fmt.Fprintf(&h, `<p style="margin:0 0 14px">%s</p>`, strings.ReplaceAll(html.EscapeString(para), "\n", "<br>"))
-	}
-	if c.AskFeedback {
-		h.WriteString(`<div style="margin:22px 0;padding:18px;border:1px solid #e4e7eb;border-radius:12px">`)
-		h.WriteString(`<p style="margin:0 0 10px;font-weight:bold">Votre note, en un clic :</p><table role="presentation" cellspacing="0" cellpadding="0"><tr>`)
-		for n := 1; n <= 5; n++ {
-			fmt.Fprintf(&h, `<td style="padding-right:6px"><a href="%s?note=%d" style="display:inline-block;padding:9px 12px;border-radius:8px;background:#f1f5f9;color:#b7791f;font-size:16px;font-weight:bold;text-decoration:none">%d &#9733;</a></td>`, base, n, n)
-		}
-		h.WriteString(`</tr></table><p style="margin:8px 0 0;font-size:12px;color:#7b8794">1 = pas satisfait &middot; 5 = tres satisfait</p>`)
-		fmt.Fprintf(&h, `<p style="margin:14px 0 0"><a href="%s" style="color:#007AFF">Ajouter un commentaire</a> ou simplement repondre a cet email.</p></div>`, base)
-	}
-	fmt.Fprintf(&h, `<p style="margin:18px 0 0">%s<br><span style="color:#7b8794">MAHU DIGITAL SYSTEM &middot; <a href="https://mahu.cards" style="color:#7b8794">mahu.cards</a></span></p>`, html.EscapeString(c.SenderName))
-	fmt.Fprintf(&h, `<p style="margin:26px 0 0;font-size:11px;color:#9aa5b1">Vous recevez cet email en tant que client Mahu. <a href="%s" style="color:#9aa5b1">Ne plus recevoir ces emails</a></p></div>`, unsub)
+	htmlBody := renderOutreachHTML(outreachEmail{
+		Subject: subject, Body: body, SenderName: c.SenderName, SenderEmail: c.SenderEmail,
+		AskFeedback: c.AskFeedback, FeedbackURL: base, UnsubURL: unsub,
+		LogoURL: d.Env.PublicSiteURL + "/icons/icon-192.png",
+	})
 
 	var t strings.Builder
 	t.WriteString(body)
 	if c.AskFeedback {
-		fmt.Fprintf(&t, "\n\nVotre note en 30 secondes : %s\n(ou repondez simplement a cet email)", base)
+		fmt.Fprintf(&t, "\n\nVotre avis compte : quelle note donnez-vous a Mahu ?\n%s\n(ou repondez simplement a cet email)", base)
 	}
-	fmt.Fprintf(&t, "\n\n%s\nMAHU DIGITAL SYSTEM - mahu.cards\n\nNe plus recevoir ces emails : %s\n", c.SenderName, unsub)
+	fmt.Fprintf(&t, "\n\n--\n%s\nEquipe Mahu - %s\nmahu.cards\n\nSe desinscrire : %s\n", c.SenderName, c.SenderEmail, unsub)
 
-	return emailutil.OutreachMessage{To: rcpt.Email, Subject: subject, HTML: h.String(), Text: t.String(), UnsubscribeURL: unsub}
+	return emailutil.OutreachMessage{To: rcpt.Email, Subject: subject, HTML: htmlBody, Text: t.String(), UnsubscribeURL: unsub}
 }
 
 // ---- admin ----
@@ -165,6 +151,24 @@ func (d *Deps) AdminOutreachTest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	httpx.WriteJSON(w, http.StatusOK, map[string]any{"success": true})
+}
+
+// AdminOutreachPreview returns the email as a client will see it (first
+// name "Awa" as an example), for the admin's preview.
+func (d *Deps) AdminOutreachPreview(w http.ResponseWriter, r *http.Request) {
+	var in outreachCampaignInput
+	if err := httpx.DecodeJSON(r, &in); err != nil {
+		httpx.WriteError(w, http.StatusBadRequest, "Requete invalide")
+		return
+	}
+	sender, ok := d.outreachSender(in.SenderEmail)
+	if !ok {
+		httpx.WriteError(w, http.StatusBadRequest, "Expediteur inconnu")
+		return
+	}
+	c := models.OutreachCampaign{SenderEmail: sender.Email, SenderName: sender.Name, Subject: in.Subject, Body: in.Body, AskFeedback: in.AskFeedback}
+	msg := d.outreachMessage(c, models.OutreachRecipient{FirstName: "Awa", LastName: "Diop", Token: "test"})
+	httpx.WriteJSON(w, http.StatusOK, map[string]any{"subject": msg.Subject, "html": msg.HTML})
 }
 
 // AdminCreateOutreachCampaign stores a draft with its cleaned recipient list

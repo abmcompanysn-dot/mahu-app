@@ -450,6 +450,12 @@ export const adminApi = {
       body: JSON.stringify({ ...draft, testTo }),
     }),
 
+  outreachPreview: (token: string, draft: OutreachDraft) =>
+    request<{ subject: string; html: string }>(`${ADMIN_BASE_URL}/outreach/preview`, token, {
+      method: "POST",
+      body: JSON.stringify(draft),
+    }),
+
   listOutreachCampaigns: (token: string) =>
     request<{ campaigns: Array<{ campaign: OutreachCampaign; stats: OutreachStats }> }>(
       `${ADMIN_BASE_URL}/outreach/campaigns`,
