@@ -19,12 +19,18 @@ import { parseRecipientFile, parseRecipientText, type OutreachRecipientInput } f
 
 // Emailing clients : envoi depuis la boite mahu.cards de Brunel ou Fanny (serveur
 // mail diarra-vps), avec note en un clic et lien de desinscription dans chaque email.
-const DEFAULT_SUBJECT = "{prenom}, votre avis sur votre carte Mahu ?"
+// Premiere campagne : clients de la version 1 (plus de 3 mois d'utilisation),
+// a qui l'on demande leur retour au moment de la sortie de la version 2.
+const DEFAULT_SUBJECT = "{prenom}, 3 mois avec Mahu : votre avis compte"
 const DEFAULT_BODY = `Bonjour {prenom},
 
-Vous utilisez votre Smart Card Mahu depuis quelque temps et nous aimerions sincèrement savoir ce que vous en pensez.
+Cela fait maintenant plus de 3 mois que vous utilisez votre carte Mahu. Merci de nous avoir fait confiance dès la première version.
 
-Qu'est-ce qui vous plaît ? Qu'est-ce que nous devrions améliorer ? Chaque retour nous aide directement à faire évoluer la carte.
+Nous venons de sortir la deuxième version de Mahu : un profil qui s'ouvre beaucoup plus vite, un formulaire pour que les personnes qui vous rencontrent vous laissent leurs coordonnées, et un mode confidentiel pour ne montrer que ce que vous voulez.
+
+Avant d'aller plus loin, nous voulons connaître votre avis sur ces 3 mois : qu'est-ce qui vous a été utile ? Qu'est-ce qui vous a manqué ou gêné ?
+
+Une note en un clic suffit. Et si vous avez 2 minutes, un commentaire nous aidera énormément à améliorer la carte.
 
 Merci pour votre confiance,`
 
