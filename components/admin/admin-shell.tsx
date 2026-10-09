@@ -3,7 +3,7 @@
 import { useEffect } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Activity, BarChart3, Loader2, Megaphone, Shield, Sparkles, Users, Wallet, IdCard, ShoppingBag, Package, MessageSquare, Building2, BadgeDollarSign } from "lucide-react"
+import { Activity, BarChart3, Loader2, Megaphone, Shield, Sparkles, Users, Wallet, IdCard, ShoppingBag, Package, MessageSquare, Building2, BadgeDollarSign, Mail } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAdminAuth } from "@/contexts/admin-auth-context"
 
@@ -14,6 +14,7 @@ const NAV_ITEMS = [
   { href: "/admin/pricing", label: "Tarifs", icon: BadgeDollarSign },
   { href: "/admin/contacts", label: "Messages contact", icon: MessageSquare },
   { href: "/admin/enterprise", label: "Demandes entreprise", icon: Building2 },
+  { href: "/admin/emailing", label: "Emailing clients", icon: Mail },
   { href: "/admin/users", label: "Utilisateurs", icon: Users },
   { href: "/admin/announcements", label: "Annonces", icon: Megaphone },
   { href: "/admin/cards", label: "Cartes & revendeurs", icon: IdCard },
@@ -53,7 +54,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       <nav className="border-b border-border/50 bg-card/30 backdrop-blur-xl sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-4 md:px-6 flex items-center gap-1 overflow-x-auto">
           {NAV_ITEMS.map((item) => {
-            const active = pathname === item.href
+            const active = pathname === item.href || (item.href !== "/admin" && pathname.startsWith(item.href + "/"))
             return (
               <Link
                 key={item.href}

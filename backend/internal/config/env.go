@@ -45,6 +45,15 @@ type Env struct {
 	ResendFromEmail string
 	EmailReplyTo    string
 
+	// Outreach - emails to clients sent from a person's mahu.cards mailbox
+	// on the mail server (admin > Emailing). OUTREACH_SENDERS is
+	// "email|Name|password;email|Name|password".
+	OutreachSMTPHost string
+	OutreachSMTPPort string
+	OutreachSenders  []OutreachSender
+	// Site serving the feedback / unsubscribe pages linked from those emails.
+	PublicSiteURL string
+
 	// CallMeBot - WhatsApp notifications to the admin (new orders, support
 	// messages, card activations), previously read from the 'Configuration' sheet.
 	CallMeBotPhone  string
@@ -207,6 +216,10 @@ func Load() (*Env, error) {
 		ResendFromEmail: getDefault("RESEND_FROM_EMAIL", "contact@mahucards.mahu.cards"),
 		EmailReplyTo:    getDefault("EMAIL_REPLY_TO", "contact@mahu.cards"),
 
+		OutreachSMTPHost: getDefault("OUTREACH_SMTP_HOST", "mail.mahu.cards"),
+		OutreachSMTPPort: getDefault("OUTREACH_SMTP_PORT", "587"),
+		PublicSiteURL:    strings.TrimRight(getDefault("PUBLIC_SITE_URL", "https://call.mahu.cards"), "/"),
+
 		CallMeBotPhone:  getDefault("CALLMEBOT_PHONE", ""),
 		CallMeBotAPIKey: getDefault("CALLMEBOT_API_KEY", ""),
 
@@ -255,6 +268,15 @@ func Load() (*Env, error) {
 		}
 	}
 
+	for _, entry := range strings.Split(getDefault("OUTREACH_SENDERS", ""), ";") {
+		parts := strings.SplitN(strings.TrimSpace(entry), "|", 3)
+		if len(parts) == 3 && parts[0] != "" && parts[2] != "" {
+			env.OutreachSenders = append(env.OutreachSenders, OutreachSender{
+				Email: strings.ToLower(strings.TrimSpace(parts[0])), Name: strings.TrimSpace(parts[1]), Password: parts[2],
+			})
+		}
+	}
+
 	for _, email := range strings.Split(superAdmins, ",") {
 		email = strings.ToLower(strings.TrimSpace(email))
 		if email != "" {
@@ -289,4 +311,11 @@ func (e *Env) IsSuperAdmin(email string) bool {
 		}
 	}
 	return false
+}
+
+// OutreachSender is a mailbox the admin can send client emails from.
+type OutreachSender struct {
+	Email    string
+	Name     string
+	Password string
 }

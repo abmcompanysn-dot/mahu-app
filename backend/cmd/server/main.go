@@ -47,6 +47,8 @@ func main() {
 
 	deps := &handlers.Deps{Env: env, FirebaseAuth: firebaseAuth, Email: emailutil.NewSender(env)}
 
+	deps.ResumeOutreach(context.Background())
+
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /health", handlers.Health)
@@ -149,6 +151,34 @@ func main() {
 	protected.Handle("PATCH /api/admin/enterprise-requests/{id}", adminOnly(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		deps.AdminUpdateEnterpriseRequest(w, r, r.PathValue("id"))
 	})))
+
+	protected.Handle("GET /api/admin/outreach/senders", adminOnly(http.HandlerFunc(deps.AdminOutreachSenders)))
+	protected.Handle("POST /api/admin/outreach/test", adminOnly(http.HandlerFunc(deps.AdminOutreachTest)))
+	protected.Handle("GET /api/admin/outreach/campaigns", adminOnly(http.HandlerFunc(deps.AdminListOutreachCampaigns)))
+	protected.Handle("POST /api/admin/outreach/campaigns", adminOnly(http.HandlerFunc(deps.AdminCreateOutreachCampaign)))
+	protected.Handle("GET /api/admin/outreach/campaigns/{id}", adminOnly(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		deps.AdminGetOutreachCampaign(w, r, r.PathValue("id"))
+	})))
+	protected.Handle("POST /api/admin/outreach/campaigns/{id}/send", adminOnly(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		deps.AdminSendOutreachCampaign(w, r, r.PathValue("id"))
+	})))
+	protected.Handle("POST /api/admin/outreach/campaigns/{id}/retry", adminOnly(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		deps.AdminRetryOutreachFailed(w, r, r.PathValue("id"))
+	})))
+	protected.Handle("DELETE /api/admin/outreach/campaigns/{id}", adminOnly(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		deps.AdminDeleteOutreachCampaign(w, r, r.PathValue("id"))
+	})))
+	// Feedback / unsubscribe page linked from the outreach emails (no login,
+	// the token is the key).
+	protected.HandleFunc("GET /api/outreach/{token}", func(w http.ResponseWriter, r *http.Request) {
+		deps.GetOutreachFeedback(w, r, r.PathValue("token"))
+	})
+	protected.HandleFunc("POST /api/outreach/{token}/feedback", func(w http.ResponseWriter, r *http.Request) {
+		deps.SubmitOutreachFeedback(w, r, r.PathValue("token"))
+	})
+	protected.HandleFunc("POST /api/outreach/{token}/unsubscribe", func(w http.ResponseWriter, r *http.Request) {
+		deps.OutreachUnsubscribe(w, r, r.PathValue("token"))
+	})
 
 	userOnly := middleware.RequireUserAuth(env.JWTSecret)
 	protected.Handle("GET /api/ai/models", userOnly(http.HandlerFunc(deps.ListModels)))

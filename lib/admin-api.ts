@@ -204,6 +204,55 @@ export interface UserDetails {
   viewCount: number
 }
 
+export interface OutreachSender {
+  email: string
+  name: string
+}
+
+export interface OutreachCampaign {
+  _id: string
+  senderEmail: string
+  senderName: string
+  subject: string
+  body: string
+  askFeedback: boolean
+  status: "brouillon" | "envoi" | "termine"
+  createdBy: string
+  total: number
+  createdAt: string
+  startedAt?: string
+  finishedAt?: string
+}
+
+export interface OutreachStats {
+  pending: number
+  sent: number
+  failed: number
+  unsubscribed: number
+  feedbacks: number
+  avgRating: number
+}
+
+export interface OutreachRecipient {
+  _id: string
+  email: string
+  firstName: string
+  lastName: string
+  status: "en_attente" | "envoye" | "echec" | "desinscrit"
+  error?: string
+  sentAt?: string
+  rating?: number
+  comment?: string
+  feedbackAt?: string
+}
+
+export interface OutreachDraft {
+  senderEmail: string
+  subject: string
+  body: string
+  askFeedback: boolean
+}
+
 type ApiCardsResponse = ApiResponse & { cards: PhysicalCard[]; isSuper: boolean }
 type ApiBatchResponse = ApiResponse & { batchId: string }
 
@@ -392,4 +441,47 @@ export const adminApi = {
     request<UserDetails>(`${ADMIN_BASE_URL}/users/${userId}/details`, token),
 
   listProspects: (token: string) => request<{ prospects: ProspectRow[] }>(`${ADMIN_BASE_URL}/prospects`, token),
+  outreachSenders: (token: string) =>
+    request<{ senders: OutreachSender[] }>(`${ADMIN_BASE_URL}/outreach/senders`, token),
+
+  outreachTest: (token: string, draft: OutreachDraft, testTo: string) =>
+    request<{ success: boolean }>(`${ADMIN_BASE_URL}/outreach/test`, token, {
+      method: "POST",
+      body: JSON.stringify({ ...draft, testTo }),
+    }),
+
+  listOutreachCampaigns: (token: string) =>
+    request<{ campaigns: Array<{ campaign: OutreachCampaign; stats: OutreachStats }> }>(
+      `${ADMIN_BASE_URL}/outreach/campaigns`,
+      token
+    ),
+
+  createOutreachCampaign: (
+    token: string,
+    draft: OutreachDraft,
+    recipients: Array<{ email: string; firstName: string; lastName: string }>
+  ) =>
+    request<{ _id: string; total: number; invalid: number; duplicates: number; unsubscribed: number }>(
+      `${ADMIN_BASE_URL}/outreach/campaigns`,
+      token,
+      { method: "POST", body: JSON.stringify({ ...draft, recipients }) }
+    ),
+
+  getOutreachCampaign: (token: string, id: string) =>
+    request<{ campaign: OutreachCampaign; recipients: OutreachRecipient[]; stats: OutreachStats; running: boolean }>(
+      `${ADMIN_BASE_URL}/outreach/campaigns/${id}`,
+      token
+    ),
+
+  sendOutreachCampaign: (token: string, id: string) =>
+    request<{ success: boolean }>(`${ADMIN_BASE_URL}/outreach/campaigns/${id}/send`, token, { method: "POST" }),
+
+  retryOutreachFailed: (token: string, id: string) =>
+    request<{ success: boolean; requeued: number }>(`${ADMIN_BASE_URL}/outreach/campaigns/${id}/retry`, token, {
+      method: "POST",
+    }),
+
+  deleteOutreachCampaign: (token: string, id: string) =>
+    request<{ success: boolean }>(`${ADMIN_BASE_URL}/outreach/campaigns/${id}`, token, { method: "DELETE" }),
 }
+
