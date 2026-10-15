@@ -51,3 +51,22 @@ func contains(s, sub string) bool {
 	}
 	return false
 }
+
+func TestBlankCardSlugsAndLinks(t *testing.T) {
+	for slug, want := range map[string]bool{
+		"mahu-noom-j-6-jeudi-1478": true, "mahu-noom-j-7-vendredi-3547": true,
+		"awa-diop": false, "mahu-cards": false, "brunel1478": false,
+	} {
+		if isBlankCardSlug(slug) != want {
+			t.Errorf("isBlankCardSlug(%q) != %v", slug, want)
+		}
+	}
+	links := blankCardLinks([]any{
+		map[string]any{"type": "whatsapp", "url": "+221771234567"},
+		map[string]any{"type": "evil", "url": "javascript:x"},
+		map[string]any{"type": "instagram", "url": " "},
+	})
+	if len(links) != 1 || links[0]["type"] != "whatsapp" {
+		t.Errorf("liens inattendus : %v", links)
+	}
+}

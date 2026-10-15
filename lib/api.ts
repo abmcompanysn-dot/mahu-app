@@ -196,11 +196,35 @@ export const api = {
   register: (email: string, password: string, cardCode?: string, profileUrl?: string) =>
     callAppScript("registerUser", { email, password, cardCode, profileUrl }),
 
+  // Carte vierge : creation du compte sur l'adresse imprimee de la carte.
+  activateBlankCard: (data: {
+    profileUrl: string
+    nomComplet: string
+    profession: string
+    compagnie: string
+    telephone: string
+    email: string
+    password: string
+    leadCapture: "OUI" | "NON"
+    liensSociaux: { type: string; url: string }[]
+  }) => callAppScript("activateBlankCard", data),
+
+  // Lien Confirmer / Refuser de l'e-mail envoye a Mahu pour chaque carte vierge activee.
+  reviewBlankCard: (token: string, decision: "confirmer" | "refuser") =>
+    callAppScript<never>("reviewBlankCard", { token, decision }) as Promise<{
+      success: boolean
+      decision?: string
+      email?: string
+      profileUrl?: string
+      error?: string
+    }>,
+
   // Adresse de profil libre ? (page d'un profil pas encore active, inscription)
   checkProfileAvailability: (profileUrl: string) =>
     callAppScript<never>("checkProfileAvailability", { profileUrl }) as Promise<{
       success: boolean
       available?: boolean
+      blankCard?: boolean
       reason?: string
       profileUrl?: string
       error?: string

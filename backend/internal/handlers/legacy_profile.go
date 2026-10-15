@@ -206,6 +206,9 @@ func (d *Deps) legacyGetProfileData(ctx context.Context, profileURL string) (map
 	if err != nil {
 		return map[string]any{"error": "Profil non trouve."}, nil
 	}
+	if blankCardHidden(&user) {
+		return map[string]any{"error": "Profil desactive."}, nil
+	}
 
 	profile, err := findProfileByUserID(ctx, user.ID)
 	if err != nil {

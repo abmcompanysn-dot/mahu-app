@@ -10,6 +10,7 @@ import {
 import Link from "next/link"
 import { api } from "@/lib/api"
 import { LEAD_CHANNELS, PHONE_PREFIXES, formatLeadContact, type LeadChannel } from "@/lib/lead-contact"
+import { BlankCardActivation } from "@/components/profile/blank-card-activation"
 import { Button } from "@/components/ui/button"
 import { optimizedImage } from "@/lib/image"
 
@@ -74,6 +75,8 @@ export function PublicProfileView({
   const [leadPrefix, setLeadPrefix] = useState("221")
   // Profil introuvable mais adresse libre : on propose de l'activer.
   const [claimable, setClaimable] = useState(false)
+  // Carte vierge (adresse imprimee) : formulaire d'activation direct.
+  const [blankCard, setBlankCard] = useState(false)
   const [leadSubmitting, setLeadSubmitting] = useState(false)
   const [leadSuccess, setLeadSuccess] = useState(false)
   const [leadError, setLeadError] = useState("")
@@ -95,6 +98,7 @@ export function PublicProfileView({
           setError(data.error)
           const check = await api.checkProfileAvailability(username)
           setClaimable(!!check.available)
+          setBlankCard(!!check.blankCard)
         } else {
           setProfile(data)
         }
@@ -191,6 +195,10 @@ END:VCARD`
         </div>
       </div>
     )
+  }
+
+  if ((error || !profile) && claimable && blankCard) {
+    return <BlankCardActivation slug={username} />
   }
 
   if ((error || !profile) && claimable) {

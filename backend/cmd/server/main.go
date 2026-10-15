@@ -48,6 +48,7 @@ func main() {
 	deps := &handlers.Deps{Env: env, FirebaseAuth: firebaseAuth, Email: emailutil.NewSender(env)}
 
 	deps.ResumeOutreach(context.Background())
+	go deps.RunBlankCardExpiry(context.Background())
 
 	mux := http.NewServeMux()
 

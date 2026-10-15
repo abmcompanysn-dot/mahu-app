@@ -37,6 +37,13 @@ type User struct {
 	// biometric) but keep their data, unlike a delete.
 	Disabled bool `bson:"disabled,omitempty" json:"disabled,omitempty"`
 
+	// Blank card activation (handlers/profile_claim.go): the admin confirms
+	// each one by email; unconfirmed after the deadline, the account is
+	// disabled and its public profile hidden.
+	BlankCardApproval string     `bson:"blankCardApproval,omitempty" json:"blankCardApproval,omitempty"`
+	BlankCardDeadline *time.Time `bson:"blankCardDeadline,omitempty" json:"blankCardDeadline,omitempty"`
+	BlankCardToken    string     `bson:"blankCardToken,omitempty" json:"-"`
+
 	// Mode IA (/ai) is hidden from the dashboard and its API endpoints
 	// rejected until an admin explicitly enables it per user - controlled
 	// rollout rather than open to everyone by default.
