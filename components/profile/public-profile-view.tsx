@@ -5,9 +5,11 @@ import { motion, AnimatePresence } from "framer-motion"
 import { 
   Phone, Mail, MapPin, Download, Copy, Check, Send,
   Linkedin, Twitter, Instagram, Facebook, Globe, Github,
-  MessageCircle, Youtube, Music, Link2, Lock
+  MessageCircle, Youtube, Music, Link2, Lock, KeyRound, ShoppingBag
 } from "lucide-react"
+import Link from "next/link"
 import { api } from "@/lib/api"
+import { LEAD_CHANNELS, PHONE_PREFIXES, formatLeadContact, type LeadChannel } from "@/lib/lead-contact"
 import { Button } from "@/components/ui/button"
 import { optimizedImage } from "@/lib/image"
 
@@ -68,6 +70,10 @@ export function PublicProfileView({
   const [copied, setCopied] = useState<string | null>(null)
   const [showLeadForm, setShowLeadForm] = useState(false)
   const [leadForm, setLeadForm] = useState({ name: "", contact: "", message: "", rating: 0 })
+  const [leadChannel, setLeadChannel] = useState<LeadChannel>("whatsapp")
+  const [leadPrefix, setLeadPrefix] = useState("221")
+  // Profil introuvable mais adresse libre : on propose de l'activer.
+  const [claimable, setClaimable] = useState(false)
   const [leadSubmitting, setLeadSubmitting] = useState(false)
   const [leadSuccess, setLeadSuccess] = useState(false)
   const [leadError, setLeadError] = useState("")
@@ -87,6 +93,8 @@ export function PublicProfileView({
         
         if (data.error) {
           setError(data.error)
+          const check = await api.checkProfileAvailability(username)
+          setClaimable(!!check.available)
         } else {
           setProfile(data)
         }
@@ -135,6 +143,11 @@ END:VCARD`
 
   const handleLeadSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    const formatted = formatLeadContact(leadChannel, leadForm.contact, leadPrefix)
+    if ("error" in formatted) {
+      setLeadError(formatted.error)
+      return
+    }
     setLeadSubmitting(true)
     setLeadError("")
 
@@ -142,7 +155,7 @@ END:VCARD`
       const result = await api.handleLeadCapture({
         profileUrl: username,
         name: leadForm.name,
-        contact: leadForm.contact,
+        contact: formatted.contact,
         message: leadForm.message,
         rating: leadForm.rating || undefined,
       })
@@ -176,6 +189,48 @@ END:VCARD`
             <div className="h-4 bg-muted rounded w-1/2 mx-auto" />
           </div>
         </div>
+      </div>
+    )
+  }
+
+  if ((error || !profile) && claimable) {
+    const address = `${typeof window !== "undefined" ? window.location.host : "call.mahu.cards"}/p/${username}`
+    const q = `profil=${encodeURIComponent(username)}`
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-6">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-sm rounded-2xl border border-border/50 bg-card/60 p-8 text-center space-y-5"
+        >
+          <div className="w-20 h-20 mx-auto rounded-full bg-primary/15 flex items-center justify-center">
+            <KeyRound className="w-9 h-9 text-primary" />
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-2xl font-bold text-foreground">Ce profil n&apos;est pas encore active</h1>
+            <p className="text-muted-foreground text-sm">
+              Cette adresse est libre. Activez-la pour en faire votre carte de visite numerique.
+            </p>
+            <p className="font-mono text-sm text-foreground break-all bg-muted/40 rounded-lg px-3 py-2">{address}</p>
+          </div>
+          <div className="space-y-3">
+            <Button asChild className="w-full py-5">
+              <Link href={`/register?${q}&mode=code`}>
+                <KeyRound className="w-4 h-4 mr-2" />
+                J&apos;ai un code d&apos;activation
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="w-full py-5">
+              <Link href={`/register?${q}&mode=order`}>
+                <ShoppingBag className="w-4 h-4 mr-2" />
+                Commander ma carte Mahu
+              </Link>
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Le code d&apos;activation est livre avec votre carte ou envoye par votre revendeur.
+          </p>
+        </motion.div>
       </div>
     )
   }
@@ -390,14 +445,67 @@ END:VCARD`
                         onChange={(e) => setLeadForm({ ...leadForm, name: e.target.value })}
                         className="w-full p-3 rounded-xl bg-muted/30 border border-border/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50"
                       />
-                      <input
-                        type="text"
-                        required
-                        placeholder="Email ou telephone"
-                        value={leadForm.contact}
-                        onChange={(e) => setLeadForm({ ...leadForm, contact: e.target.value })}
-                        className="w-full p-3 rounded-xl bg-muted/30 border border-border/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50"
-                      />
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-1">Comment vous joindre ?</p>
+                        <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Comment vous joindre">
+                          {LEAD_CHANNELS.map((c) => (
+                            <button
+                              key={c.id}
+                              type="button"
+                              role="radio"
+                              aria-checked={leadChannel === c.id}
+                              onClick={() => {
+                                setLeadChannel(c.id)
+                                setLeadError("")
+                              }}
+                              className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                                leadChannel === c.id
+                                  ? "text-white border-transparent"
+                                  : "border-border/60 text-muted-foreground hover:text-foreground"
+                              }`}
+                              style={leadChannel === c.id ? { backgroundColor: accentColor } : undefined}
+                            >
+                              {c.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      {leadChannel === "whatsapp" || leadChannel === "telephone" ? (
+                        <div className="flex gap-2">
+                          <select
+                            value={leadPrefix}
+                            onChange={(e) => setLeadPrefix(e.target.value)}
+                            aria-label="Pays"
+                            className="w-32 shrink-0 p-3 rounded-xl bg-muted/30 border border-border/50 text-foreground text-sm focus:outline-none focus:border-primary/50"
+                          >
+                            {PHONE_PREFIXES.map((p) => (
+                              <option key={p.code} value={p.code}>
+                                {p.label}
+                              </option>
+                            ))}
+                          </select>
+                          <input
+                            type="tel"
+                            inputMode="tel"
+                            required
+                            autoComplete="tel-national"
+                            placeholder={LEAD_CHANNELS.find((c) => c.id === leadChannel)?.placeholder}
+                            value={leadForm.contact}
+                            onChange={(e) => setLeadForm({ ...leadForm, contact: e.target.value })}
+                            className="min-w-0 flex-1 p-3 rounded-xl bg-muted/30 border border-border/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50"
+                          />
+                        </div>
+                      ) : (
+                        <input
+                          type={leadChannel === "email" ? "email" : "text"}
+                          required
+                          autoComplete={leadChannel === "email" ? "email" : "off"}
+                          placeholder={LEAD_CHANNELS.find((c) => c.id === leadChannel)?.placeholder}
+                          value={leadForm.contact}
+                          onChange={(e) => setLeadForm({ ...leadForm, contact: e.target.value })}
+                          className="w-full p-3 rounded-xl bg-muted/30 border border-border/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50"
+                        />
+                      )}
                       <div>
                         <p className="text-sm text-muted-foreground mb-1">Votre avis (optionnel)</p>
                         <div className="flex gap-1" role="radiogroup" aria-label="Votre avis">

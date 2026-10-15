@@ -193,8 +193,18 @@ export const api = {
   login: (email: string, password: string) =>
     callAppScript("loginUser", { email, password }),
   
-  register: (email: string, password: string, cardCode?: string) =>
-    callAppScript("registerUser", { email, password, cardCode }),
+  register: (email: string, password: string, cardCode?: string, profileUrl?: string) =>
+    callAppScript("registerUser", { email, password, cardCode, profileUrl }),
+
+  // Adresse de profil libre ? (page d'un profil pas encore active, inscription)
+  checkProfileAvailability: (profileUrl: string) =>
+    callAppScript<never>("checkProfileAvailability", { profileUrl }) as Promise<{
+      success: boolean
+      available?: boolean
+      reason?: string
+      profileUrl?: string
+      error?: string
+    }>,
   
   forgotPassword: (email: string) =>
     callAppScript("forgotPassword", { email }),

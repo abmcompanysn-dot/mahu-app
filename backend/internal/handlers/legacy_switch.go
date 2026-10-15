@@ -16,7 +16,9 @@ func (d *Deps) runLegacyAction(ctx context.Context, action string, payload map[s
 	case "registerUser":
 		// enterpriseId is only set internally (legacyCreateEmployee) - accepting it
 		// here would let a public signup skip the card code / deposit check.
-		return d.legacyRegisterUser(ctx, str(payload, "email"), str(payload, "password"), "", str(payload, "cardCode"))
+		return d.legacyRegisterUser(ctx, str(payload, "email"), str(payload, "password"), "", str(payload, "cardCode"), str(payload, "profileUrl"))
+	case "checkProfileAvailability":
+		return d.legacyCheckProfileAvailability(ctx, str(payload, "profileUrl"))
 	case "loginUser":
 		return d.legacyLoginUser(ctx, str(payload, "email"), str(payload, "password"))
 	case "forgotPassword":

@@ -5,12 +5,13 @@ import { motion, AnimatePresence } from "framer-motion"
 import {
   Search, Filter, Download, Plus,
   Mail, Phone, Loader2, Send, X,
-  Trash2, Edit2, Eye, Users
+  Trash2, Edit2, Eye, Users, MessageCircle, ExternalLink
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/hooks/use-auth"
 import { api } from "@/lib/api"
 import { gmailApi } from "@/lib/connectors-api"
+import { parseLeadContact, whatsappHref } from "@/lib/lead-contact"
 
 interface Contact {
   id: string
@@ -110,7 +111,7 @@ export default function ContactsPage() {
     setSendingEmail(true)
     setSendError(null)
     try {
-      await gmailApi.sendEmail(token, composeFor.contact, composeSubject, composeBody)
+      await gmailApi.sendEmail(token, parseLeadContact(composeFor.contact).value, composeSubject, composeBody)
       setComposeFor(null)
     } catch (err) {
       setSendError(err instanceof Error ? err.message : "Erreur d'envoi")
@@ -181,11 +182,14 @@ export default function ContactsPage() {
     }
   }
 
+  // Canal choisi par le visiteur ("WhatsApp : +221...", "Instagram : @...") ou
+  // ancienne saisie libre (e-mail ou numero).
   const getContactType = (contact: string | undefined | null) => {
-    if (!contact || typeof contact !== 'string') return 'other'
-    if (contact.includes('@')) return 'email'
-    if (contact.startsWith('+') || /^\d/.test(contact)) return 'phone'
-    return 'other'
+    const { channel } = parseLeadContact(contact)
+    if (channel === 'email') return 'email'
+    if (channel === 'telephone' || channel === 'whatsapp') return 'phone'
+    if (channel === 'autre') return 'other'
+    return 'social'
   }
 
   const getInitials = (name: string | undefined | null) => {
@@ -387,6 +391,8 @@ export default function ContactsPage() {
               <tbody>
                 {filteredContacts.map((contact, index) => {
                   const contactType = getContactType(contact.contact)
+                  const parsed = parseLeadContact(contact.contact)
+                  const waLink = whatsappHref(parsed)
                   return (
                     <motion.tr
                       key={contact.id}
@@ -450,9 +456,35 @@ export default function ContactsPage() {
                               </option>
                             ))}
                           </select>
+                          {waLink && (
+                            <motion.a
+                              href={waLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              className="p-2 rounded-lg hover:bg-green-500/10 text-muted-foreground hover:text-green-600 transition-colors"
+                              title="Ecrire sur WhatsApp"
+                            >
+                              <MessageCircle className="w-4 h-4" />
+                            </motion.a>
+                          )}
+                          {contactType === 'social' && parsed.href && (
+                            <motion.a
+                              href={parsed.href}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              className="p-2 rounded-lg hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors"
+                              title="Ouvrir le profil"
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                            </motion.a>
+                          )}
                           {contactType === 'email' && (
                             <motion.a
-                              href={`mailto:${contact.contact}`}
+                              href={parsed.href || `mailto:${parsed.value}`}
                               whileHover={{ scale: 1.1 }}
                               whileTap={{ scale: 0.9 }}
                               className="p-2 rounded-lg hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors"
@@ -474,7 +506,7 @@ export default function ContactsPage() {
                           )}
                           {contactType === 'phone' && (
                             <motion.a
-                              href={`tel:${contact.contact}`}
+                              href={`tel:${parsed.value.replace(/[^\d+]/g, '')}`}
                               whileHover={{ scale: 1.1 }}
                               whileTap={{ scale: 0.9 }}
                               className="p-2 rounded-lg hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors"

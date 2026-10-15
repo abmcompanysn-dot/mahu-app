@@ -11,6 +11,7 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 
 	"mahu-backend/internal/authutil"
 	"mahu-backend/internal/db"
@@ -65,11 +66,21 @@ func resetEmailHTML(resetURL string) (string, string) {
 
 // createLegacyAccount inserts a user and its empty profile - shared by the
 // email/password signup (legacyRegisterUser) and the deposit-paid signup
-// (finalizeCardOrder), which already holds a hashed password.
-func createLegacyAccount(ctx context.Context, email, passwordHash, enterpriseID, name, phone string) (*models.User, error) {
+// (finalizeCardOrder), which already holds a hashed password. wantedSlug is
+// the profile address the visitor asked to activate (see profile_claim.go):
+// used when still free, otherwise the usual generated address.
+func createLegacyAccount(ctx context.Context, email, passwordHash, enterpriseID, name, phone, wantedSlug string) (*models.User, error) {
 	role := models.RoleEntreprise
 	if enterpriseID != "" {
 		role = models.RoleEmploye
+	}
+
+	generated := slugify(emailPrefix(email)) + fmt.Sprintf("%d", rand.Intn(1000))
+	slug := generated
+	if wanted := normalizeProfileSlug(wantedSlug); wanted != "" {
+		if problem, err := profileSlugProblem(ctx, wanted); err == nil && problem == "" {
+			slug = wanted
+		}
 	}
 
 	now := time.Now()
@@ -79,13 +90,19 @@ func createLegacyAccount(ctx context.Context, email, passwordHash, enterpriseID,
 		Role:             role,
 		PasswordHash:     passwordHash,
 		EnterpriseID:     enterpriseID,
-		ProfileURL:       slugify(emailPrefix(email)) + fmt.Sprintf("%d", rand.Intn(1000)),
+		ProfileURL:       slug,
 		NfcCardIDs:       []string{},
 		OnboardingStatus: models.OnboardingStarted,
 		CreatedAt:        now,
 		UpdatedAt:        now,
 	}
-	if _, err := db.Collection(models.UsersCollection).InsertOne(ctx, user); err != nil {
+	_, err := db.Collection(models.UsersCollection).InsertOne(ctx, user)
+	if mongo.IsDuplicateKeyError(err) && slug != generated {
+		// The wanted address was taken in between: fall back to the generated one.
+		user.ProfileURL = generated
+		_, err = db.Collection(models.UsersCollection).InsertOne(ctx, user)
+	}
+	if err != nil {
 		return nil, err
 	}
 
@@ -116,7 +133,7 @@ func createLegacyAccount(ctx context.Context, email, passwordHash, enterpriseID,
 // a self-signup must go through the deposit checkout instead
 // (CreateDepositCheckout) - only employees invited by their enterprise
 // (enterpriseID) skip both.
-func (d *Deps) legacyRegisterUser(ctx context.Context, email, password, enterpriseID, cardCode string) (map[string]any, error) {
+func (d *Deps) legacyRegisterUser(ctx context.Context, email, password, enterpriseID, cardCode, wantedSlug string) (map[string]any, error) {
 	email = strings.ToLower(strings.TrimSpace(email))
 	cardCode = strings.ToUpper(strings.TrimSpace(cardCode))
 	if email == "" || password == "" {
@@ -162,7 +179,7 @@ func (d *Deps) legacyRegisterUser(ctx context.Context, email, password, enterpri
 		return nil, err
 	}
 
-	user, err := createLegacyAccount(ctx, email, storedPassword, enterpriseID, "", "")
+	user, err := createLegacyAccount(ctx, email, storedPassword, enterpriseID, "", "", wantedSlug)
 	if err != nil {
 		return nil, err
 	}
@@ -194,7 +211,7 @@ func (d *Deps) legacyRegisterUser(ctx context.Context, email, password, enterpri
 		}
 	}()
 
-	return map[string]any{"success": true, "newUser": true, "token": token}, nil
+	return map[string]any{"success": true, "newUser": true, "token": token, "profileUrl": user.ProfileURL}, nil
 }
 
 func (d *Deps) legacyLoginUser(ctx context.Context, email, password string) (map[string]any, error) {

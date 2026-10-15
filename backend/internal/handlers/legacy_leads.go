@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"html"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -15,10 +17,32 @@ import (
 	"mahu-backend/internal/models"
 )
 
+var nonDigitRegexp = regexp.MustCompile(`\D`)
+
+// leadWhatsAppURL gives a wa.me link when the visitor left a WhatsApp or phone
+// number ("WhatsApp : +221771234567", see lib/lead-contact.ts).
+func leadWhatsAppURL(contact string) string {
+	lower := strings.ToLower(contact)
+	if !strings.HasPrefix(lower, "whatsapp") && !strings.HasPrefix(lower, "telephone") {
+		return ""
+	}
+	digits := nonDigitRegexp.ReplaceAllString(contact, "")
+	if len(digits) < 8 {
+		return ""
+	}
+	return "https://wa.me/" + digits
+}
+
+// Everything the visitor typed is escaped: it goes into an HTML email.
 func leadNotificationHTML(name, contact, message, connectionURL string) string {
+	waURL := leadWhatsAppURL(contact)
+	name, contact, message = html.EscapeString(name), html.EscapeString(contact), html.EscapeString(message)
 	messageBlock := ""
 	if message != "" {
 		messageBlock = fmt.Sprintf(`<p style="margin: 15px 0 5px 0; font-size: 15px;"><strong>MESSAGE :</strong></p><p style="margin: 0; font-style: italic; color: #555;">"%s"</p>`, message)
+	}
+	if waURL != "" {
+		messageBlock += fmt.Sprintf(`<p style="margin: 20px 0 0 0;"><a href="%s" style="background-color: #25D366; color: #ffffff; padding: 12px 22px; text-decoration: none; font-weight: 600; font-size: 14px; display: inline-block; border-radius: 6px;">Repondre sur WhatsApp</a></p>`, waURL)
 	}
 	return fmt.Sprintf(`
     <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #eeeeee;">

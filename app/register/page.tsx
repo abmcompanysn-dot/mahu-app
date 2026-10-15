@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button"
 import { useAuth } from "@/hooks/use-auth"
 import { cn } from "@/lib/utils"
 import { shopApi, formatXof, PRODUCT_CATEGORY_LABELS, type Product } from "@/lib/shop-api"
+import { api } from "@/lib/api"
 
 type Mode = "code" | "order"
 
@@ -52,7 +53,15 @@ function RegisterForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { register } = useAuth()
-  const [mode, setMode] = useState<Mode>(searchParams.get("code") ? "code" : "order")
+  const [mode, setMode] = useState<Mode>(
+    searchParams.get("code") || searchParams.get("mode") === "code" ? "code" : "order"
+  )
+  // Adresse de profil a activer (venue d'une page /p/<adresse> pas encore activee).
+  const wantedProfile = (searchParams.get("profil") || "").trim().toLowerCase()
+  const [profileStatus, setProfileStatus] = useState<"none" | "checking" | "free" | "taken">(
+    wantedProfile ? "checking" : "none"
+  )
+  const profileUrl = profileStatus === "free" ? wantedProfile : undefined
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -72,6 +81,14 @@ function RegisterForm() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(searchParams.get("cancelled") ? "Paiement annule. Vous pouvez reessayer." : "")
   const [success, setSuccess] = useState(false)
+
+  useEffect(() => {
+    if (!wantedProfile) return
+    api
+      .checkProfileAvailability(wantedProfile)
+      .then((r) => setProfileStatus(r.available ? "free" : "taken"))
+      .catch(() => setProfileStatus("taken"))
+  }, [wantedProfile])
 
   useEffect(() => {
     shopApi
@@ -133,6 +150,7 @@ function RegisterForm() {
           email: formData.email.toLowerCase().trim(),
           phone: formData.phone,
           password: formData.password,
+          profileUrl,
         })
         window.location.href = checkoutUrl
         return
@@ -140,7 +158,8 @@ function RegisterForm() {
       const result = await register(
         formData.email.toLowerCase().trim(),
         formData.password,
-        cardCode
+        cardCode,
+        profileUrl
       )
       if (result.success) {
         setSuccess(true)
@@ -171,6 +190,7 @@ function RegisterForm() {
         phone: formData.phone,
         deliveryAddress: formData.deliveryAddress,
         password: formData.password,
+        profileUrl,
       })
       window.location.href = checkoutUrl
       return
@@ -289,6 +309,24 @@ function RegisterForm() {
                 <p className="text-muted-foreground mb-6">
                   Commandez votre carte avec un acompte des {formatXof(Math.min(depositXof, ...products.map((p) => p.depositXof)))}, ou activez celle que vous avez deja.
                 </p>
+
+                {profileStatus !== "none" && (
+                  <div
+                    className={cn(
+                      "mb-6 rounded-xl border p-4 text-sm",
+                      profileStatus === "taken" ? "border-amber-500/30 bg-amber-500/10" : "border-primary/30 bg-primary/10"
+                    )}
+                  >
+                    <p className="text-muted-foreground">Adresse de votre profil</p>
+                    <p className="font-mono text-foreground break-all">.../p/{wantedProfile}</p>
+                    <p className="mt-1 text-muted-foreground">
+                      {profileStatus === "checking" && "Verification..."}
+                      {profileStatus === "free" && "Elle vous sera reservee a la creation du compte."}
+                      {profileStatus === "taken" &&
+                        "Cette adresse n'est plus disponible : une adresse vous sera attribuee, modifiable ensuite."}
+                    </p>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-2 gap-2 p-1 mb-6 rounded-xl bg-muted/30 border border-border/50">
                   {(

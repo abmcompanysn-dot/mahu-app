@@ -37,25 +37,27 @@ const (
 // PayDunya confirms the deposit (see finalizeCardOrder), so the password is
 // held here hashed until then.
 type CardOrder struct {
-	ID              primitive.ObjectID  `bson:"_id,omitempty" json:"_id"`
-	Reference       string              `bson:"reference" json:"reference"`
-	Kind            string              `bson:"kind,omitempty" json:"kind,omitempty"`
-	CardCode        string              `bson:"cardCode,omitempty" json:"cardCode,omitempty"`
-	ProductID       primitive.ObjectID  `bson:"productId" json:"productId"`
-	ProductName     string              `bson:"productName" json:"productName"`
-	ProductPriceXof int                 `bson:"productPriceXof" json:"productPriceXof"`
-	DepositXof      int                 `bson:"depositXof" json:"depositXof"`
-	ClientName      string              `bson:"clientName" json:"clientName"`
-	Email           string              `bson:"email" json:"email"`
-	Phone           string              `bson:"phone" json:"phone"`
-	DeliveryAddress string              `bson:"deliveryAddress" json:"deliveryAddress"`
-	PasswordHash    string              `bson:"passwordHash,omitempty" json:"-"`
-	PaymentStatus   string              `bson:"paymentStatus" json:"paymentStatus"`
-	DeliveryStatus  string              `bson:"deliveryStatus" json:"deliveryStatus"`
-	PaydunyaToken   string              `bson:"paydunyaToken,omitempty" json:"paydunyaToken,omitempty"`
-	UserID          *primitive.ObjectID `bson:"userId,omitempty" json:"userId,omitempty"`
-	AdminNote       string              `bson:"adminNote,omitempty" json:"adminNote,omitempty"`
-	PaidAt          *time.Time          `bson:"paidAt,omitempty" json:"paidAt,omitempty"`
-	CreatedAt       time.Time           `bson:"createdAt" json:"createdAt"`
-	UpdatedAt       time.Time           `bson:"updatedAt" json:"updatedAt"`
+	ID        primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
+	Reference string             `bson:"reference" json:"reference"`
+	Kind      string             `bson:"kind,omitempty" json:"kind,omitempty"`
+	CardCode  string             `bson:"cardCode,omitempty" json:"cardCode,omitempty"`
+	// Profile address asked for from an unactivated /p/<adresse> page.
+	WantedProfileURL string              `bson:"wantedProfileUrl,omitempty" json:"wantedProfileUrl,omitempty"`
+	ProductID        primitive.ObjectID  `bson:"productId" json:"productId"`
+	ProductName      string              `bson:"productName" json:"productName"`
+	ProductPriceXof  int                 `bson:"productPriceXof" json:"productPriceXof"`
+	DepositXof       int                 `bson:"depositXof" json:"depositXof"`
+	ClientName       string              `bson:"clientName" json:"clientName"`
+	Email            string              `bson:"email" json:"email"`
+	Phone            string              `bson:"phone" json:"phone"`
+	DeliveryAddress  string              `bson:"deliveryAddress" json:"deliveryAddress"`
+	PasswordHash     string              `bson:"passwordHash,omitempty" json:"-"`
+	PaymentStatus    string              `bson:"paymentStatus" json:"paymentStatus"`
+	DeliveryStatus   string              `bson:"deliveryStatus" json:"deliveryStatus"`
+	PaydunyaToken    string              `bson:"paydunyaToken,omitempty" json:"paydunyaToken,omitempty"`
+	UserID           *primitive.ObjectID `bson:"userId,omitempty" json:"userId,omitempty"`
+	AdminNote        string              `bson:"adminNote,omitempty" json:"adminNote,omitempty"`
+	PaidAt           *time.Time          `bson:"paidAt,omitempty" json:"paidAt,omitempty"`
+	CreatedAt        time.Time           `bson:"createdAt" json:"createdAt"`
+	UpdatedAt        time.Time           `bson:"updatedAt" json:"updatedAt"`
 }

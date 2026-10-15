@@ -128,6 +128,7 @@ type depositCheckoutRequest struct {
 	DeliveryAddress string `json:"deliveryAddress"`
 	Password        string `json:"password"`
 	Origin          string `json:"origin"`
+	ProfileURL      string `json:"profileUrl"`
 }
 
 // CreateDepositCheckout starts a signup paid by deposit: stores a pending
@@ -197,7 +198,8 @@ func (d *Deps) CreateDepositCheckout(w http.ResponseWriter, r *http.Request) {
 		DepositXof: depositFor(product, pricing),
 		ClientName: req.ClientName, Email: req.Email, Phone: req.Phone,
 		DeliveryAddress: strings.TrimSpace(req.DeliveryAddress), PasswordHash: passwordHash,
-		PaymentStatus: models.OrderPaymentPending, DeliveryStatus: models.OrderDeliveryToPrepare,
+		WantedProfileURL: normalizeProfileSlug(req.ProfileURL),
+		PaymentStatus:    models.OrderPaymentPending, DeliveryStatus: models.OrderDeliveryToPrepare,
 		CreatedAt: now, UpdatedAt: now,
 	}
 
@@ -258,6 +260,7 @@ type codeCheckoutRequest struct {
 	Phone      string `json:"phone"`
 	Password   string `json:"password"`
 	Origin     string `json:"origin"`
+	ProfileURL string `json:"profileUrl"`
 }
 
 // CreateCodeCheckout is the paid version of the "J'ai un code" signup, used
@@ -330,7 +333,8 @@ func (d *Deps) CreateCodeCheckout(w http.ResponseWriter, r *http.Request) {
 	order := models.CardOrder{
 		ID: primitive.NewObjectID(), Reference: reference, Kind: models.OrderKindCodeActivation,
 		CardCode: req.CardCode, ProductName: "Activation carte " + req.CardCode,
-		ProductPriceXof: price, DepositXof: price,
+		WantedProfileURL: normalizeProfileSlug(req.ProfileURL),
+		ProductPriceXof:  price, DepositXof: price,
 		ClientName: strings.TrimSpace(req.ClientName), Email: req.Email, Phone: strings.TrimSpace(req.Phone),
 		PasswordHash:  passwordHash,
 		PaymentStatus: models.OrderPaymentPending, DeliveryStatus: models.OrderDeliveryDelivered,
@@ -375,7 +379,7 @@ func (d *Deps) finalizeCardOrder(ctx context.Context, reference, invoiceToken st
 		return err
 	}
 	if user == nil {
-		user, err = createLegacyAccount(ctx, order.Email, order.PasswordHash, "", order.ClientName, order.Phone)
+		user, err = createLegacyAccount(ctx, order.Email, order.PasswordHash, "", order.ClientName, order.Phone, order.WantedProfileURL)
 		if err != nil {
 			return err
 		}

@@ -59,6 +59,7 @@ export const shopApi = {
     phone: string
     deliveryAddress: string
     password: string
+    profileUrl?: string
   }) =>
     parse<{ checkoutUrl: string; reference: string }>(
       await fetch(`${SHOP_BASE_URL}/deposit-checkout`, {
@@ -84,6 +85,7 @@ export const shopApi = {
     email: string
     phone: string
     password: string
+    profileUrl?: string
   }) =>
     parse<{ checkoutUrl: string; reference: string }>(
       await fetch(`${SHOP_BASE_URL}/code-checkout`, {
