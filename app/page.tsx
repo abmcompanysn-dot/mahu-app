@@ -9,6 +9,7 @@ import { AboutSection } from "@/components/landing/about-section"
 import { TechnologySection } from "@/components/landing/technology-section"
 import { FeaturesSection } from "@/components/landing/features-section"
 import { DashboardDemo } from "@/components/landing/dashboard-demo"
+import { GuideSection } from "@/components/landing/guide-section"
 import { Footer } from "@/components/landing/footer"
 import { SupportModal } from "@/components/landing/support-modal"
 import { useState } from "react"
@@ -27,6 +28,7 @@ export default function Home() {
       <TechnologySection />
       <FeaturesSection />
       <DashboardDemo />
+      <GuideSection />
       <Footer />
       <SupportModal 
         open={supportModalOpen} 
