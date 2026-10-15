@@ -17,16 +17,16 @@ export const LEAD_CHANNELS: { id: LeadChannel; label: string; placeholder: strin
 
 // Pays de livraison et voisins les plus frequents en premier.
 export const PHONE_PREFIXES = [
-  { code: "221", label: "Senegal (+221)" },
-  { code: "229", label: "Benin (+229)" },
-  { code: "226", label: "Burkina Faso (+226)" },
-  { code: "225", label: "Cote d'Ivoire (+225)" },
-  { code: "223", label: "Mali (+223)" },
-  { code: "228", label: "Togo (+228)" },
-  { code: "227", label: "Niger (+227)" },
-  { code: "224", label: "Guinee (+224)" },
-  { code: "237", label: "Cameroun (+237)" },
-  { code: "33", label: "France (+33)" },
+  { code: "221", label: "+221 Senegal" },
+  { code: "229", label: "+229 Benin" },
+  { code: "226", label: "+226 Burkina Faso" },
+  { code: "225", label: "+225 Cote d'Ivoire" },
+  { code: "223", label: "+223 Mali" },
+  { code: "228", label: "+228 Togo" },
+  { code: "227", label: "+227 Niger" },
+  { code: "224", label: "+224 Guinee" },
+  { code: "237", label: "+237 Cameroun" },
+  { code: "33", label: "+33 France" },
 ]
 
 const LABELS: Record<LeadChannel, string> = {

@@ -178,8 +178,8 @@ export function ImageCropField({ label, aspect, round = false, outWidth, onChang
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
-          className={`w-full border border-dashed border-border/70 bg-muted/20 hover:bg-muted/40 transition-colors flex flex-col items-center justify-center gap-1 text-muted-foreground text-sm ${
-            round ? "mx-auto w-28 h-28 rounded-full" : "rounded-xl"
+          className={`border border-dashed border-border/70 bg-muted/20 hover:bg-muted/40 transition-colors flex flex-col items-center justify-center gap-1 text-muted-foreground text-sm ${
+            round ? "mx-auto w-28 h-28 rounded-full" : "w-full rounded-xl"
           }`}
           style={round ? undefined : { aspectRatio: String(aspect) }}
         >
