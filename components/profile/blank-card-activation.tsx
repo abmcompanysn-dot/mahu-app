@@ -13,6 +13,8 @@ import { Button } from "@/components/ui/button"
 import { api } from "@/lib/api"
 import { useAuth } from "@/hooks/use-auth"
 import { PHONE_PREFIXES, fullPhone } from "@/lib/lead-contact"
+import { uploadToCloudinary } from "@/lib/cloudinary"
+import { ImageCropField } from "@/components/profile/image-crop-field"
 
 const input =
   "w-full p-3 rounded-xl bg-muted/30 border border-border/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50"
@@ -57,6 +59,11 @@ export function BlankCardActivation({ slug, accentColor = "#007AFF" }: { slug: s
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [done, setDone] = useState(false)
+  // Photos deja recadrees a la bonne taille (envoyees apres la creation du compte).
+  const [photo, setPhoto] = useState<File | null>(null)
+  const [cover, setCover] = useState<File | null>(null)
+  const [loadingText, setLoadingText] = useState("")
+  const [photoWarning, setPhotoWarning] = useState("")
 
   const set = (k: keyof typeof f, v: string | boolean) => {
     setF({ ...f, [k]: v })
@@ -102,12 +109,26 @@ export function BlankCardActivation({ slug, accentColor = "#007AFF" }: { slug: s
       leadCapture: f.leadCapture ? "OUI" : "NON",
       liensSociaux: links,
     })) as { success: boolean; token?: string; role?: string; error?: string }
-    setLoading(false)
     if (!result.success || !result.token) {
+      setLoading(false)
       setError(result.error || "L'activation n'a pas abouti. Reessayez.")
       return
     }
     hydrateFromToken(result.token, result.role || "Entreprise")
+
+    // Le compte existe : on envoie les photos. Un echec ne bloque pas
+    // l'activation, la photo peut etre ajoutee ensuite dans « Editer mon profil ».
+    let failed = false
+    for (const [file, type] of [[photo, "photo"], [cover, "cover"]] as const) {
+      if (!file) continue
+      setLoadingText(type === "photo" ? "Envoi de la photo..." : "Envoi de la couverture...")
+      const up = await uploadToCloudinary(file)
+      const saved = up.success && up.url ? await api.saveProfileImage(result.token, { imageBase64: up.url, type }) : null
+      if (!saved?.success) failed = true
+    }
+    if (failed) setPhotoWarning("Une photo n'a pas pu etre envoyee : ajoutez-la dans « Editer mon profil ».")
+    setLoading(false)
+    setLoadingText("")
     setDone(true)
   }
 
@@ -120,8 +141,9 @@ export function BlankCardActivation({ slug, accentColor = "#007AFF" }: { slug: s
         <h1 className="text-2xl font-bold text-foreground">Votre carte est activee !</h1>
         <p className="text-muted-foreground text-sm">
           Votre profil est en ligne sur <span className="font-mono text-foreground break-all">{address}</span>. Ajoutez
-          maintenant votre photo et vos services.
+          {photo ? "vos services." : "votre photo et vos services."}
         </p>
+        {photoWarning && <p className="text-sm text-amber-500">{photoWarning}</p>}
         <div className="space-y-3">
           <Button asChild className="w-full py-5" style={{ backgroundColor: accentColor }}>
             <Link href="/dashboard/profile">Completer mon profil</Link>
@@ -186,6 +208,8 @@ export function BlankCardActivation({ slug, accentColor = "#007AFF" }: { slug: s
               <input className={`${input} min-w-0 flex-1`} type="tel" inputMode="tel" placeholder="Telephone (optionnel)" autoComplete="tel-national" value={f.telephone} onChange={(e) => set("telephone", e.target.value)} />
             </div>
             <input className={input} type="email" placeholder="E-mail *" autoComplete="email" value={f.email} onChange={(e) => set("email", e.target.value)} />
+            <ImageCropField label="Photo de couverture (optionnel)" aspect={3} outWidth={1500} onChange={setCover} />
+            <ImageCropField label="Photo de profil (optionnel)" aspect={1} round outWidth={600} onChange={setPhoto} />
           </>
         )}
 
@@ -252,7 +276,12 @@ export function BlankCardActivation({ slug, accentColor = "#007AFF" }: { slug: s
             </Button>
           )}
           <Button type="submit" className="flex-1 py-5" style={{ backgroundColor: accentColor }} disabled={loading}>
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : step === 3 ? "Activer ma carte" : "Suivant"}
+            {loading ? (
+              <span className="inline-flex items-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                {loadingText}
+              </span>
+            ) : step === 3 ? "Activer ma carte" : "Suivant"}
           </Button>
         </div>
         <p className="text-xs text-muted-foreground text-center">
