@@ -35,6 +35,11 @@ export default function CardVerificationPage({ params }: { params: Promise<{ car
 
     function applyRedirectMode(mode: CardRedirectMode, username: string | null, redirectUrl?: string) {
       setRedirectMode(mode)
+      // Carte "ordinateur le plus fin au monde" : ecran du code secret.
+      if (mode === "pc") {
+        router.replace(`/pc/${encodeURIComponent(cardCode)}`)
+        return
+      }
       if (mode === "activate") {
         router.replace(`/register?code=${encodeURIComponent(cardCode)}`)
         return

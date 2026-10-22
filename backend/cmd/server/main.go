@@ -48,6 +48,7 @@ func main() {
 	deps := &handlers.Deps{Env: env, FirebaseAuth: firebaseAuth, Email: emailutil.NewSender(env)}
 
 	deps.ResumeOutreach(context.Background())
+	go deps.RunCloudPCReaper(context.Background())
 	go deps.RunBlankCardExpiry(context.Background())
 
 	mux := http.NewServeMux()
@@ -180,6 +181,25 @@ func main() {
 	})
 	protected.HandleFunc("POST /api/outreach/{token}/unsubscribe", func(w http.ResponseWriter, r *http.Request) {
 		deps.OutreachUnsubscribe(w, r, r.PathValue("token"))
+	})
+
+	protected.Handle("GET /api/admin/cloudpc", adminOnly(http.HandlerFunc(deps.AdminListCloudPCs)))
+	protected.Handle("POST /api/admin/cloudpc", adminOnly(http.HandlerFunc(deps.AdminCreateCloudPC)))
+	protected.Handle("PATCH /api/admin/cloudpc/{id}", adminOnly(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		deps.AdminUpdateCloudPC(w, r, r.PathValue("id"))
+	})))
+	protected.Handle("POST /api/admin/cloudpc/{id}/stop", adminOnly(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		deps.AdminStopCloudPC(w, r, r.PathValue("id"))
+	})))
+	protected.Handle("DELETE /api/admin/cloudpc/{id}", adminOnly(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		deps.AdminDeleteCloudPC(w, r, r.PathValue("id"))
+	})))
+	// Ecran du code secret ouvert par le scan d'une carte Cloud PC.
+	protected.HandleFunc("GET /api/pc/{code}", func(w http.ResponseWriter, r *http.Request) {
+		deps.GetCloudPCInfo(w, r, r.PathValue("code"))
+	})
+	protected.HandleFunc("POST /api/pc/{code}/session", func(w http.ResponseWriter, r *http.Request) {
+		deps.OpenCloudPCSession(w, r, r.PathValue("code"))
 	})
 
 	userOnly := middleware.RequireUserAuth(env.JWTSecret)

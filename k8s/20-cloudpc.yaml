@@ -1,0 +1,158 @@
+# Mahu Cloud PC - "l'ordinateur le plus fin au monde".
+# Chaque client a un bureau Linux (XFCE) isole dans le namespace mahu-pc,
+# cree et allume par le backend (handlers/cloudpc.go) apres verification
+# carte + code secret. L'ecran est diffuse dans le navigateur par Apache
+# Guacamole, qui n'accepte que des jetons signes par le backend (auth JSON).
+#
+# Secret a creer une fois (jamais dans le depot) :
+#   kubectl -n mahu-pc create secret generic cloudpc-guac --from-literal=JSON_SECRET_KEY=<32 hex>
+#   + la meme valeur dans mahu-backend-env (GUAC_JSON_SECRET) via kubectl patch.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mahu-pc
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: guacd
+  namespace: mahu-pc
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: guacd } }
+  template:
+    metadata: { labels: { app: guacd } }
+    spec:
+      containers:
+        - name: guacd
+          image: guacamole/guacd:1.5.5
+          ports: [{ containerPort: 4822 }]
+          resources:
+            requests: { memory: 64Mi, cpu: 50m }
+            limits: { memory: 768Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: guacd
+  namespace: mahu-pc
+spec:
+  selector: { app: guacd }
+  ports: [{ port: 4822, targetPort: 4822 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: guacamole
+  namespace: mahu-pc
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: guacamole } }
+  template:
+    metadata: { labels: { app: guacamole } }
+    spec:
+      containers:
+        - name: guacamole
+          image: guacamole/guacamole:1.5.5
+          ports: [{ containerPort: 8080 }]
+          env:
+            - { name: GUACD_HOSTNAME, value: guacd }
+            - { name: GUACD_PORT, value: "4822" }
+            - { name: JAVA_OPTS, value: "-Xmx256m" }
+            - name: JSON_SECRET_KEY
+              valueFrom: { secretKeyRef: { name: cloudpc-guac, key: JSON_SECRET_KEY } }
+          resources:
+            requests: { memory: 256Mi, cpu: 50m }
+            limits: { memory: 512Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: guacamole
+  namespace: mahu-pc
+spec:
+  selector: { app: guacamole }
+  ports: [{ port: 8080, targetPort: 8080 }]
+---
+# Pas de DNS dedie pour l'instant : l'ecran passe par ai-api.mahu.cards/guacamole.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: guacamole
+  namespace: mahu-pc
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: ai-api.mahu.cards
+      http:
+        paths:
+          - path: /guacamole
+            pathType: Prefix
+            backend: { service: { name: guacamole, port: { number: 8080 } } }
+---
+# Script lance au demarrage de chaque bureau : mot de passe RDP aleatoire
+# (fourni par le backend dans le secret du bureau) a la place de abc/abc.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: desktop-init
+  namespace: mahu-pc
+data:
+  10-mahu-password.sh: |
+    #!/bin/bash
+    if [ -n "$RDP_PASSWORD" ]; then
+      echo "abc:${RDP_PASSWORD}" | chpasswd
+    fi
+---
+# Les bureaux ne sont joignables que par guacd (pas par les autres pods).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: desktops-only-from-guacd
+  namespace: mahu-pc
+spec:
+  podSelector: { matchLabels: { role: desktop } }
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector: { matchLabels: { app: guacd } }
+      ports: [{ port: 3389, protocol: TCP }]
+---
+# Le backend (namespace mahu) gere les bureaux, et seulement dans mahu-pc
+# (autorise par l'utilisateur le 2026-10-22).
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: backend
+  namespace: mahu
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: desktop-manager
+  namespace: mahu-pc
+rules:
+  - apiGroups: [""]
+    resources: [secrets, services, persistentvolumeclaims]
+    verbs: [get, create, delete, patch]
+  - apiGroups: ["apps"]
+    resources: [deployments, deployments/scale]
+    verbs: [get, create, delete, patch, update]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: backend-desktop-manager
+  namespace: mahu-pc
+subjects:
+  - kind: ServiceAccount
+    name: backend
+    namespace: mahu
+roleRef:
+  kind: Role
+  name: desktop-manager
+  apiGroup: rbac.authorization.k8s.io

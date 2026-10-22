@@ -253,6 +253,21 @@ export interface OutreachDraft {
   askFeedback: boolean
 }
 
+export interface CloudPC {
+  _id: string
+  cardCode: string
+  ownerName: string
+  ownerEmail: string
+  os: string
+  status: "actif" | "suspendu"
+  running: boolean
+  failedAttempts: number
+  lockedUntil?: string
+  expiresAt: string
+  lastLoginAt?: string
+  createdAt: string
+}
+
 type ApiCardsResponse = ApiResponse & { cards: PhysicalCard[]; isSuper: boolean }
 type ApiBatchResponse = ApiResponse & { batchId: string }
 
@@ -489,5 +504,19 @@ export const adminApi = {
 
   deleteOutreachCampaign: (token: string, id: string) =>
     request<{ success: boolean }>(`${ADMIN_BASE_URL}/outreach/campaigns/${id}`, token, { method: "DELETE" }),
+  listCloudPCs: (token: string) => request<{ pcs: CloudPC[]; maxRunning: number }>(`${ADMIN_BASE_URL}/cloudpc`, token),
+
+  createCloudPC: (token: string, data: { cardCode: string; ownerName: string; ownerEmail: string; pin: string; months: number }) =>
+    request<{ pc: CloudPC }>(`${ADMIN_BASE_URL}/cloudpc`, token, { method: "POST", body: JSON.stringify(data) }),
+
+  updateCloudPC: (token: string, id: string, data: { pin?: string; status?: CloudPC["status"]; extendMonths?: number }) =>
+    request<{ success: boolean }>(`${ADMIN_BASE_URL}/cloudpc/${id}`, token, { method: "PATCH", body: JSON.stringify(data) }),
+
+  stopCloudPC: (token: string, id: string) =>
+    request<{ success: boolean }>(`${ADMIN_BASE_URL}/cloudpc/${id}/stop`, token, { method: "POST" }),
+
+  deleteCloudPC: (token: string, id: string) =>
+    request<{ success: boolean }>(`${ADMIN_BASE_URL}/cloudpc/${id}`, token, { method: "DELETE" }),
 }
+
 

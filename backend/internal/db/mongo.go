@@ -80,6 +80,7 @@ func EnsureIndexes(ctx context.Context) error {
 		{models.ProspectsCollection, bson.D{{Key: "dateCapture", Value: -1}}, false, false},
 		{models.OutreachRecipientsCollection, bson.D{{Key: "token", Value: 1}}, true, false},
 		{models.OutreachRecipientsCollection, bson.D{{Key: "campaignId", Value: 1}, {Key: "status", Value: 1}}, false, false},
+		{models.CloudPCsCollection, bson.D{{Key: "cardCode", Value: 1}}, true, false},
 		{models.SocialConnectionsCollection, bson.D{{Key: "userId", Value: 1}, {Key: "provider", Value: 1}}, true, false},
 	}
 

@@ -109,6 +109,12 @@ func (d *Deps) GetCard(w http.ResponseWriter, r *http.Request) {
 // ever exposes the linked username and redirect preference, never the face
 // descriptor or enabled state.
 func (d *Deps) GetCardPublicInfo(w http.ResponseWriter, r *http.Request, cardCode string) {
+	// Carte "ordinateur le plus fin au monde" : ouvre l'ecran du code secret.
+	if _, err := cloudPCByCode(r.Context(), cardCode); err == nil {
+		httpx.WriteJSON(w, http.StatusOK, map[string]any{"profileUsername": nil, "redirectMode": "pc", "redirectUrl": ""})
+		return
+	}
+
 	var card models.BiometricCard
 	err := db.Collection(models.BiometricCardsCollection).FindOne(r.Context(), bson.M{"cardCode": cardCode}).Decode(&card)
 

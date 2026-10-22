@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -53,6 +54,16 @@ type Env struct {
 	OutreachSenders  []OutreachSender
 	// Site serving the feedback / unsubscribe pages linked from those emails.
 	PublicSiteURL string
+
+	// Cloud PC ("l'ordinateur le plus fin au monde"): Linux desktops in the
+	// mahu-pc namespace, shown in the browser by Apache Guacamole.
+	GuacJSONSecret     string // 32 hex chars, shared with Guacamole (auth JSON)
+	GuacInternalURL    string
+	GuacPublicURL      string
+	CloudPCNamespace   string
+	CloudPCImage       string
+	CloudPCMaxRunning  int
+	CloudPCSessionHour int
 
 	// CallMeBot - WhatsApp notifications to the admin (new orders, support
 	// messages, card activations), previously read from the 'Configuration' sheet.
@@ -220,6 +231,14 @@ func Load() (*Env, error) {
 		OutreachSMTPPort: getDefault("OUTREACH_SMTP_PORT", "587"),
 		PublicSiteURL:    strings.TrimRight(getDefault("PUBLIC_SITE_URL", "https://call.mahu.cards"), "/"),
 
+		GuacJSONSecret:     getDefault("GUAC_JSON_SECRET", ""),
+		GuacInternalURL:    strings.TrimRight(getDefault("GUAC_INTERNAL_URL", "http://guacamole.mahu-pc.svc.cluster.local:8080/guacamole"), "/"),
+		GuacPublicURL:      strings.TrimRight(getDefault("GUAC_PUBLIC_URL", "https://ai-api.mahu.cards/guacamole"), "/"),
+		CloudPCNamespace:   getDefault("CLOUDPC_NAMESPACE", "mahu-pc"),
+		CloudPCImage:       getDefault("CLOUDPC_IMAGE", "lscr.io/linuxserver/rdesktop:ubuntu-xfce"),
+		CloudPCMaxRunning:  getIntDefault("CLOUDPC_MAX_RUNNING", 2),
+		CloudPCSessionHour: getIntDefault("CLOUDPC_SESSION_HOURS", 8),
+
 		CallMeBotPhone:  getDefault("CALLMEBOT_PHONE", ""),
 		CallMeBotAPIKey: getDefault("CALLMEBOT_API_KEY", ""),
 
@@ -318,4 +337,11 @@ type OutreachSender struct {
 	Email    string
 	Name     string
 	Password string
+}
+
+func getIntDefault(key string, def int) int {
+	if v, err := strconv.Atoi(strings.TrimSpace(os.Getenv(key))); err == nil {
+		return v
+	}
+	return def
 }
