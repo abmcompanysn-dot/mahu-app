@@ -73,6 +73,45 @@ func SeedProducts(ctx context.Context) error {
 	return err
 }
 
+// computerProducts : les trois modeles de "l'ordinateur le plus fin au
+// monde", en precommande. Ajoutes au demarrage s'ils manquent (par slug),
+// ensuite modifiables dans l'admin Catalogue.
+var computerProducts = []models.Product{
+	{Slug: "ordinateur-essentiel", Name: "Ordinateur Mahu Essentiel", PriceXof: 200000, Category: models.ProductCategoryComputer,
+		Description: "L'ordinateur le plus fin au monde : ta carte Mahu ouvre ton ordinateur partout. Abonnement d'un an.",
+		ImageURL:    "/products/ordinateur-essentiel.png",
+		Features:    []string{"Processeur 4 coeurs", "8 Go de memoire", "100 Go de stockage", "Ouvre ton ordinateur sur n'importe quel ecran", "Precommande - 1 an"}},
+	{Slug: "ordinateur-pro", Name: "Ordinateur Mahu Pro", PriceXof: 300000, Category: models.ProductCategoryComputer,
+		Description: "Plus de puissance pour le travail et les etudes exigeantes. Abonnement d'un an.",
+		ImageURL:    "/products/ordinateur-pro.png",
+		Features:    []string{"Processeur 6 coeurs", "16 Go de memoire", "250 Go de stockage", "Ouvre ton ordinateur sur n'importe quel ecran", "Precommande - 1 an"}},
+	{Slug: "ordinateur-max", Name: "Ordinateur Mahu Max", PriceXof: 500000, Category: models.ProductCategoryComputer,
+		Description: "Le maximum de puissance et d'espace, pour les professionnels. Abonnement d'un an.",
+		ImageURL:    "/products/ordinateur-max.png",
+		Features:    []string{"Processeur 8 coeurs", "32 Go de memoire", "500 Go de stockage", "Ouvre ton ordinateur sur n'importe quel ecran", "Precommande - 1 an"}},
+}
+
+// EnsureComputerProducts ajoute les modeles d'ordinateur absents du catalogue
+// (sans toucher a ceux deja modifies dans l'admin).
+func EnsureComputerProducts(ctx context.Context) error {
+	coll := db.Collection(models.ProductsCollection)
+	now := time.Now()
+	for i, p := range computerProducts {
+		p.ID = primitive.NewObjectID()
+		p.Active = true
+		p.SortOrder = 100 + i
+		p.CreatedAt, p.UpdatedAt = now, now
+		res, err := coll.UpdateOne(ctx, bson.M{"slug": p.Slug}, bson.M{"$setOnInsert": p}, options.Update().SetUpsert(true))
+		if err != nil {
+			return err
+		}
+		if res.UpsertedCount > 0 {
+			log.Printf("[shop] produit ajoute : %s", p.Slug)
+		}
+	}
+	return nil
+}
+
 func findProducts(ctx context.Context, filter bson.M) ([]models.Product, error) {
 	cursor, err := db.Collection(models.ProductsCollection).Find(ctx, filter,
 		options.Find().SetSort(bson.D{{Key: "sortOrder", Value: 1}, {Key: "createdAt", Value: 1}}))
@@ -563,7 +602,7 @@ func (p *productInput) validate() error {
 		return errors.New("Acompte invalide.")
 	}
 	switch p.Category {
-	case models.ProductCategoryNfcCard, models.ProductCategoryRfidFob, models.ProductCategoryRfidCard, models.ProductCategoryWebCard:
+	case models.ProductCategoryNfcCard, models.ProductCategoryRfidFob, models.ProductCategoryRfidCard, models.ProductCategoryWebCard, models.ProductCategoryComputer:
 	default:
 		return errors.New("Categorie invalide.")
 	}

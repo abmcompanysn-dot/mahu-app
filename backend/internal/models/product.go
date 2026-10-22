@@ -16,6 +16,9 @@ const (
 	ProductCategoryRfidCard = "carte_rfid"
 	// Web Card : site web dynamique (au-dela de la carte), pas un support physique.
 	ProductCategoryWebCard = "web_card"
+	// Ordinateur : la carte Mahu qui ouvre un ordinateur personnel partout
+	// (abonnement annuel, voir handlers/cloudpc.go).
+	ProductCategoryComputer = "ordinateur"
 )
 
 // Product is one item of the shop catalogue (previously only listed as

@@ -96,6 +96,10 @@ function RegisterForm() {
       .then((res) => {
         setProducts(res.products)
         setDepositXof(res.depositXof)
+        // Lien "Precommander" de la page d'accueil : modele deja choisi.
+        const wanted = searchParams.get("product")
+        const match = wanted && res.products.find((p) => p.slug === wanted)
+        if (match) setProductId(match._id)
       })
       .catch(() => setProductsError("Impossible de charger les cartes. Rechargez la page."))
   }, [])
@@ -424,7 +428,7 @@ function RegisterForm() {
                 ) : (
                   <form onSubmit={handleOrderSubmit} className="space-y-4">
                     <div>
-                      <p className="block text-sm font-medium text-muted-foreground mb-2">Choisissez votre carte</p>
+                      <p className="block text-sm font-medium text-muted-foreground mb-2">Choisissez votre carte ou votre ordinateur</p>
                       {productsError && <p className="text-sm text-destructive">{productsError}</p>}
                       {!productsError && products.length === 0 && (
                         <div className="flex justify-center py-6">

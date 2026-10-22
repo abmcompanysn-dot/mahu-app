@@ -2,6 +2,7 @@
 
 import { Header } from "@/components/landing/header"
 import { Hero } from "@/components/landing/hero"
+import { ComputerHero, ComputerModels } from "@/components/landing/computer-hero"
 import { PhoneShowcase } from "@/components/landing/phone-showcase"
 import { CardShowcase } from "@/components/landing/card-showcase"
 import { AiShowcase } from "@/components/landing/ai-showcase"
@@ -20,6 +21,8 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-background overflow-x-hidden">
       <Header onSupportClick={() => setSupportModalOpen(true)} />
+      <ComputerHero />
+      <ComputerModels />
       <Hero />
       <PhoneShowcase />
       <CardShowcase />

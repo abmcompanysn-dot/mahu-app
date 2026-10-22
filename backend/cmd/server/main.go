@@ -44,6 +44,9 @@ func main() {
 	if err := handlers.SeedProducts(context.Background()); err != nil {
 		log.Printf("[shop] product seed failed: %v", err)
 	}
+	if err := handlers.EnsureComputerProducts(context.Background()); err != nil {
+		log.Printf("[shop] computer products: %v", err)
+	}
 
 	deps := &handlers.Deps{Env: env, FirebaseAuth: firebaseAuth, Email: emailutil.NewSender(env)}
 

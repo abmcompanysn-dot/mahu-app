@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import { Delete, Loader2, Lock, Monitor } from "lucide-react"
 
-// Ecran ouvert par le scan d'une carte Cloud PC (/c/CODE -> /pc/CODE) :
+// Ecran ouvert par le scan d'une carte ordinateur (/c/CODE -> /pc/CODE) :
 // code secret, puis le bureau du client s'allume et s'ouvre dans le
 // navigateur (Guacamole). La carte seule ne suffit jamais.
 
@@ -76,7 +76,7 @@ export default function CloudPCPage() {
         <div className="flex items-center gap-2 text-white/60 text-sm">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/icons/icon-192.png" alt="" className="w-7 h-7 rounded-lg" />
-          Mahu Cloud PC
+          Mahu Ordinateur
         </div>
 
         <div className="mt-10 text-center">

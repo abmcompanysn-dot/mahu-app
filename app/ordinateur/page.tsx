@@ -1,15 +1,15 @@
 import Link from "next/link"
 import { BellRing, Building2, GraduationCap, HardDrive, KeyRound, Monitor, Nfc, ShieldCheck, Store, Wifi } from "lucide-react"
 
-// Page produit Mahu Cloud PC - "l'ordinateur le plus fin au monde".
-// Lancement en test prive (places limitees par la capacite des serveurs).
+// Page produit "l'ordinateur le plus fin au monde" (carte Mahu + ordinateur
+// personnel ouvert partout). Precommande, trois modeles (voir ComputerModels).
 export const metadata = {
-  title: "L'ordinateur le plus fin au monde - Mahu Cloud PC",
+  title: "L'ordinateur le plus fin au monde - Mahu",
   description:
     "Ton ordinateur tient dans ta carte Mahu. Scanne-la sur n'importe quel appareil, tape ton code : ton bureau, tes fichiers, ta session. Des 200 000 FCFA par an.",
 }
 
-const RESERVE = "mailto:contact@mahu.cards?subject=Mahu%20Cloud%20PC%20-%20r%C3%A9server%20ma%20place"
+const RESERVE = "/register?product=ordinateur-essentiel"
 
 const steps = [
   { icon: Nfc, title: "Scanne ta carte", text: "Sur un téléphone, une tablette, le PC d'une salle info ou d'un cybercafé." },
@@ -18,8 +18,8 @@ const steps = [
 ]
 
 const included = [
-  { icon: Monitor, title: "Un bureau complet", text: "Un vrai ordinateur (Linux) avec navigateur web, dans ton navigateur. Rien à installer." },
-  { icon: HardDrive, title: "Tes fichiers gardés", text: "5 Go d'espace personnel. Rien ne reste sur l'appareil que tu empruntes." },
+  { icon: Monitor, title: "Un bureau complet", text: "Un vrai ordinateur, sur n'importe quel écran. Rien à installer." },
+  { icon: HardDrive, title: "Tes fichiers gardés", text: "De 100 Go à 500 Go selon le modèle. Rien ne reste sur l'appareil que tu empruntes." },
   { icon: BellRing, title: "Alerte à chaque connexion", text: "Un email à chaque ouverture, et blocage automatique après 5 codes faux." },
   { icon: ShieldCheck, title: "Carte perdue ? Rien de perdu", text: "On bloque la carte, on t'en donne une nouvelle : ton ordinateur et tes fichiers t'attendent." },
 ]
@@ -32,16 +32,12 @@ const who = [
 
 const faq = [
   {
-    q: "Windows ou Linux ?",
-    a: "Linux pour le lancement (navigateur, documents, cours en ligne). Windows arrive ensuite, sur demande.",
-  },
-  {
     q: "Quelle connexion faut-il ?",
     a: "Une connexion stable, 4G ou wifi. Parfait pour le web, les documents et les cours. Ce n'est pas fait pour les jeux vidéo ni le montage vidéo.",
   },
   {
     q: "Pourquoi des places limitées ?",
-    a: "Chaque ordinateur tourne sur nos serveurs. Nous ouvrons les places au rythme de nos serveurs, pour que chacun ait un ordinateur rapide.",
+    a: "Nous ouvrons les places par séries, pour garantir à chacun un ordinateur rapide.",
   },
 ]
 
@@ -52,7 +48,7 @@ export default function OrdinateurPage() {
         <div className="flex items-center gap-2 text-white/60">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/icons/icon-192.png" alt="" className="w-9 h-9 rounded-xl" />
-          <span className="font-bold text-white">Mahu</span> Cloud PC
+          <span className="font-bold text-white">Mahu</span> Ordinateur
         </div>
 
         <div className="mt-14 grid gap-10 sm:grid-cols-[1.2fr_1fr] sm:items-center">
@@ -67,13 +63,13 @@ export default function OrdinateurPage() {
             </p>
             <div className="mt-8 flex flex-col sm:flex-row gap-3 sm:items-center">
               <a href={RESERVE} className="inline-flex justify-center rounded-2xl bg-[#007AFF] px-6 py-4 text-lg font-bold hover:bg-[#0a84ff]">
-                Réserver ma place
+                Précommander
               </a>
               <span className="text-white/60">
                 Dès <b className="text-white">200 000 FCFA</b> / an
               </span>
             </div>
-            <p className="mt-3 text-sm text-white/40">Lancement en test privé : places limitées.</p>
+            <p className="mt-3 text-sm text-white/40">Précommande ouverte : places limitées.</p>
           </div>
 
           {/* La carte, epaisseur d'un ordinateur */}
@@ -84,7 +80,7 @@ export default function OrdinateurPage() {
             </div>
             <div>
               <Monitor className="w-7 h-7 text-[#5ac8fa]" />
-              <p className="mt-2 text-xs text-white/50">0,8 mm · ton ordinateur complet</p>
+              <p className="mt-2 text-xs text-white/50">85,6 × 54 × 0,76 mm</p>
             </div>
           </div>
         </div>
@@ -144,7 +140,7 @@ export default function OrdinateurPage() {
           <h2 className="text-3xl font-black">Ton ordinateur, dans ta poche.</h2>
           <p className="mt-2 text-white/80">Dès 200 000 FCFA par an. Places limitées pour le lancement.</p>
           <a href={RESERVE} className="mt-6 inline-flex rounded-2xl bg-white px-6 py-3 font-bold text-[#0a3f8f] hover:bg-white/90">
-            Réserver ma place
+            Précommander
           </a>
         </div>
 
