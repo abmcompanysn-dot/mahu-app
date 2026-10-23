@@ -1,0 +1,3 @@
+/* Ecran de l'ordinateur Mahu : aucune marque tierce visible. */
+.logo, .login-ui .logo { background-image: url('app/ext/mahu/images/icon.png') !important; background-size: contain !important; }
+.version, .login-ui .version, .about-dialog { display: none !important; }

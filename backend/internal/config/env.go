@@ -232,8 +232,8 @@ func Load() (*Env, error) {
 		PublicSiteURL:    strings.TrimRight(getDefault("PUBLIC_SITE_URL", "https://call.mahu.cards"), "/"),
 
 		GuacJSONSecret:     getDefault("GUAC_JSON_SECRET", ""),
-		GuacInternalURL:    strings.TrimRight(getDefault("GUAC_INTERNAL_URL", "http://guacamole.mahu-pc.svc.cluster.local:8080/guacamole"), "/"),
-		GuacPublicURL:      strings.TrimRight(getDefault("GUAC_PUBLIC_URL", "https://ai-api.mahu.cards/guacamole"), "/"),
+		GuacInternalURL:    strings.TrimRight(getDefault("GUAC_INTERNAL_URL", "http://guacamole.mahu-pc.svc.cluster.local:8080/ecran"), "/"),
+		GuacPublicURL:      strings.TrimRight(getDefault("GUAC_PUBLIC_URL", "https://ai-api.mahu.cards/ecran"), "/"),
 		CloudPCNamespace:   getDefault("CLOUDPC_NAMESPACE", "mahu-pc"),
 		CloudPCImage:       getDefault("CLOUDPC_IMAGE", "lscr.io/linuxserver/rdesktop:ubuntu-xfce"),
 		CloudPCMaxRunning:  getIntDefault("CLOUDPC_MAX_RUNNING", 2),

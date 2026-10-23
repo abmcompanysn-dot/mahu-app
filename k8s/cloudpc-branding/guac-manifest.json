@@ -1,0 +1,9 @@
+{
+  "guacamoleVersion": "1.5.5",
+  "name": "Mahu",
+  "namespace": "mahu",
+  "translations": ["translations/en.json", "translations/fr.json"],
+  "css": ["mahu.css"],
+  "html": ["favicon.html"],
+  "resources": { "images/icon.png": "image/png" }
+}

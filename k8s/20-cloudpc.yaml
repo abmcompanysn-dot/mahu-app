@@ -4,6 +4,11 @@
 # carte + code secret. L'ecran est diffuse dans le navigateur par Apache
 # Guacamole, qui n'accepte que des jetons signes par le backend (auth JSON).
 #
+# Aucune marque tierce visible : l'ecran est servi sous /ecran avec
+# l'extension "Mahu" (k8s/cloudpc-branding/, empaquetee dans
+# k8s/cloudpc-branding.jar) :
+#   kubectl -n mahu-pc create configmap guac-branding --from-file=mahu-branding.jar=k8s/cloudpc-branding.jar
+#
 # Secret a creer une fois (jamais dans le depot) :
 #   kubectl -n mahu-pc create secret generic cloudpc-guac --from-literal=JSON_SECRET_KEY=<32 hex>
 #   + la meme valeur dans mahu-backend-env (GUAC_JSON_SECRET) via kubectl patch.
@@ -59,11 +64,18 @@ spec:
             - { name: GUACD_HOSTNAME, value: guacd }
             - { name: GUACD_PORT, value: "4822" }
             - { name: JAVA_OPTS, value: "-Xmx256m" }
+            - { name: WEBAPP_CONTEXT, value: ecran }
+            - { name: GUACAMOLE_HOME, value: /etc/guacamole-mahu }
             - name: JSON_SECRET_KEY
               valueFrom: { secretKeyRef: { name: cloudpc-guac, key: JSON_SECRET_KEY } }
+          volumeMounts:
+            - { name: branding, mountPath: /etc/guacamole-mahu/extensions/mahu-branding.jar, subPath: mahu-branding.jar, readOnly: true }
           resources:
             requests: { memory: 256Mi, cpu: 50m }
             limits: { memory: 512Mi }
+      volumes:
+        - name: branding
+          configMap: { name: guac-branding }
 ---
 apiVersion: v1
 kind: Service
@@ -74,7 +86,7 @@ spec:
   selector: { app: guacamole }
   ports: [{ port: 8080, targetPort: 8080 }]
 ---
-# Pas de DNS dedie pour l'instant : l'ecran passe par ai-api.mahu.cards/guacamole.
+# Pas de DNS dedie pour l'instant : l'ecran passe par ai-api.mahu.cards/ecran.
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -90,7 +102,7 @@ spec:
     - host: ai-api.mahu.cards
       http:
         paths:
-          - path: /guacamole
+          - path: /ecran
             pathType: Prefix
             backend: { service: { name: guacamole, port: { number: 8080 } } }
 ---
@@ -106,6 +118,12 @@ data:
     #!/bin/bash
     if [ -n "$RDP_PASSWORD" ]; then
       echo "abc:${RDP_PASSWORD}" | chpasswd
+    fi
+    # Fond d'ecran Mahu a la place des fonds par defaut du bureau.
+    WP=/usr/share/backgrounds/mahu.jpg
+    if curl -fsSL -A "Mozilla/5.0" -o "$WP.tmp" https://call.mahu.cards/brand/mahu-wallpaper.jpg; then
+      mv "$WP.tmp" "$WP"
+      for f in /usr/share/backgrounds/xfce/*; do [ -f "$f" ] && cp "$WP" "$f"; done
     fi
 ---
 # Les bureaux ne sont joignables que par guacd (pas par les autres pods).

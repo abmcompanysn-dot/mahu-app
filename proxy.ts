@@ -26,6 +26,12 @@ const CLOUD_HOST = "cloud.mahu.cards"
 const MYFOCUS_HOST = "myfocus.mahu.cards"
 const MYFOCUS_PATHS: Record<string, string> = { "/": "/myfocus", "/confidentialite": "/myfocus/confidentialite" }
 
+// Robots d'IA (entrainement, resume, agents) : refuses sur tout le site.
+// Les moteurs de recherche (Googlebot, Bingbot) et les apercus de liens
+// (WhatsApp, facebookexternalhit, LinkedIn) restent autorises.
+const AI_BOTS =
+  /GPTBot|ChatGPT-User|OAI-SearchBot|ClaudeBot|Claude-Web|Claude-User|Claude-SearchBot|anthropic-ai|CCBot|PerplexityBot|Perplexity-User|Bytespider|Amazonbot|meta-externalagent|meta-externalfetcher|FacebookBot|Diffbot|cohere-ai|cohere-training-data-crawler|YouBot|Timpibot|ImagesiftBot|omgili|Google-CloudVertexBot|AI2Bot|Ai2Bot-Dolma|PanguBot|Kangaroo Bot|Sidetrade|Scrapy|DuckAssistBot|MistralAI-User|iaskspider|ICC-Crawler|VelenPublicWebCrawler|Webzio-Extended|img2dataset|Brightbot|Crawlspace|QualifiedBot|SemrushBot-OCOB|Novellum/i
+
 function isDevHost(hostname: string): boolean {
   return hostname === "localhost" || hostname === "127.0.0.1" || hostname.endsWith(".local")
 }
@@ -35,6 +41,10 @@ export function proxy(request: NextRequest) {
   // reverse proxy (Caddy/Cloudflare Tunnel here) - it reflects the address
   // Next.js's own server is bound to, not the client's Host header. Read
   // the real Host header directly instead (strip the port, if any).
+  if (AI_BOTS.test(request.headers.get("user-agent") || "")) {
+    return new NextResponse("Forbidden", { status: 403 })
+  }
+
   const hostname = (request.headers.get("host") || request.nextUrl.hostname).split(":")[0]
   const { pathname } = request.nextUrl
 
