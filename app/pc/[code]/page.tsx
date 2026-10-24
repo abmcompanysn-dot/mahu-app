@@ -1,12 +1,12 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useParams } from "next/navigation"
-import { Delete, Loader2, Lock, Monitor } from "lucide-react"
+import { Delete, Loader2, Lock, Maximize2, Monitor, X } from "lucide-react"
 
 // Ecran ouvert par le scan d'une carte ordinateur (/c/CODE -> /pc/CODE) :
-// code secret, puis le bureau du client s'allume et s'ouvre dans le
-// navigateur (Guacamole). La carte seule ne suffit jamais.
+// code secret, puis le bureau du client s'allume et s'affiche en plein ecran
+// dans cette page (cadre integre). La carte seule ne suffit jamais.
 
 interface Info {
   ownerFirstName: string
@@ -24,6 +24,29 @@ export default function CloudPCPage() {
   const [error, setError] = useState("")
   const [pin, setPin] = useState("")
   const [step, setStep] = useState(-1)
+  const [screenUrl, setScreenUrl] = useState("")
+  const [isFull, setIsFull] = useState(false)
+  const rootRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const onChange = () => setIsFull(!!document.fullscreenElement)
+    document.addEventListener("fullscreenchange", onChange)
+    return () => document.removeEventListener("fullscreenchange", onChange)
+  }, [])
+
+  // Plein ecran : demande au moment du clic (le navigateur l'exige). Sur
+  // ordinateur, le clavier est aussi capture (Echap, raccourcis) quand c'est possible.
+  const goFullscreen = async () => {
+    try {
+      if (!document.fullscreenElement && rootRef.current?.requestFullscreen) {
+        await rootRef.current.requestFullscreen({ navigationUI: "hide" })
+      }
+      const kb = (navigator as Navigator & { keyboard?: { lock?: () => Promise<void> } }).keyboard
+      await kb?.lock?.()
+    } catch {
+      // iPhone, ou plein ecran refuse : l'ordinateur s'affiche quand meme en grand.
+    }
+  }
 
   useEffect(() => {
     fetch(`/api/backend/api/pc/${encodeURIComponent(code)}`)
@@ -37,6 +60,7 @@ export default function CloudPCPage() {
 
   const open = async () => {
     if (pin.length < 4 || step >= 0) return
+    void goFullscreen()
     setError("")
     setStep(0)
     // Les etapes avancent pendant que le serveur allume le bureau.
@@ -51,11 +75,12 @@ export default function CloudPCPage() {
       const data = await res.json().catch(() => ({}))
       if (!res.ok || !data.url) throw new Error(data?.error || "Une erreur est survenue, réessaie.")
       setStep(2)
-      window.location.href = data.url
+      setScreenUrl(data.url)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur")
       setPin("")
       setStep(-1)
+      if (document.fullscreenElement) void document.exitFullscreen().catch(() => undefined)
     } finally {
       clearTimeout(t1)
       clearTimeout(t2)
@@ -70,8 +95,44 @@ export default function CloudPCPage() {
 
   const blocked = info && (info.suspended || info.expired || info.locked)
 
+  if (screenUrl) {
+    return (
+      <div ref={rootRef} className="fixed inset-0 bg-black">
+        <iframe
+          src={screenUrl}
+          title="Mon ordinateur Mahu"
+          className="h-full w-full border-0"
+          allow="fullscreen; clipboard-read; clipboard-write; keyboard-map"
+          onLoad={(e) => e.currentTarget.focus()}
+        />
+        <div className="absolute right-3 top-3 flex gap-2 opacity-30 transition-opacity hover:opacity-100">
+          {!isFull && (
+            <button
+              onClick={goFullscreen}
+              className="flex items-center gap-1.5 rounded-full bg-black/70 px-3 py-1.5 text-xs font-semibold text-white"
+            >
+              <Maximize2 className="h-3.5 w-3.5" /> Plein écran
+            </button>
+          )}
+          <button
+            onClick={() => {
+              if (document.fullscreenElement) void document.exitFullscreen().catch(() => undefined)
+              setScreenUrl("")
+              setStep(-1)
+              setPin("")
+            }}
+            aria-label="Quitter"
+            className="flex items-center rounded-full bg-black/70 p-1.5 text-white"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="min-h-screen bg-[#05070d] text-white flex flex-col items-center px-5 py-10">
+    <div ref={rootRef} className="min-h-screen bg-[#05070d] text-white flex flex-col items-center px-5 py-10">
       <div className="w-full max-w-sm flex-1 flex flex-col">
         <div className="flex items-center gap-2 text-white/60 text-sm">
           {/* eslint-disable-next-line @next/next/no-img-element */}
