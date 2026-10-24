@@ -125,6 +125,14 @@ data:
       mv "$WP.tmp" "$WP"
       for f in /usr/share/backgrounds/xfce/*; do [ -f "$f" ] && cp "$WP" "$f"; done
     fi
+    # Bureau epure : fond Mahu, aucune icone systeme, nom affiche "Mahu".
+    usermod -c "Mahu" abc 2>/dev/null || true
+    ICONS='<property name="desktop-icons" type="empty"><property name="file-icons" type="empty"><property name="show-filesystem" type="bool" value="false"/><property name="show-home" type="bool" value="false"/><property name="show-trash" type="bool" value="false"/><property name="show-removable" type="bool" value="false"/></property></property>'
+    for f in /config/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml /etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml; do
+      [ -f "$f" ] || continue
+      sed -i -E 's#(name="last-image" type="string" value=")[^"]*#\1/usr/share/backgrounds/mahu.jpg#g; s#(name="image-style" type="int" value=")[0-9]+#\15#g' "$f"
+      grep -q 'name="desktop-icons"' "$f" || sed -i "s#</channel>#${ICONS}</channel>#" "$f"
+    done
 ---
 # Les bureaux ne sont joignables que par guacd (pas par les autres pods).
 apiVersion: networking.k8s.io/v1
