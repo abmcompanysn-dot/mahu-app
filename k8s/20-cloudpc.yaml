@@ -127,11 +127,16 @@ data:
     fi
     # Bureau epure : fond Mahu, aucune icone systeme, nom affiche "Mahu".
     usermod -c "Mahu" abc 2>/dev/null || true
-    ICONS='<property name="desktop-icons" type="empty"><property name="file-icons" type="empty"><property name="show-filesystem" type="bool" value="false"/><property name="show-home" type="bool" value="false"/><property name="show-trash" type="bool" value="false"/><property name="show-removable" type="bool" value="false"/></property></property>'
+    ICONS='<property name="desktop-icons" type="empty"><property name="style" type="int" value="0"/></property>'
     for f in /config/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml /etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml; do
       [ -f "$f" ] || continue
       sed -i -E 's#(name="last-image" type="string" value=")[^"]*#\1/usr/share/backgrounds/mahu.jpg#g; s#(name="image-style" type="int" value=")[0-9]+#\15#g' "$f"
-      grep -q 'name="desktop-icons"' "$f" || sed -i "s#</channel>#${ICONS}</channel>#" "$f"
+      if grep -q 'name="desktop-icons"' "$f"; then
+        sed -i -E 's#name="style" type="int" value="[0-9]+"#name="style" type="int" value="0"#g' "$f"
+        grep -q 'name="style" type="int"' "$f" || sed -i 's#<property name="desktop-icons" type="empty">#<property name="desktop-icons" type="empty"><property name="style" type="int" value="0"/>#' "$f"
+      else
+        sed -i "s#</channel>#${ICONS}</channel>#" "$f"
+      fi
     done
     # Langue : francais partout (session de bureau et applications).
     if [ -d /run/s6/container_environment ]; then
@@ -145,6 +150,7 @@ data:
     X=/config/.config/xfce4/xfconf/xfce-perchannel-xml
     if [ ! -f /config/.mahu-bureau-v1 ]; then
       mkdir -p "$X" /config/.local/share/mahu /config/.config/xfce4/panel/launcher-3 /config/.config/xfce4/panel/launcher-4
+      [ -f "$X/xfce4-desktop.xml" ] || printf '<?xml version="1.0" encoding="UTF-8"?>\n<channel name="xfce4-desktop" version="1.0">%s</channel>\n' "$ICONS" > "$X/xfce4-desktop.xml"
       curl -fsSL -A "Mozilla/5.0" -o /config/.local/share/mahu/mahu.png https://call.mahu.cards/icons/icon-192.png || true
       [ -f /usr/share/applications/firefox.desktop ] && cp /usr/share/applications/firefox.desktop /config/.config/xfce4/panel/launcher-3/
       [ -f /usr/share/applications/thunar.desktop ] && cp /usr/share/applications/thunar.desktop /config/.config/xfce4/panel/launcher-4/

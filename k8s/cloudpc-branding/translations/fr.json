@@ -1,1 +1,28 @@
-{ "APP": { "NAME": "Mahu" } }
+{
+ "APP": {
+  "NAME": "Mahu"
+ },
+ "CLIENT": {
+  "ERROR_CLIENT_202": "Le service Mahu a fermé cette connexion car l'ordinateur distant a mis trop de temps à répondre. Merci de réessayer ou de contacter l'administrateur.",
+  "ERROR_CLIENT_308": "Le service Mahu a fermé la connexion car il n'y avait pas de réponse de votre navigateur Internet et qu'il l'a considéré comme déconnecté. Cela se produit à cause de problèmes réseaux (mauvais signal Wi-Fi ou réseau très lent). Merci de vérifier votre réseau et de réessayer.",
+  "ERROR_CLIENT_31D": "Le service Mahu interdit les connexions car vous avez dépassé la limite de connexion simultanée par utilisateur. Merci de fermer une ou plusieurs connexions et de reéssayer.",
+  "ERROR_CLIENT_DEFAULT": "Une erreur interne est apparue dans le service Mahu et la connexion a été fermée. Si le problème persiste, merci de notifier l'administrateur ou de regarder les journaux système.",
+  "ERROR_TUNNEL_201": "Le service Mahu a rejeté cette tentative de connexion car il y a trop de connexions ouvertes. Merci d'attendre quelques minutes et de réessayer.",
+  "ERROR_TUNNEL_207": "Le service Mahu n'est pas actuellement accessible. Veuillez vérifier votre réseau et réessayer..",
+  "ERROR_TUNNEL_208": "Le service Mahu n'accepte pas les connexions. Veuillez vérifier votre réseau et réessayer.",
+  "ERROR_TUNNEL_308": "Le service Mahu a fermé la connexion car il n'y avait pas de réponse de votre navigateur Internet et qu'il l'a considéré comme déconnecté. Cela se produit à cause de problèmes réseaux (mauvais signal Wi-Fi ou réseau très lent). Merci de vérifier votre réseau et de réessayer.",
+  "ERROR_TUNNEL_31D": "Le service Mahu interdit cette connexion car vous avez dépassé la limite de connexions simultanées par utilisateur. Merci de fermer une ou plusieurs connexions et de reéssayer.",
+  "ERROR_TUNNEL_DEFAULT": "Une erreur interne est apparue dans le service Mahu et la connexion a été fermée. Si le problème persiste, merci de notifier l'administrateur ou de regarder les journaux système.",
+  "ERROR_UPLOAD_DEFAULT": "Une erreur interne est apparue dans le service Mahu et la connexion a été fermée. Si le problème persiste, merci de notifier l'administrateur ou de regarder les journaux système.",
+  "HELP_CLIPBOARD": "Texte copié/coupé dans Mahu apparaîtra ici. Changer le texte ci-dessous affectera le presse-papiers distant.",
+  "HELP_INPUT_METHOD_OSK": "Affiche et utilise la saisie du clavier virtuel intégré dans Mahu. Le clavier virtuel permet d'utiliser des combinaisons de touches autrement impossibles (comme Ctrl-Alt-Supp).",
+  "HELP_INPUT_METHOD_TEXT": "Affiche et utilise la saisie du clavier virtuel intégré dans Mahu. Ceci est nécessaire pou les périphériques mobiles ne disposant pas de clavier physique.",
+  "TEXT_CLIENT_STATUS_CONNECTING": "Connexion à ton ordinateur...",
+  "TEXT_CLIENT_STATUS_UNSTABLE": "La connexion réseau au service Mahu est instable.",
+  "TEXT_CLIENT_STATUS_WAITING": "Connecté à ton ordinateur. En attente de réponse..."
+ },
+ "SETTINGS_PREFERENCES": {
+  "HELP_DEFAULT_INPUT_METHOD": "La méthode de saisie par défaut détermine comment les événements clavier sont reçus par Mahu. Modifier ces paramètres peut être nécessaire pour l'utilisateur des smartphone/tablette. Ces paramètres peuvent être écrasés pour chaque connexion dans le menu de Mahu.",
+  "HELP_DEFAULT_MOUSE_MODE": "Le mode d'émulation de la souris détermine comment la souris distante se comportera dans les nouvelles connexions. Ce paramètre peut être définit dans chaque connexion dans le menu de Mahu."
+ }
+}
