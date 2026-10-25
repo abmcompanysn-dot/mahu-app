@@ -57,6 +57,13 @@ Signaux de la LED : allumée = carte posée · 3 clignotements rapides = carte n
 
 ## Boîtier 3D
 
+**Galet ovale à liseré doré (recommandé)** — 120 × 76 × 17 mm, fils soudés :
+`mahu-ovale-dessus.stl` (PLA noir, s'imprime à l'envers, dessus sur le plateau),
+`mahu-ovale-socle.stl` (PLA noir) et `mahu-ovale-lisere-dore.stl` (PLA doré, se clipse
+dans la rainure autour de la carte). Réglages dans `boitier_ovale.py`.
+
+**Version simple (pavé)** :
+
 Dossier `boitier/` : `mahu-box-socle-fin.stl` (12 mm, fils soudés) ou
 `mahu-box-socle-sans-soudure.stl` (22 mm, fils Dupont) + `mahu-box-couvercle.stl`.
 PLA, 0,2 mm, 20 % de remplissage, sans support (le couvercle s'imprime à l'envers).
