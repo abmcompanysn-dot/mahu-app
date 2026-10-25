@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Lecteurs NFC ACS : ACR122U (0x072F:0x2200), ACR1252U (0x072F:0x223B) -->
+    <usb-device vendor-id="1839" product-id="8704" />
+    <usb-device vendor-id="1839" product-id="8763" />
+</resources>

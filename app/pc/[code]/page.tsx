@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { useParams } from "next/navigation"
+import { useParams, useSearchParams } from "next/navigation"
 import { Delete, Loader2, Lock, Maximize2, Monitor, X } from "lucide-react"
 
 // Ecran ouvert par le scan d'une carte ordinateur (/c/CODE -> /pc/CODE) :
@@ -20,6 +20,8 @@ const STEPS = ["Vérification du code…", "Allumage de ton ordinateur…", "Ouv
 
 export default function CloudPCPage() {
   const { code } = useParams<{ code: string }>()
+  // ?box=1 : ouvert par la Mahu Box (carte posee sur le lecteur).
+  const isBox = useSearchParams().get("box") === "1"
   const [info, setInfo] = useState<Info | null>(null)
   const [error, setError] = useState("")
   const [pin, setPin] = useState("")
@@ -92,6 +94,22 @@ export default function CloudPCPage() {
     if (k === "del") setPin((p) => p.slice(0, -1))
     else if (pin.length < 8) setPin((p) => p + k)
   }
+
+  // Clavier physique (box, ordinateur) : chiffres, Effacer, Entree.
+  const openRef = useRef(open)
+  openRef.current = open
+  useEffect(() => {
+    if (screenUrl) return
+    const onKey = (e: KeyboardEvent) => {
+      if (/^[0-9]$/.test(e.key)) setPin((p) => (step < 0 && p.length < 8 ? p + e.key : p))
+      else if (e.key === "Backspace") setPin((p) => (step < 0 ? p.slice(0, -1) : p))
+      else if (e.key === "Enter") void openRef.current()
+      else return
+      e.preventDefault()
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [screenUrl, step])
 
   const blocked = info && (info.suspended || info.expired || info.locked)
 
@@ -232,7 +250,9 @@ export default function CloudPCPage() {
         {error && !info && <p className="mt-10 text-center text-white/70">{error}</p>}
 
         <p className="mt-auto pt-10 text-center text-xs text-white/35">
-          Rien n&apos;est enregistré sur cet appareil. Ferme l&apos;onglet pour partir : ton ordinateur t&apos;attend.
+          {isBox
+            ? "Retire ta carte pour partir : ton ordinateur se verrouille et t'attend."
+            : "Rien n'est enregistré sur cet appareil. Ferme l'onglet pour partir : ton ordinateur t'attend."}
         </p>
       </div>
     </div>
