@@ -133,6 +133,100 @@ data:
       sed -i -E 's#(name="last-image" type="string" value=")[^"]*#\1/usr/share/backgrounds/mahu.jpg#g; s#(name="image-style" type="int" value=")[0-9]+#\15#g' "$f"
       grep -q 'name="desktop-icons"' "$f" || sed -i "s#</channel>#${ICONS}</channel>#" "$f"
     done
+    # Langue : francais partout (session de bureau et applications).
+    if [ -d /run/s6/container_environment ]; then
+      printf 'fr_FR.UTF-8' > /run/s6/container_environment/LANG
+      printf 'fr_FR:fr' > /run/s6/container_environment/LANGUAGE
+      printf 'fr_FR.UTF-8' > /run/s6/container_environment/LC_ALL
+    fi
+    printf 'LANG=fr_FR.UTF-8\nLANGUAGE=fr_FR:fr\n' > /etc/default/locale
+    # Bureau facon Windows (une fois par ordinateur) : barre des taches en bas,
+    # bouton Demarrer Mahu, raccourcis navigateur et fichiers, horloge a droite.
+    X=/config/.config/xfce4/xfconf/xfce-perchannel-xml
+    if [ ! -f /config/.mahu-bureau-v1 ]; then
+      mkdir -p "$X" /config/.local/share/mahu /config/.config/xfce4/panel/launcher-3 /config/.config/xfce4/panel/launcher-4
+      curl -fsSL -A "Mozilla/5.0" -o /config/.local/share/mahu/mahu.png https://call.mahu.cards/icons/icon-192.png || true
+      [ -f /usr/share/applications/firefox.desktop ] && cp /usr/share/applications/firefox.desktop /config/.config/xfce4/panel/launcher-3/
+      [ -f /usr/share/applications/thunar.desktop ] && cp /usr/share/applications/thunar.desktop /config/.config/xfce4/panel/launcher-4/
+      cat > "$X/xfce4-panel.xml" <<'XML'
+    <?xml version="1.0" encoding="UTF-8"?>
+    <channel name="xfce4-panel" version="1.0">
+      <property name="configver" type="int" value="2"/>
+      <property name="panels" type="array">
+        <value type="int" value="1"/>
+        <property name="dark-mode" type="bool" value="true"/>
+        <property name="panel-1" type="empty">
+          <property name="position" type="string" value="p=10;x=0;y=0"/>
+          <property name="length" type="uint" value="100"/>
+          <property name="position-locked" type="bool" value="true"/>
+          <property name="size" type="uint" value="44"/>
+          <property name="icon-size" type="uint" value="24"/>
+          <property name="plugin-ids" type="array">
+            <value type="int" value="1"/>
+            <value type="int" value="2"/>
+            <value type="int" value="3"/>
+            <value type="int" value="4"/>
+            <value type="int" value="5"/>
+            <value type="int" value="6"/>
+            <value type="int" value="7"/>
+            <value type="int" value="8"/>
+            <value type="int" value="9"/>
+            <value type="int" value="10"/>
+          </property>
+        </property>
+      </property>
+      <property name="plugins" type="empty">
+        <property name="plugin-1" type="string" value="applicationsmenu">
+          <property name="button-title" type="string" value="Démarrer"/>
+          <property name="show-button-title" type="bool" value="true"/>
+          <property name="button-icon" type="string" value="/config/.local/share/mahu/mahu.png"/>
+        </property>
+        <property name="plugin-2" type="string" value="separator">
+          <property name="style" type="uint" value="0"/>
+        </property>
+        <property name="plugin-3" type="string" value="launcher">
+          <property name="items" type="array">
+            <value type="string" value="firefox.desktop"/>
+          </property>
+        </property>
+        <property name="plugin-4" type="string" value="launcher">
+          <property name="items" type="array">
+            <value type="string" value="thunar.desktop"/>
+          </property>
+        </property>
+        <property name="plugin-5" type="string" value="tasklist">
+          <property name="grouping" type="uint" value="1"/>
+          <property name="show-labels" type="bool" value="true"/>
+        </property>
+        <property name="plugin-6" type="string" value="separator">
+          <property name="expand" type="bool" value="true"/>
+          <property name="style" type="uint" value="0"/>
+        </property>
+        <property name="plugin-7" type="string" value="systray">
+          <property name="square-icons" type="bool" value="true"/>
+        </property>
+        <property name="plugin-8" type="string" value="pulseaudio"/>
+        <property name="plugin-9" type="string" value="clock">
+          <property name="digital-layout" type="uint" value="1"/>
+          <property name="digital-time-format" type="string" value="%H:%M"/>
+          <property name="digital-date-format" type="string" value="%d/%m/%Y"/>
+        </property>
+        <property name="plugin-10" type="string" value="showdesktop"/>
+      </property>
+    </channel>
+    XML
+      cat > "$X/xsettings.xml" <<'XML'
+    <?xml version="1.0" encoding="UTF-8"?>
+    <channel name="xsettings" version="1.0">
+      <property name="Net" type="empty">
+        <property name="ThemeName" type="string" value="Greybird-dark"/>
+        <property name="IconThemeName" type="string" value="elementary-xfce-dark"/>
+      </property>
+    </channel>
+    XML
+      touch /config/.mahu-bureau-v1
+      chown -R 1000:1000 /config/.config /config/.local /config/.mahu-bureau-v1
+    fi
 ---
 # Les bureaux ne sont joignables que par guacd (pas par les autres pods).
 apiVersion: networking.k8s.io/v1

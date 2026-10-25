@@ -29,6 +29,7 @@ export default function CloudPCPage() {
   const [screenUrl, setScreenUrl] = useState("")
   const [isFull, setIsFull] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
+  const frameRef = useRef<HTMLIFrameElement>(null)
 
   useEffect(() => {
     const onChange = () => setIsFull(!!document.fullscreenElement)
@@ -115,13 +116,25 @@ export default function CloudPCPage() {
 
   if (screenUrl) {
     return (
-      <div ref={rootRef} className="fixed inset-0 bg-black">
+      <div
+        ref={rootRef}
+        className="fixed inset-0 bg-black"
+        // Le clavier ne va a l'ordinateur que si le cadre a le focus : on le
+        // lui redonne a chaque clic (et apres chargement, une fois l'ecran pret).
+        onPointerDown={() => frameRef.current?.focus()}
+      >
         <iframe
+          ref={frameRef}
           src={screenUrl}
           title="Mon ordinateur Mahu"
+          tabIndex={0}
           className="h-full w-full border-0"
           allow="fullscreen; clipboard-read; clipboard-write; keyboard-map"
-          onLoad={(e) => e.currentTarget.focus()}
+          onLoad={(e) => {
+            const f = e.currentTarget
+            f.focus()
+            ;[800, 2500, 6000].forEach((ms) => setTimeout(() => f.focus(), ms))
+          }}
         />
         <div className="absolute right-3 top-3 flex gap-2 opacity-30 transition-opacity hover:opacity-100">
           {!isFull && (
