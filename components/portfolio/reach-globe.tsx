@@ -173,7 +173,7 @@ function Globe({ items }: { items: PortfolioItem[] }) {
             <g key={it.title}>
               <circle cx={x} cy={y} r={r + pulse * 14} fill="none" stroke={hub || FEATURED.has(it.title) ? GOLD : BLUE} strokeOpacity={1 - pulse} />
               <circle cx={x} cy={y} r={r} fill={hub || FEATURED.has(it.title) ? GOLD : "#60a5fa"} stroke="#06070b" strokeWidth={1.5} />
-              {(hub || n >= 20 || FEATURED.has(it.title)) && (
+              {(hub || n >= 29 || FEATURED.has(it.title)) && (
                 <text x={x + r + 5} y={y + 4} fill="#fff" fontSize={13} fontWeight={700} style={{ paintOrder: "stroke", stroke: "#06070b", strokeWidth: 3 }}>
                   {it.title}
                 </text>
@@ -210,7 +210,8 @@ export function ReachSection({ items, index }: { items: PortfolioItem[]; index: 
   const accounts = items.reduce((s, x) => s + num(x.org), 0)
   const sellers = items.reduce((s, x) => s + num(x.period), 0)
   const countries = items.filter((x) => PLACES[x.title]).length
-  const ranked = items.filter((x) => num(x.org) > 0).sort((a, b) => num(b.org) - num(a.org))
+  // Le classement ne montre que les pays places sur le globe ("Pays non precise" compte dans les totaux).
+  const ranked = items.filter((x) => PLACES[x.title] && num(x.org) > 0).sort((a, b) => num(b.org) - num(a.org))
   const top = ranked.slice(0, 8)
   const max = Math.max(1, ...top.map((x) => num(x.org)))
 
@@ -256,7 +257,7 @@ export function ReachSection({ items, index }: { items: PortfolioItem[]; index: 
               </li>
             ))}
           </ul>
-          {items.filter((x) => x.description && !num(x.org)).map((x) => (
+          {items.filter((x) => PLACES[x.title] && x.description && !num(x.org)).map((x) => (
             <p key={x.title} className="mt-6 flex items-center gap-2 text-sm text-white/70">
               <span className="h-2.5 w-2.5 rounded-full" style={{ background: GOLD }} />
               <b>{x.title}</b> · {x.description}
