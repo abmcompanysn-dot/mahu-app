@@ -241,6 +241,10 @@ func (d *Deps) legacyAdminListPortfolioCards(ctx context.Context, user *models.U
 	if err := cursor.All(ctx, &portfolios); err != nil {
 		return nil, err
 	}
+	ranks, err := freeCardRanks(ctx)
+	if err != nil {
+		return nil, err
+	}
 	cards := []map[string]any{}
 	for _, p := range portfolios {
 		var u models.User
@@ -260,6 +264,7 @@ func (d *Deps) legacyAdminListPortfolioCards(ctx context.Context, user *models.U
 		cards = append(cards, map[string]any{
 			"id": p.ID.Hex(), "name": name, "email": u.Email, "photo": photo, "profileUrl": u.ProfileURL,
 			"title": p.Title, "skills": p.Skills, "field": p.Field, "level": p.Level, "school": p.School, "expiresAt": p.ExpiresAt, "printedAt": p.PrintedAt,
+			"freeCardRank": ranks[p.ID],
 		})
 	}
 	return map[string]any{"success": true, "cards": cards}, nil
@@ -287,4 +292,40 @@ func (d *Deps) legacyAdminMarkPortfolioCardsPrinted(ctx context.Context, payload
 	}
 	d.logAction(ctx, "adminMarkPortfolioCardsPrinted", models.LogStatusSuccess, fmt.Sprintf("%d carte(s) etudiant marquee(s) imprimee(s)", res.ModifiedCount), user.Email)
 	return map[string]any{"success": true, "updated": res.ModifiedCount}, nil
+}
+
+// ---- lancement : carte imprimee offerte aux 100 premiers inscrits
+
+const portfolioFreeCards = 100
+
+func (d *Deps) legacyGetPortfolioOffer(ctx context.Context) (map[string]any, error) {
+	n, err := db.Collection(models.PortfoliosCollection).CountDocuments(ctx, bson.M{})
+	if err != nil {
+		return nil, err
+	}
+	left := portfolioFreeCards - int(n)
+	if left < 0 {
+		left = 0
+	}
+	return map[string]any{"success": true, "freeCardsTotal": portfolioFreeCards, "freeCardsLeft": left}, nil
+}
+
+// freeCardRanks donne le rang (1 a 100) des portfolios dont la carte est offerte.
+func freeCardRanks(ctx context.Context) (map[primitive.ObjectID]int, error) {
+	cursor, err := db.Collection(models.PortfoliosCollection).Find(ctx, bson.M{},
+		options.Find().SetSort(bson.D{{Key: "createdAt", Value: 1}, {Key: "_id", Value: 1}}).SetLimit(portfolioFreeCards).SetProjection(bson.M{"_id": 1}))
+	if err != nil {
+		return nil, err
+	}
+	var docs []struct {
+		ID primitive.ObjectID `bson:"_id"`
+	}
+	if err := cursor.All(ctx, &docs); err != nil {
+		return nil, err
+	}
+	ranks := make(map[primitive.ObjectID]int, len(docs))
+	for i, doc := range docs {
+		ranks[doc.ID] = i + 1
+	}
+	return ranks, nil
 }

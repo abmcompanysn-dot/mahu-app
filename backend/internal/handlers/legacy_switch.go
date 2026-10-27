@@ -38,6 +38,8 @@ func (d *Deps) runLegacyAction(ctx context.Context, action string, payload map[s
 	case "getProfileData":
 		userParam := str(payload, "user")
 		return d.legacyGetProfileData(ctx, userParam)
+	case "getPortfolioOffer":
+		return d.legacyGetPortfolioOffer(ctx)
 	case "getPortfolioPublic":
 		return d.legacyGetPortfolioPublic(ctx, str(payload, "user"))
 	case "checkCardStatus":

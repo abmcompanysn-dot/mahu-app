@@ -1,13 +1,32 @@
 import { StudentsLanding } from "@/components/portfolio/students-landing"
 
-// Offre etudiante : portfolio numerique + carte digitale professionnelle Mahu,
-// valables un an, pour 3 500 FCFA (produit "portfolio-etudiant").
+// Offre etudiante : portfolio numerique + carte de visite professionnelle Mahu,
+// valables un an, pour 3 500 FCFA (produit "portfolio-etudiant"). Au lancement,
+// la carte imprimee est offerte aux 100 premiers inscrits (compteur backend).
 export const metadata = {
   title: "Portfolio étudiant · Mahu",
   description:
-    "Ton portfolio en ligne avec les vidéos de tes réalisations et ta carte digitale professionnelle Mahu, valables un an, pour 3 500 FCFA. Réservé aux étudiants.",
+    "Ton portfolio en ligne avec les vidéos de tes réalisations et ta carte de visite professionnelle Mahu, valables un an, pour 3 500 FCFA. Carte imprimée offerte aux 100 premiers inscrits.",
 }
 
-export default function StudentsPage() {
-  return <StudentsLanding />
+export const revalidate = 60
+
+const BACKEND_URL = process.env.BACKEND_URL || "http://127.0.0.1:4000"
+const SERVICE_API_KEY = process.env.BACKEND_API_KEY || ""
+
+async function freeCardsLeft(): Promise<number> {
+  if (!SERVICE_API_KEY) return 0
+  try {
+    const url = new URL("/api/legacy", BACKEND_URL)
+    url.searchParams.set("action", "getPortfolioOffer")
+    const res = await fetch(url, { headers: { "x-api-key": SERVICE_API_KEY }, next: { revalidate: 60 }, signal: AbortSignal.timeout(4000) })
+    const data = (await res.json()) as { freeCardsLeft?: number }
+    return data.freeCardsLeft ?? 0
+  } catch {
+    return 0
+  }
+}
+
+export default async function StudentsPage() {
+  return <StudentsLanding freeCardsLeft={await freeCardsLeft()} />
 }

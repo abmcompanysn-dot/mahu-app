@@ -13,7 +13,7 @@ import { CARDS_PER_SHEET, buildStudentCardsHtml, type StudentCard } from "@/lib/
 // automatiquement. Une feuille A4 par etudiant = 9 exemplaires de sa carte
 // (3 x 3), recto puis verso. Par defaut on coche ceux pas encore imprimes.
 
-type Row = StudentCard & { email: string; printedAt?: string | null }
+type Row = StudentCard & { email: string; printedAt?: string | null; freeCardRank?: number }
 
 export default function StudentCardsPage() {
   const { token } = useAdminAuth()
@@ -131,6 +131,7 @@ export default function StudentCardsPage() {
                     <TableHead className="w-10" />
                     <TableHead>Etudiant</TableHead>
                     <TableHead>Filiere</TableHead>
+                    <TableHead>Carte</TableHead>
                     <TableHead>Valable jusqu'au</TableHead>
                     <TableHead>Imprimee</TableHead>
                   </TableRow>
@@ -146,6 +147,13 @@ export default function StudentCardsPage() {
                         <p className="text-xs text-muted-foreground">{r.email}</p>
                       </TableCell>
                       <TableCell className="text-sm">{[r.field, r.level].filter(Boolean).join(" · ") || "-"}</TableCell>
+                      <TableCell className="text-sm">
+                        {r.freeCardRank ? (
+                          <span className="rounded-full bg-green-500/15 px-2 py-0.5 text-xs font-semibold text-green-600">Offerte · n°{r.freeCardRank}/100</span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">Hors offre</span>
+                        )}
+                      </TableCell>
                       <TableCell className="text-sm">{new Date(r.expiresAt).toLocaleDateString("fr-FR")}</TableCell>
                       <TableCell className="text-sm">{r.printedAt ? new Date(r.printedAt).toLocaleDateString("fr-FR") : "Non"}</TableCell>
                     </TableRow>

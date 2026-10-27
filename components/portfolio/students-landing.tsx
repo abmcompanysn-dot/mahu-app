@@ -14,7 +14,7 @@ import {
   useSpring,
   useTransform,
 } from "framer-motion"
-import { ArrowRight, BadgeCheck, CreditCard, Eye, FolderKanban, GraduationCap, Play, Sparkles, Video } from "lucide-react"
+import { ArrowRight, BadgeCheck, CreditCard, Eye, Gift, FolderKanban, GraduationCap, Play, Sparkles, Video } from "lucide-react"
 import { PORTFOLIO_PRICE, PORTFOLIO_TEMPLATES, type PortfolioTemplate } from "@/lib/portfolio"
 
 // Page de vente /etudiants en motion design. Les ecrans des telephones sont
@@ -29,11 +29,12 @@ const AUDIENCES = ["recruteurs.", "écoles.", "entreprises.", "clients."]
 const FIELDS = ["Informatique", "Mécanique", "Mécatronique", "Procédés de fabrication", "Marketing", "Droit", "Design", "Médecine", "Finance", "Architecture", "Communication", "Génie civil", "Gestion", "Journalisme", "Agronomie"]
 const SKILLS = ["React", "Figma", "Excel", "Prise de parole", "Marketing digital", "Python"]
 const CYCLE_MS = 6500
+const FREE_CARDS = 100
 
 const included = [
   { icon: FolderKanban, title: "Ton portfolio en ligne", text: "Projets, compétences, expériences, formation et CV, sur une page à ton nom." },
   { icon: Video, title: "Les vidéos de tes réalisations", text: "Ton appli, ta maquette, ton exposé : la vidéo se lit directement dans ton portfolio." },
-  { icon: CreditCard, title: "Ta carte digitale pro", text: "Ta carte de visite Mahu : un lien et un QR code à partager avec les recruteurs." },
+  { icon: CreditCard, title: "Ta carte de visite pro", text: "Ta carte Mahu en ligne (un lien et un QR code). Offerte en version imprimée aux 100 premiers inscrits." },
   { icon: BadgeCheck, title: "5 modèles, valable 1 an", text: "Change de modèle quand tu veux, ton contenu suit. Un seul paiement." },
 ]
 
@@ -136,9 +137,33 @@ function ShineButton({ href, children, className = "" }: { href: string; childre
   )
 }
 
+/** Lancement : carte imprimee + 1 an de carte de visite Mahu offerts aux 100 premiers. */
+function FreeCards({ left, className = "" }: { left: number; className?: string }) {
+  const taken = FREE_CARDS - left
+  return (
+    <div className={`rounded-2xl border border-[#d4af37]/35 bg-[#d4af37]/[0.08] p-4 ${className}`}>
+      <p className="flex items-start gap-2 text-sm font-semibold text-[#f1d77e]">
+        <Gift className="mt-0.5 h-4 w-4 shrink-0" />
+        <span>Offert aux 100 premiers inscrits : ta carte imprimée + 1 an de carte de visite Mahu.</span>
+      </p>
+      <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10">
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${Math.max(3, (taken / FREE_CARDS) * 100)}%` }}
+          transition={{ duration: 1.4, delay: 1, ease: EASE }}
+          className="h-full rounded-full bg-gradient-to-r from-[#f1d77e] to-[#d4af37]"
+        />
+      </div>
+      <p className="mt-2 text-xs text-white/60">
+        Plus que <b className="text-white">{left}</b> carte{left > 1 ? "s" : ""} offerte{left > 1 ? "s" : ""} sur {FREE_CARDS}
+      </p>
+    </div>
+  )
+}
+
 // ------------------------------------------------------------ hero
 
-function Hero() {
+function Hero({ freeCardsLeft }: { freeCardsLeft: number }) {
   const reduce = useReducedMotion()
   const [current, setCurrent] = useState(0)
   const [toast, setToast] = useState(false)
@@ -237,6 +262,12 @@ function Hero() {
               <p className="text-sm text-white/55">portfolio + carte pro · 1 an</p>
             </div>
           </motion.div>
+
+          {freeCardsLeft > 0 && (
+            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.8, ease: EASE }}>
+              <FreeCards left={freeCardsLeft} className="mt-6 max-w-md" />
+            </motion.div>
+          )}
 
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.9 }} className="mt-8 flex flex-wrap gap-2">
             {PORTFOLIO_TEMPLATES.map((t, i) => (
@@ -539,7 +570,7 @@ function PriceCounter() {
   return <span ref={ref}>{n.toLocaleString("fr-FR").replace(/ /g, " ")} FCFA</span>
 }
 
-function FinalCta() {
+function FinalCta({ freeCardsLeft }: { freeCardsLeft: number }) {
   return (
     <section className="mx-auto max-w-6xl px-5 pb-28 pt-6">
       <Reveal>
@@ -548,7 +579,12 @@ function FinalCta() {
           <div className="relative grid items-center gap-8 lg:grid-cols-[minmax(0,1fr)_auto]">
             <div>
               <h2 className="text-3xl font-black leading-tight sm:text-5xl">Ton avenir mérite une belle vitrine.</h2>
-              <p className="mt-3 text-lg font-medium text-black/70">Portfolio + vidéos + carte digitale pro, pendant 1 an.</p>
+              <p className="mt-3 text-lg font-medium text-black/70">Portfolio + vidéos + carte de visite pro, pendant 1 an.</p>
+              {freeCardsLeft > 0 && (
+                <p className="mt-3 inline-flex items-center gap-2 rounded-full bg-black/10 px-4 py-1.5 text-sm font-bold">
+                  <Gift className="h-4 w-4" /> Carte imprimée offerte · plus que {freeCardsLeft} sur {FREE_CARDS}
+                </p>
+              )}
               <p className="mt-6 text-5xl font-black tracking-tight sm:text-6xl">
                 <PriceCounter />
               </p>
@@ -563,7 +599,7 @@ function FinalCta() {
   )
 }
 
-function StickyMobileCta() {
+function StickyMobileCta({ freeCardsLeft }: { freeCardsLeft: number }) {
   const { scrollY } = useScroll()
   const [show, setShow] = useState(false)
   useEffect(() => scrollY.on("change", (v) => setShow(v > 700)), [scrollY])
@@ -580,7 +616,9 @@ function StickyMobileCta() {
         >
           <div className="leading-tight">
             <p className="font-black">{PORTFOLIO_PRICE}</p>
-            <p className="text-xs text-white/55">portfolio + carte pro · 1 an</p>
+            <p className="text-xs text-white/55">
+              {freeCardsLeft > 0 ? `Carte imprimée offerte · plus que ${freeCardsLeft}` : "portfolio + carte pro · 1 an"}
+            </p>
           </div>
           <Link href={ORDER} className="rounded-xl bg-[#d4af37] px-5 py-3 font-bold text-black">
             Je commence
@@ -603,18 +641,18 @@ const KEYFRAMES = `
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important } }
 `
 
-export function StudentsLanding() {
+export function StudentsLanding({ freeCardsLeft = 0 }: { freeCardsLeft?: number }) {
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#07090f] text-white">
       <style>{KEYFRAMES}</style>
-      <Hero />
+      <Hero freeCardsLeft={freeCardsLeft} />
       <FieldsMarquee />
       <Included />
       <VideoShowcase />
       <Templates />
       <Steps />
-      <FinalCta />
-      <StickyMobileCta />
+      <FinalCta freeCardsLeft={freeCardsLeft} />
+      <StickyMobileCta freeCardsLeft={freeCardsLeft} />
     </main>
   )
 }
