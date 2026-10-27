@@ -13,8 +13,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Sparkles,
-  X
-} from "lucide-react"
+  X, GraduationCap } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/hooks/use-auth"
 
@@ -28,6 +27,7 @@ interface SidebarProps {
 const navItems = [
   { icon: LayoutDashboard, label: "Tableau de bord", href: "/dashboard" },
   { icon: User, label: "Mon Profil", href: "/dashboard/profile" },
+  { icon: GraduationCap, label: "Mon portfolio", href: "/dashboard/portfolio" },
   { icon: Sparkles, label: "AI MAHU", href: "/ai", badge: "Nouveau" },
   { icon: Users, label: "Mes Contacts", href: "/dashboard/contacts" },
   { icon: Building2, label: "Entreprise", href: "/dashboard/enterprise", badge: "Pro" },

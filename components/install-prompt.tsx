@@ -16,7 +16,7 @@ const DISMISS_DAYS = 14
 
 // Pas de bandeau sur les cartes publiques (les visiteurs d'un profil ne
 // sont pas des clients Mahu) ni dans l'admin.
-const HIDDEN_PREFIXES = ["/p/", "/c/", "/admin", "/myfocus"]
+const HIDDEN_PREFIXES = ["/p/", "/c/", "/admin", "/myfocus", "/portfolio", "/pc/"]
 
 function recentlyDismissed() {
   try {

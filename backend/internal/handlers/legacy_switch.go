@@ -38,6 +38,8 @@ func (d *Deps) runLegacyAction(ctx context.Context, action string, payload map[s
 	case "getProfileData":
 		userParam := str(payload, "user")
 		return d.legacyGetProfileData(ctx, userParam)
+	case "getPortfolioPublic":
+		return d.legacyGetPortfolioPublic(ctx, str(payload, "user"))
 	case "checkCardStatus":
 		return d.legacyCheckCardStatus(ctx, payload)
 	case "quickRegisterAndActivate":
@@ -60,6 +62,10 @@ func (d *Deps) runLegacyAction(ctx context.Context, action string, payload map[s
 		return d.legacyGetDashboardData(ctx, user)
 	case "saveProfile":
 		return d.legacySaveProfile(ctx, payload, user)
+	case "getPortfolio":
+		return d.legacyGetPortfolio(ctx, user)
+	case "savePortfolio":
+		return d.legacySavePortfolio(ctx, payload, user)
 	case "saveProfileImage":
 		imageType := str(payload, "imageType")
 		return d.legacySaveProfileImage(ctx, imageType, str(payload, "imageUrl"), user)

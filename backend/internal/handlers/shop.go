@@ -444,6 +444,18 @@ func (d *Deps) finalizeCardOrder(ctx context.Context, reference, invoiceToken st
 		}
 	}
 
+	// Offre etudiante : rien a livrer, le portfolio s'active pour un an.
+	isPortfolio := false
+	var product models.Product
+	if err := db.Collection(models.ProductsCollection).FindOne(ctx, bson.M{"_id": order.ProductID}).Decode(&product); err == nil &&
+		product.Category == models.ProductCategoryPortfolio {
+		isPortfolio = true
+		if err := activatePortfolio(ctx, user.ID); err != nil {
+			d.logAction(ctx, "finalizeCardOrder", models.LogStatusError, "Portfolio non active: "+err.Error(), order.Email)
+		}
+		_, _ = coll.UpdateOne(ctx, bson.M{"_id": order.ID}, bson.M{"$set": bson.M{"deliveryStatus": models.OrderDeliveryDelivered}})
+	}
+
 	remaining := order.ProductPriceXof - order.DepositXof
 	go func() {
 		loginURL := d.Env.AppURL + "/login?email=" + url.QueryEscape(order.Email)
@@ -460,10 +472,17 @@ func (d *Deps) finalizeCardOrder(ctx context.Context, reference, invoiceToken st
 			subject = "Paiement recu - votre carte Mahu est activee"
 			html = fmt.Sprintf(activationPaidEmailHTML, order.ClientName, order.DepositXof, order.CardCode, loginURL)
 		}
+		if isPortfolio {
+			subject = "Bienvenue ! Ton portfolio Mahu est pret"
+			html = fmt.Sprintf(portfolioPaidEmailHTML, order.ClientName, loginURL)
+		}
 		if err := d.Email.Send(order.Email, subject, html); err != nil {
 			d.logAction(context.Background(), "finalizeCardOrder", models.LogStatusError, "Email client non envoye: "+err.Error(), order.Email)
 		}
 		label := "Nouvelle commande (acompte paye)"
+		if isPortfolio {
+			label = "Portfolio etudiant paye"
+		}
 		if order.Kind == models.OrderKindCodeActivation {
 			label = "Activation payee (carte " + order.CardCode + ")"
 		}
@@ -602,7 +621,7 @@ func (p *productInput) validate() error {
 		return errors.New("Acompte invalide.")
 	}
 	switch p.Category {
-	case models.ProductCategoryNfcCard, models.ProductCategoryRfidFob, models.ProductCategoryRfidCard, models.ProductCategoryWebCard, models.ProductCategoryComputer:
+	case models.ProductCategoryNfcCard, models.ProductCategoryRfidFob, models.ProductCategoryRfidCard, models.ProductCategoryWebCard, models.ProductCategoryComputer, models.ProductCategoryPortfolio:
 	default:
 		return errors.New("Categorie invalide.")
 	}
@@ -762,4 +781,12 @@ const activationPaidEmailHTML = `<div style="font-family:sans-serif;padding:20px
   <p>Bonjour %s,</p>
   <p>Nous avons bien recu votre paiement de <strong>%d FCFA</strong> pour activer la carte <strong>%s</strong>.</p>
   <p><a href="%s" style="background:#000;color:#fff;padding:12px 24px;text-decoration:none;display:inline-block;">Configurer mon profil</a></p>
+</div>`
+
+const portfolioPaidEmailHTML = `<div style="font-family:sans-serif;padding:20px;color:#1a1a1a;">
+  <h2>Ton portfolio Mahu est pret</h2>
+  <p>Bonjour %s,</p>
+  <p>Paiement bien recu. Ton <strong>portfolio numerique</strong> et ta <strong>carte digitale professionnelle Mahu</strong> sont actifs pour <strong>un an</strong>.</p>
+  <p>Connecte-toi, choisis ton modele et ajoute tes projets : ton portfolio est en ligne tout de suite.</p>
+  <p><a href="%s" style="background:#000;color:#fff;padding:12px 24px;text-decoration:none;display:inline-block;">Creer mon portfolio</a></p>
 </div>`

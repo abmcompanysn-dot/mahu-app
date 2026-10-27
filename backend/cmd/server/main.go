@@ -44,6 +44,9 @@ func main() {
 	if err := handlers.SeedProducts(context.Background()); err != nil {
 		log.Printf("[shop] product seed failed: %v", err)
 	}
+	if err := handlers.EnsurePortfolioProduct(context.Background()); err != nil {
+		log.Printf("[shop] portfolio product: %v", err)
+	}
 	if err := handlers.EnsureComputerProducts(context.Background()); err != nil {
 		log.Printf("[shop] computer products: %v", err)
 	}

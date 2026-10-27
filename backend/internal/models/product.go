@@ -19,6 +19,8 @@ const (
 	// Ordinateur : la carte Mahu qui ouvre un ordinateur personnel partout
 	// (abonnement annuel, voir handlers/cloudpc.go).
 	ProductCategoryComputer = "ordinateur"
+	// Portfolio : offre etudiante numerique (portfolio + carte digitale, 1 an).
+	ProductCategoryPortfolio = "portfolio"
 )
 
 // Product is one item of the shop catalogue (previously only listed as
