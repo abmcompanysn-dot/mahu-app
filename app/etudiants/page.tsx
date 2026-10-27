@@ -2,11 +2,11 @@ import { StudentsLanding } from "@/components/portfolio/students-landing"
 
 // Offre etudiante : portfolio numerique + carte de visite professionnelle Mahu,
 // valables un an, pour 3 500 FCFA (produit "portfolio-etudiant"). Au lancement,
-// la carte imprimee est offerte aux 100 premiers inscrits (compteur backend).
+// la carte de visite numerique est offerte aux 100 premiers inscrits (compteur backend).
 export const metadata = {
   title: "Portfolio étudiant · Mahu",
   description:
-    "Ton portfolio en ligne avec les vidéos de tes réalisations et ta carte de visite professionnelle Mahu, valables un an, pour 3 500 FCFA. Carte imprimée offerte aux 100 premiers inscrits.",
+    "Ton portfolio en ligne avec les vidéos de tes réalisations et ta carte de visite numérique Mahu, valables un an, pour 3 500 FCFA. Carte numérique offerte aux 100 premiers inscrits.",
 }
 
 // Rendu a chaque visite : le compteur doit refleter les inscriptions.
