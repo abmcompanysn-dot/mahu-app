@@ -1,7 +1,8 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { CheckCircle2, Loader2, Printer } from "lucide-react"
+import { CheckCircle2, Download, Loader2, Printer } from "lucide-react"
+import { downloadStudentCardPdf } from "@/lib/student-card-pdf"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -69,6 +70,20 @@ export default function StudentCardsPage() {
     win.document.close()
   }
 
+  // Telechargement direct du PDF vectoriel (carte PVC 85,6 x 54 mm ou planche A4).
+  const [downloading, setDownloading] = useState<string | null>(null)
+  const download = async (cards: Row[], format: "pvc" | "a4") => {
+    if (cards.length === 0) return
+    setDownloading(cards.length === 1 ? `${cards[0].id}-${format}` : `all-${format}`)
+    try {
+      await downloadStudentCardPdf(cards, format)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "PDF non genere")
+    } finally {
+      setDownloading(null)
+    }
+  }
+
   const markPrinted = async () => {
     if (!token || chosen.length === 0) return
     setBusy(true)
@@ -110,6 +125,12 @@ export default function StudentCardsPage() {
               <Button size="sm" onClick={print} disabled={selected.size === 0}>
                 <Printer className="mr-2 h-4 w-4" />Imprimer (PDF)
               </Button>
+              <Button size="sm" variant="outline" onClick={() => download(chosen, "pvc")} disabled={selected.size === 0 || !!downloading}>
+                {downloading === "all-pvc" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}PDF PVC (sélection)
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => download(chosen, "a4")} disabled={selected.size === 0 || !!downloading}>
+                {downloading === "all-a4" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}PDF A4 (sélection)
+              </Button>
               <Button size="sm" variant="secondary" onClick={markPrinted} disabled={selected.size === 0 || busy}>
                 {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Marquer imprimees
               </Button>
@@ -134,6 +155,7 @@ export default function StudentCardsPage() {
                     <TableHead>Carte</TableHead>
                     <TableHead>Valable jusqu'au</TableHead>
                     <TableHead>Imprimee</TableHead>
+                    <TableHead>Fichiers</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -156,6 +178,22 @@ export default function StudentCardsPage() {
                       </TableCell>
                       <TableCell className="text-sm">{new Date(r.expiresAt).toLocaleDateString("fr-FR")}</TableCell>
                       <TableCell className="text-sm">{r.printedAt ? new Date(r.printedAt).toLocaleDateString("fr-FR") : "Non"}</TableCell>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        <div className="flex flex-col gap-1 text-xs font-semibold">
+                          {(["pvc", "a4"] as const).map((f) => (
+                            <button
+                              key={f}
+                              type="button"
+                              disabled={!!downloading}
+                              onClick={() => download([r], f)}
+                              className="flex items-center gap-1 text-primary hover:underline disabled:opacity-50"
+                            >
+                              {downloading === `${r.id}-${f}` ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+                              {f === "pvc" ? "PDF PVC" : "PDF A4 (9)"}
+                            </button>
+                          ))}
+                        </div>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

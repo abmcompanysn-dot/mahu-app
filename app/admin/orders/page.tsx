@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { Loader2, Printer, Search } from "lucide-react"
+import { Download, Loader2, Printer, Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -11,6 +11,7 @@ import { useAdminAuth } from "@/contexts/admin-auth-context"
 import { adminApi, type CardOrder } from "@/lib/admin-api"
 import { formatXof } from "@/lib/shop-api"
 import { buildStudentCardsHtml, type StudentCard } from "@/lib/student-cards-print"
+import { downloadStudentCardPdf } from "@/lib/student-card-pdf"
 
 const PAYMENT_LABELS: Record<CardOrder["paymentStatus"], string> = {
   en_attente: "En attente",
@@ -54,6 +55,18 @@ export default function AdminOrdersPage() {
     win.document.open()
     win.document.write(html)
     win.document.close()
+  }
+
+  // PDF vectoriel de la carte PVC (85,6 x 54 mm, recto + verso) de l'etudiant.
+  const downloadCardPdf = async (o: CardOrder) => {
+    if (!token) return
+    const res = (await adminApi.listPortfolioCards(token)) as { cards?: Array<StudentCard & { email: string }> }
+    const card = res.cards?.find((c) => c.email.toLowerCase() === o.email.toLowerCase())
+    if (!card) {
+      setError(`Aucun portfolio actif pour ${o.email}.`)
+      return
+    }
+    await downloadStudentCardPdf([card], "pvc")
   }
 
   const load = useCallback(async () => {
@@ -200,6 +213,15 @@ export default function AdminOrdersPage() {
                                 className="mt-1 flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
                               >
                                 <Printer className="h-3.5 w-3.5" /> Imprimer la carte (9 ex.)
+                              </button>
+                            )}
+                            {!pending && /portfolio/i.test(o.productName) && (
+                              <button
+                                type="button"
+                                onClick={() => downloadCardPdf(o)}
+                                className="mt-1 flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+                              >
+                                <Download className="h-3.5 w-3.5" /> PDF carte PVC
                               </button>
                             )}
                           </TableCell>
