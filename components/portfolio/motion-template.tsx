@@ -429,11 +429,16 @@ export function MotionTemplate({ v }: { v: PortfolioView }) {
           <div className="relative overflow-hidden rounded-[2rem] border border-white/10 p-10 text-center sm:p-16" style={{ background: `radial-gradient(ellipse at 30% 0%, ${BLUE}40, transparent 60%), radial-gradient(ellipse at 80% 100%, ${GOLD}30, transparent 60%), #0b0e17` }}>
             <h2 className="text-4xl font-extrabold tracking-tight sm:text-6xl" style={{ fontFamily: F.display }}>Travaillons ensemble.</h2>
             <p className="mx-auto mt-4 max-w-xl text-lg text-white/65">Un projet hardware, une plateforme web ou une idée à lancer ? Écrivez-moi.</p>
-            {v.email && (
-              <a href={`mailto:${v.email}`} className="mt-8 inline-flex items-center gap-2 rounded-full bg-white px-8 py-4 text-lg font-bold text-black transition-transform hover:scale-[1.04]">
-                {v.email} <ArrowUpRight className="h-5 w-5" />
+            <div className="mt-8 flex flex-wrap justify-center gap-3">
+              <a href="#contact" className="inline-flex items-center gap-2 rounded-full bg-white px-8 py-4 text-lg font-bold text-black transition-transform hover:scale-[1.04]">
+                Laisser mes coordonnées <ArrowUpRight className="h-5 w-5" />
               </a>
-            )}
+              {v.email && (
+                <a href={`mailto:${v.email}`} className="inline-flex items-center gap-2 rounded-full border border-white/20 px-8 py-4 text-lg font-bold hover:bg-white/10">
+                  {v.email}
+                </a>
+              )}
+            </div>
           </div>
         </Reveal>
       </section>

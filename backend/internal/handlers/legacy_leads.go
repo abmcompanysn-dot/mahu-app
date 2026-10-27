@@ -99,6 +99,10 @@ func (d *Deps) legacyHandleLeadCapture(ctx context.Context, payload map[string]a
 		NoteEtoiles:    rating,
 		Canal:          "Profil",
 	}
+	// Formulaire de contact du portfolio etudiant (app/portfolio/[username]).
+	if str(payload, "source") == "Portfolio" {
+		prospect.Canal = "Portfolio"
+	}
 	if _, err := db.Collection(models.ProspectsCollection).InsertOne(ctx, prospect); err != nil {
 		return nil, err
 	}

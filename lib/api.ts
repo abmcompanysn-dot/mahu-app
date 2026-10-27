@@ -257,7 +257,7 @@ export const api = {
     callAppScriptGet<Profile & { error?: string }>("getProfileData", { user: profileUrl }),
   
   // Contacts / Leads
-  handleLeadCapture: (data: { profileUrl: string; name: string; contact: string; message?: string; rating?: number }) =>
+  handleLeadCapture: (data: { profileUrl: string; name: string; contact: string; message?: string; rating?: number; source?: "Portfolio" }) =>
     callAppScript("handleLeadCapture", data),
   
   // Reponse en texte CSV brut (pas le format JSON des autres actions).

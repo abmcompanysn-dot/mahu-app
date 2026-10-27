@@ -31,6 +31,7 @@ export default function PortfolioEditorPage() {
   const [loading, setLoading] = useState(true)
   const [active, setActive] = useState(false)
   const [profileUrl, setProfileUrl] = useState("")
+  const [stats, setStats] = useState<{ views: number; leads: number } | null>(null)
   const [p, setP] = useState<Portfolio>(emptyPortfolio())
   const [skills, setSkills] = useState("")
   const [languages, setLanguages] = useState("")
@@ -42,8 +43,9 @@ export default function PortfolioEditorPage() {
   useEffect(() => {
     if (!token) return
     callAppScript("getPortfolio", {}, token).then((res) => {
-      const r = res as unknown as { success: boolean; active: boolean; portfolio?: Portfolio; profileUrl?: string }
+      const r = res as unknown as { success: boolean; active: boolean; portfolio?: Portfolio; profileUrl?: string; stats?: { views: number; leads: number } }
       setActive(!!r.active)
+      if (r.stats) setStats(r.stats)
       setProfileUrl(r.profileUrl || "")
       if (r.portfolio) {
         const loaded = { ...emptyPortfolio(), ...r.portfolio }
@@ -139,6 +141,14 @@ export default function PortfolioEditorPage() {
         <div>
           <h1 className="text-2xl font-bold">Mon portfolio</h1>
           {p.expiresAt && <p className="text-sm text-muted-foreground">Actif jusqu'au {new Date(p.expiresAt).toLocaleDateString("fr-FR")}</p>}
+          {stats && (
+            <div className="mt-3 flex flex-wrap gap-3 text-sm">
+              <span className="rounded-full bg-primary/10 px-3 py-1 font-semibold text-primary">{stats.views} vue{stats.views > 1 ? "s" : ""}</span>
+              <Link href="/dashboard/contacts" className="rounded-full bg-emerald-500/10 px-3 py-1 font-semibold text-emerald-600 hover:underline">
+                {stats.leads} contact{stats.leads > 1 ? "s" : ""} reçu{stats.leads > 1 ? "s" : ""} →
+              </Link>
+            </div>
+          )}
         </div>
         {profileUrl && (
           <Link href={`/portfolio/${profileUrl}`} target="_blank" className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold">

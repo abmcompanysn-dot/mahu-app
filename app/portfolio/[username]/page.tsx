@@ -2,6 +2,7 @@ import { cache } from "react"
 import type { Metadata } from "next"
 import Link from "next/link"
 import { MadeWithMahu, PortfolioRender } from "@/components/portfolio/templates"
+import { PortfolioContactForm, PortfolioViewTracker } from "@/components/portfolio/portfolio-contact"
 import { toView, type Portfolio } from "@/lib/portfolio"
 
 const BACKEND_URL = process.env.BACKEND_URL || "http://127.0.0.1:4000"
@@ -58,9 +59,12 @@ export default async function PortfolioPage({ params }: { params: Promise<{ user
       </div>
     )
   }
+  const view = toView(data.portfolio, data.profile, data.profileUrl || username)
   return (
     <>
-      <PortfolioRender view={toView(data.portfolio, data.profile, data.profileUrl || username)} />
+      <PortfolioViewTracker profileUrl={view.profileUrl} />
+      <PortfolioRender view={view} />
+      <PortfolioContactForm profileUrl={view.profileUrl} ownerName={view.name} />
       <MadeWithMahu />
     </>
   )

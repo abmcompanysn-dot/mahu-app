@@ -70,7 +70,17 @@ func (d *Deps) legacyGetPortfolio(ctx context.Context, user *models.User) (map[s
 	if p == nil {
 		return map[string]any{"success": true, "active": false, "profileUrl": user.ProfileURL}, nil
 	}
-	return map[string]any{"success": true, "active": time.Now().Before(p.ExpiresAt), "portfolio": p, "profileUrl": user.ProfileURL}, nil
+	// Statistiques du portfolio : vues (source "Portfolio") et contacts recus.
+	slugs := []string{}
+	for _, s := range []string{user.ProfileURL, user.ProfileURL2, user.ProfileURL3} {
+		if s != "" {
+			slugs = append(slugs, s)
+		}
+	}
+	views, _ := db.Collection(models.ViewEventsCollection).CountDocuments(ctx, bson.M{"profileUrl": bson.M{"$in": slugs}, "source": "Portfolio"})
+	leads, _ := db.Collection(models.ProspectsCollection).CountDocuments(ctx, bson.M{"profileOwnerId": user.ID, "canal": "Portfolio"})
+	return map[string]any{"success": true, "active": time.Now().Before(p.ExpiresAt), "portfolio": p, "profileUrl": user.ProfileURL,
+		"stats": map[string]any{"views": views, "leads": leads}}, nil
 }
 
 func cleanStrings(raw any, maxItems, maxLen int) []string {
