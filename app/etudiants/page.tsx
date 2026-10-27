@@ -18,9 +18,14 @@ const SERVICE_API_KEY = process.env.BACKEND_API_KEY || ""
 async function freeCardsLeft(): Promise<number> {
   if (!SERVICE_API_KEY) return 0
   try {
-    const url = new URL("/api/legacy", BACKEND_URL)
-    url.searchParams.set("action", "getPortfolioOffer")
-    const res = await fetch(url, { headers: { "x-api-key": SERVICE_API_KEY }, cache: "no-store", signal: AbortSignal.timeout(4000) })
+    // POST : en GET, /api/legacy ne sert que getProfileData.
+    const res = await fetch(new URL("/api/legacy", BACKEND_URL), {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-api-key": SERVICE_API_KEY },
+      body: JSON.stringify({ action: "getPortfolioOffer" }),
+      cache: "no-store",
+      signal: AbortSignal.timeout(4000),
+    })
     const data = (await res.json()) as { freeCardsLeft?: number }
     return data.freeCardsLeft ?? 0
   } catch {

@@ -19,10 +19,14 @@ interface PublicPortfolio {
 const getPortfolio = cache(async (username: string): Promise<PublicPortfolio> => {
   if (!SERVICE_API_KEY) return { error: "Service indisponible" }
   try {
-    const url = new URL("/api/legacy", BACKEND_URL)
-    url.searchParams.set("action", "getPortfolioPublic")
-    url.searchParams.set("user", username)
-    const res = await fetch(url, { headers: { "x-api-key": SERVICE_API_KEY }, cache: "no-store", signal: AbortSignal.timeout(4000) })
+    // POST : en GET, /api/legacy ne sert que getProfileData.
+    const res = await fetch(new URL("/api/legacy", BACKEND_URL), {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-api-key": SERVICE_API_KEY },
+      body: JSON.stringify({ action: "getPortfolioPublic", user: username }),
+      cache: "no-store",
+      signal: AbortSignal.timeout(4000),
+    })
     return (await res.json()) as PublicPortfolio
   } catch {
     return { error: "Service indisponible" }
