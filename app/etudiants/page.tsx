@@ -9,7 +9,8 @@ export const metadata = {
     "Ton portfolio en ligne avec les vidéos de tes réalisations et ta carte de visite professionnelle Mahu, valables un an, pour 3 500 FCFA. Carte imprimée offerte aux 100 premiers inscrits.",
 }
 
-export const revalidate = 60
+// Rendu a chaque visite : le compteur doit refleter les inscriptions.
+export const dynamic = "force-dynamic"
 
 const BACKEND_URL = process.env.BACKEND_URL || "http://127.0.0.1:4000"
 const SERVICE_API_KEY = process.env.BACKEND_API_KEY || ""
@@ -19,7 +20,7 @@ async function freeCardsLeft(): Promise<number> {
   try {
     const url = new URL("/api/legacy", BACKEND_URL)
     url.searchParams.set("action", "getPortfolioOffer")
-    const res = await fetch(url, { headers: { "x-api-key": SERVICE_API_KEY }, next: { revalidate: 60 }, signal: AbortSignal.timeout(4000) })
+    const res = await fetch(url, { headers: { "x-api-key": SERVICE_API_KEY }, cache: "no-store", signal: AbortSignal.timeout(4000) })
     const data = (await res.json()) as { freeCardsLeft?: number }
     return data.freeCardsLeft ?? 0
   } catch {
