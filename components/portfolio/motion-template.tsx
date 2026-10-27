@@ -104,7 +104,7 @@ function Hero({ v }: { v: PortfolioView }) {
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:radial-gradient(ellipse_at_center,black_25%,transparent_75%)]" />
       </div>
 
-      <motion.div style={reduce ? undefined : { y, opacity: fade }} className="relative mx-auto grid w-full max-w-6xl items-center gap-12 px-5 py-24 lg:grid-cols-[minmax(0,1fr)_auto]">
+      <motion.div style={reduce ? undefined : { y, opacity: fade }} className="relative mx-auto grid w-full max-w-6xl items-center gap-10 px-5 py-20 lg:grid-cols-[minmax(0,1fr)_auto]">
         <div className="min-w-0">
           <motion.p
             initial={{ opacity: 0, x: -20 }}
@@ -167,7 +167,7 @@ function Hero({ v }: { v: PortfolioView }) {
           initial={{ opacity: 0, scale: 0.8, rotate: -8 }}
           animate={{ opacity: 1, scale: 1, rotate: 0 }}
           transition={{ duration: 1.1, delay: 0.3, ease: EASE }}
-          className="relative mx-auto h-60 w-60 sm:h-72 sm:w-72"
+          className="relative order-first mx-auto h-40 w-40 sm:h-60 sm:w-60 lg:order-none lg:h-72 lg:w-72"
         >
           <div className="absolute -inset-3 rounded-full [animation:mo-spin_8s_linear_infinite]" style={{ background: `conic-gradient(from 0deg, ${BLUE}, transparent 30%, ${GOLD} 55%, transparent 80%, ${BLUE})` }} />
           <div className="absolute -inset-1 rounded-full bg-[#06070b]" />
@@ -368,7 +368,7 @@ export function MotionTemplate({ v }: { v: PortfolioView }) {
         <section className="mx-auto max-w-6xl px-5 py-16">
           <SectionTitle index={idx()}>À propos</SectionTitle>
           <Reveal>
-            <p className="max-w-4xl text-2xl font-medium leading-relaxed text-white/80 sm:text-3xl" style={{ fontFamily: F.display }}>{v.about}</p>
+            <p className="max-w-4xl text-xl font-medium leading-relaxed text-white/80 sm:text-3xl" style={{ fontFamily: F.display }}>{v.about}</p>
           </Reveal>
         </section>
       )}
