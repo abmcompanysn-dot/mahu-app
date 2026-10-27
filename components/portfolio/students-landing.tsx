@@ -34,7 +34,7 @@ const FREE_CARDS = 100
 const included = [
   { icon: FolderKanban, title: "Ton portfolio en ligne", text: "Projets, compétences, expériences, formation et CV, sur une page à ton nom." },
   { icon: Video, title: "Les vidéos de tes réalisations", text: "Ton appli, ta maquette, ton exposé : la vidéo se lit directement dans ton portfolio." },
-  { icon: CreditCard, title: "Ta carte de visite numérique", text: "Ta carte Mahu en ligne : un lien et un QR code à partager. Offerte aux 100 premiers inscrits." },
+  { icon: CreditCard, title: "Ta Smart Card Mahu", text: "Ta carte de visite numérique avec puce NFC : un tap sur un téléphone et ton contact s'ouvre. Offerte aux 100 premiers inscrits." },
   { icon: BadgeCheck, title: "5 modèles, valable 1 an", text: "Change de modèle quand tu veux, ton contenu suit. Un seul paiement." },
 ]
 
@@ -137,14 +137,14 @@ function ShineButton({ href, children, className = "" }: { href: string; childre
   )
 }
 
-/** Lancement : carte de visite numerique Mahu (1 an) offerte aux 100 premiers. */
+/** Lancement : Smart Card V2 Mahu (carte numerique avec puce NFC) offerte aux 100 premiers. */
 function FreeCards({ left, className = "" }: { left: number; className?: string }) {
   const taken = FREE_CARDS - left
   return (
     <div className={`rounded-2xl border border-[#d4af37]/35 bg-[#d4af37]/[0.08] p-4 ${className}`}>
       <p className="flex items-start gap-2 text-sm font-semibold text-[#f1d77e]">
         <Gift className="mt-0.5 h-4 w-4 shrink-0" />
-        <span>Offert aux 100 premiers inscrits : ta carte de visite numérique Mahu, pendant 1 an.</span>
+        <span>Offerte aux 100 premiers inscrits : ta Smart Card V2 Mahu, la carte de visite numérique avec puce NFC.</span>
       </p>
       <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10">
         <motion.div
@@ -155,7 +155,7 @@ function FreeCards({ left, className = "" }: { left: number; className?: string 
         />
       </div>
       <p className="mt-2 text-xs text-white/60">
-        Plus que <b className="text-white">{left}</b> carte{left > 1 ? "s" : ""} offerte{left > 1 ? "s" : ""} sur {FREE_CARDS}
+        Plus que <b className="text-white">{left}</b> Smart Card{left > 1 ? "s" : ""} offerte{left > 1 ? "s" : ""} sur {FREE_CARDS}
       </p>
     </div>
   )
@@ -259,7 +259,7 @@ function Hero({ freeCardsLeft }: { freeCardsLeft: number }) {
             </ShineButton>
             <div className="leading-tight">
               <p className="text-3xl font-black">{PORTFOLIO_PRICE}</p>
-              <p className="text-sm text-white/55">portfolio + carte numérique · 1 an</p>
+              <p className="text-sm text-white/55">portfolio + Smart Card · 1 an</p>
             </div>
           </motion.div>
 
@@ -579,10 +579,10 @@ function FinalCta({ freeCardsLeft }: { freeCardsLeft: number }) {
           <div className="relative grid items-center gap-8 lg:grid-cols-[minmax(0,1fr)_auto]">
             <div>
               <h2 className="text-3xl font-black leading-tight sm:text-5xl">Ton avenir mérite une belle vitrine.</h2>
-              <p className="mt-3 text-lg font-medium text-black/70">Portfolio + vidéos + carte de visite numérique, pendant 1 an.</p>
+              <p className="mt-3 text-lg font-medium text-black/70">Portfolio + vidéos pendant 1 an, et ta Smart Card NFC offerte aux 100 premiers.</p>
               {freeCardsLeft > 0 && (
                 <p className="mt-3 inline-flex items-center gap-2 rounded-full bg-black/10 px-4 py-1.5 text-sm font-bold">
-                  <Gift className="h-4 w-4" /> Carte de visite numérique offerte · plus que {freeCardsLeft} sur {FREE_CARDS}
+                  <Gift className="h-4 w-4" /> Smart Card offerte · plus que {freeCardsLeft} sur {FREE_CARDS}
                 </p>
               )}
               <p className="mt-6 text-5xl font-black tracking-tight sm:text-6xl">
@@ -617,7 +617,7 @@ function StickyMobileCta({ freeCardsLeft }: { freeCardsLeft: number }) {
           <div className="leading-tight">
             <p className="font-black">{PORTFOLIO_PRICE}</p>
             <p className="text-xs text-white/55">
-              {freeCardsLeft > 0 ? `Carte numérique offerte · plus que ${freeCardsLeft}` : "portfolio + carte numérique · 1 an"}
+              {freeCardsLeft > 0 ? `Smart Card offerte · plus que ${freeCardsLeft}` : "portfolio + Smart Card · 1 an"}
             </p>
           </div>
           <Link href={ORDER} className="rounded-xl bg-[#d4af37] px-5 py-3 font-bold text-black">

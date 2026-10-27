@@ -1,4 +1,4 @@
-"""Affiches de l'offre de lancement : 100 cartes de visite numeriques offertes aux etudiants
+"""Affiches de l'offre de lancement : 100 cartes de visite numeriques avec puce NFC (Smartcard V2) offertes aux etudiants
 qui creent leur portfolio (portfolio 3 500 FCFA, carte gratuite). Usage : python gen_offre.py"""
 import os, subprocess
 HERE = os.path.dirname(os.path.abspath(__file__)); OUT = os.path.dirname(HERE)
@@ -22,25 +22,22 @@ body {{ position:relative; width:{w}px; height:{h}px; overflow:hidden; font-fami
   filter:drop-shadow(0 18px 50px rgba(212,175,55,.35)); }}
 .what {{ font-size:{62 if s else 42}px; font-weight:900; line-height:1.05; letter-spacing:-.03em; }}
 .what span {{ color:#d4af37; }}
-/* carte affichee dans un telephone : 100 % numerique, pas une carte a puce */
-.visual {{ position:relative; height:{540 if s else 290}px; margin-top:{40 if s else 12}px; }}
-.phone {{ position:absolute; left:50%; top:0; transform:translateX(-50%) rotate(-4deg); width:{320 if s else 170}px; height:{540 if s else 290}px;
-  border-radius:{48 if s else 26}px; background:#111; padding:{12 if s else 6}px; box-shadow:0 40px 90px rgba(0,0,0,.75), 0 0 0 2px rgba(255,255,255,.14); }}
-.screen {{ width:100%; height:100%; border-radius:{38 if s else 21}px; overflow:hidden; background:linear-gradient(180deg,#0f141d,#07090f);
-  padding:{40 if s else 20}px {16 if s else 8}px 0; }}
-.bar {{ margin:0 auto; width:max-content; border-radius:999px; background:rgba(255,255,255,.08); color:rgba(255,255,255,.7); font-size:{17 if s else 9}px; font-weight:700; padding:{8 if s else 4}px {16 if s else 9}px; }}
-.dcard {{ display:block; width:100%; margin-top:{26 if s else 12}px; border-radius:{16 if s else 8}px; box-shadow:0 18px 40px rgba(0,122,255,.25); }}
-.btn {{ margin-top:{16 if s else 8}px; border-radius:{16 if s else 8}px; padding:{16 if s else 8}px; text-align:center; font-size:{19 if s else 10}px; font-weight:700; }}
-.b1 {{ margin-top:{30 if s else 14}px; background:#007AFF; color:#fff; }}
-.b2 {{ background:rgba(255,255,255,.08); color:#fff; }}
-.chip {{ position:absolute; border-radius:999px; background:rgba(15,19,28,.92); border:2px solid rgba(255,255,255,.14); color:#fff;
-  font-size:{26 if s else 16}px; font-weight:700; padding:{14 if s else 8}px {24 if s else 14}px; white-space:nowrap; box-shadow:0 18px 40px rgba(0,0,0,.5); }}
-.chip b {{ color:#4da3ff; }}
-.k1 {{ left:{28 if s else 90}px; top:{70 if s else 60}px; transform:rotate(-5deg); }}
-.k2 {{ right:{28 if s else 100}px; top:{250 if s else 140}px; transform:rotate(4deg); }}
-.k3 {{ left:{36 if s else 100}px; top:{400 if s else 215}px; transform:rotate(-3deg); }}
-.free {{ position:absolute; right:{50 if s else 150}px; top:{40 if s else 18}px; transform:rotate(12deg); background:#d4af37; color:#000;
+/* les trois Smartcards V2 (puce NFC) en eventail */
+.visual {{ position:relative; height:{560 if s else 290}px; margin-top:{36 if s else 10}px; }}
+.sc {{ position:absolute; left:50%; width:{450 if s else 300}px; aspect-ratio:1.586; border-radius:{24 if s else 14}px; overflow:hidden;
+  box-shadow:0 40px 90px rgba(0,0,0,.7), 0 0 0 2px rgba(255,255,255,.14); }}
+.sc img {{ width:100%; height:100%; object-fit:cover; display:block; }}
+.s1 {{ top:{70 if s else 40}px; transform:translateX(-{108 if s else 118}%) rotate(-14deg); }}
+.s2 {{ top:{10 if s else 6}px; transform:translateX(-50%) rotate(0deg); z-index:2; }}
+.s3 {{ top:{70 if s else 40}px; transform:translateX({8 if s else 18}%) rotate(14deg); }}
+.nfc {{ position:absolute; left:50%; top:{330 if s else 200}px; transform:translateX(-50%); z-index:3; display:flex; align-items:center; gap:{14 if s else 8}px;
+  background:#fff; color:#0a0a0a; border-radius:999px; padding:{14 if s else 8}px {28 if s else 16}px; font-size:{28 if s else 17}px; font-weight:900;
+  box-shadow:0 20px 50px rgba(0,0,0,.55); white-space:nowrap; }}
+.nfc svg {{ width:{34 if s else 20}px; height:{34 if s else 20}px; }}
+.free {{ position:absolute; right:{60 if s else 120}px; top:{0 if s else 0}px; z-index:4; transform:rotate(12deg); background:#d4af37; color:#000;
   font-weight:900; font-size:{34 if s else 22}px; padding:{14 if s else 9}px {26 if s else 16}px; border-radius:999px; box-shadow:0 14px 40px rgba(212,175,55,.5); }}
+.v2 {{ position:absolute; left:{60 if s else 120}px; top:{0 if s else 0}px; z-index:4; transform:rotate(-10deg); background:#007AFF; color:#fff;
+  font-weight:900; font-size:{30 if s else 19}px; padding:{12 if s else 8}px {22 if s else 14}px; border-radius:999px; box-shadow:0 14px 40px rgba(0,122,255,.45); }}
 .offer {{ position:absolute; left:{80 if s else 70}px; right:{80 if s else 70}px; bottom:{250 if s else 48}px; }}
 .row {{ display:flex; align-items:center; justify-content:space-between; gap:20px; border-radius:{28 if s else 20}px; padding:{26 if s else 16}px {34 if s else 26}px; }}
 .row + .row {{ margin-top:{16 if s else 10}px; }}
@@ -56,23 +53,19 @@ body {{ position:relative; width:{w}px; height:{h}px; overflow:hidden; font-fami
   <span class="pill">Offre de lancement · réservée aux étudiants</span>
   <p class="lead">Mahu offre</p>
   <p class="hundred">100</p>
-  <p class="what">cartes de visite<br><span>numériques</span><br>aux étudiants</p>
+  <p class="what">cartes de visite numériques<br><span>avec puce NFC</span><br>aux étudiants</p>
 </div>
 <div class="visual">
-  <div class="phone"><div class="screen">
-    <div class="bar">call.mahu.cards</div>
-    <img class="dcard" src="carte-awa.png">
-    <div class="btn b1">Enregistrer le contact</div>
-    <div class="btn b2">Partager ma carte</div>
-  </div></div>
-  <span class="chip k1">Envoyée par <b>WhatsApp</b></span>
-  <span class="chip k2">Partagée par <b>QR code</b></span>
-  <span class="chip k3"><b>100 % numérique</b> · sans puce</span>
+  <div class="sc s1"><img src="sc1.svg"></div>
+  <div class="sc s3"><img src="sc5.svg"></div>
+  <div class="sc s2"><img src="sc3.svg"></div>
+  <span class="nfc"><svg viewBox="0 0 24 24" fill="none" stroke="#007AFF" stroke-width="2.4" stroke-linecap="round"><path d="M6 8.5a5 5 0 0 1 0 7"/><path d="M10 6a9 9 0 0 1 0 12"/><path d="M14 3.5a13 13 0 0 1 0 17"/></svg>Puce NFC · un tap, ton contact s'ouvre</span>
+  <span class="v2">SMARTCARD V2</span>
   <span class="free">GRATUITE</span>
 </div>
 <div class="offer">
   <div class="row r1"><span class="label">Ton portfolio en ligne · 1 an</span><span class="val">3 500 FCFA</span></div>
-  <div class="row r2"><span class="label">Ta carte de visite numérique</span><span class="val">OFFERTE</span></div>
+  <div class="row r2"><span class="label">Ta Smartcard V2 (puce NFC)</span><span class="val">OFFERTE</span></div>
   <p class="note">Pour les 100 premiers étudiants qui créent leur portfolio</p>
   <p class="url">call.mahu.cards/etudiants</p>
 </div>
