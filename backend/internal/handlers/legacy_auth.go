@@ -216,18 +216,24 @@ func (d *Deps) legacyRegisterUser(ctx context.Context, email, password, enterpri
 
 func (d *Deps) legacyLoginUser(ctx context.Context, email, password string) (map[string]any, error) {
 	email = strings.ToLower(strings.TrimSpace(email))
+	if limitUserLogin.blocked(ctx, email) {
+		return map[string]any{"success": false, "error": tooManyAttemptsMsg}, nil
+	}
 	user, err := findUserByEmail(ctx, email)
 	if err != nil {
 		return nil, err
 	}
 	if user == nil || user.PasswordHash == "" {
+		limitUserLogin.fail(ctx, email)
 		return map[string]any{"success": false, "error": "Email ou mot de passe incorrect."}, nil
 	}
 
 	valid, upgraded, newStored := legacyauth.VerifyPassword(user.PasswordHash, password)
 	if !valid {
+		limitUserLogin.fail(ctx, email)
 		return map[string]any{"success": false, "error": "Email ou mot de passe incorrect."}, nil
 	}
+	limitUserLogin.reset(ctx, email)
 
 	if user.Disabled {
 		return map[string]any{"success": false, "error": "Ce compte a ete desactive."}, nil
@@ -257,6 +263,12 @@ func (d *Deps) legacyForgotPassword(ctx context.Context, email string) (map[stri
 		return nil, errors.New("L'email est requis.")
 	}
 	genericSuccess := map[string]any{"success": true, "message": "Verifiez votre boite mail. Un lien vous a ete envoye, il expire dans 5 minutes."}
+	// Evite d'inonder une boite mail : 3 demandes par heure et par email,
+	// sans dire au demandeur que la limite est atteinte.
+	if limitForgotPwd.blocked(ctx, email) {
+		return genericSuccess, nil
+	}
+	limitForgotPwd.fail(ctx, email)
 
 	user, err := findUserByEmail(ctx, email)
 	if err != nil {

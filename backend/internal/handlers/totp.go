@@ -54,10 +54,18 @@ func (d *Deps) Verify2FA(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// 5 codes faux par compte et par quart d'heure : empeche de deviner le
+	// code a 6 chiffres en boucle avec un mot de passe vole.
+	if limitAdmin2FA.blocked(ctx, admin.ID.Hex()) {
+		httpx.WriteError(w, http.StatusTooManyRequests, tooManyAttemptsMsg)
+		return
+	}
 	if !admin.TOTPEnabled || !totp.Validate(req.Code, admin.TOTPSecret) {
+		limitAdmin2FA.fail(ctx, admin.ID.Hex())
 		httpx.WriteError(w, http.StatusUnauthorized, "Code invalide")
 		return
 	}
+	limitAdmin2FA.reset(ctx, admin.ID.Hex())
 
 	token, err := authutil.SignAdminToken(d.Env.JWTSecret, admin.ID.Hex(), admin.Email, admin.Role)
 	if err != nil {

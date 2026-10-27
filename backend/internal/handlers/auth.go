@@ -32,11 +32,16 @@ func (d *Deps) AdminLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
+	if limitAdminLogin.blocked(ctx, req.Email) {
+		httpx.WriteError(w, http.StatusTooManyRequests, tooManyAttemptsMsg)
+		return
+	}
 	col := db.Collection(models.AdminUsersCollection)
 
 	var admin models.AdminUser
 	err := col.FindOne(ctx, bson.M{"email": req.Email}).Decode(&admin)
 	if err == mongo.ErrNoDocuments {
+		limitAdminLogin.fail(ctx, req.Email)
 		httpx.WriteError(w, http.StatusUnauthorized, "Invalid credentials")
 		return
 	} else if err != nil {
@@ -45,9 +50,11 @@ func (d *Deps) AdminLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if bcrypt.CompareHashAndPassword([]byte(admin.PasswordHash), []byte(req.Password)) != nil {
+		limitAdminLogin.fail(ctx, req.Email)
 		httpx.WriteError(w, http.StatusUnauthorized, "Invalid credentials")
 		return
 	}
+	limitAdminLogin.reset(ctx, req.Email)
 
 	if admin.TOTPEnabled {
 		pendingToken, err := authutil.SignAdminPendingToken(d.Env.JWTSecret, admin.ID.Hex(), admin.Email)

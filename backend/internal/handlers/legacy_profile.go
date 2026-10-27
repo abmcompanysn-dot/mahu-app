@@ -26,6 +26,10 @@ func profileCacheKey(slug string) string {
 func applyProfileFields(profile *models.Profile, payload map[string]any) {
 	set := func(key string, target *string) {
 		if v, ok := payload[key].(string); ok {
+			// Liens piegés (javascript:...) refuses : on garde l'ancienne valeur.
+			if strings.HasSuffix(key, "_JSON") && unsafeJSONLinks(v) || unsafeLink(v) {
+				return
+			}
 			*target = v
 		}
 	}
