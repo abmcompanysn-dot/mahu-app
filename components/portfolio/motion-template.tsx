@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react"
 import { animate, motion, useInView, useReducedMotion, useScroll, useSpring, useTransform } from "framer-motion"
 import { ArrowUpRight, Mail, MapPin, Phone } from "lucide-react"
 import { videoEmbed, type PortfolioItem, type PortfolioView } from "@/lib/portfolio"
+import { ReachSection } from "@/components/portfolio/reach-globe"
 
 // Modele "Motion" : portfolio anime sur mesure (fond vivant, nom qui
 // s'assemble, compteurs, captures en parallaxe, frise qui se dessine).
@@ -381,6 +382,8 @@ export function MotionTemplate({ v }: { v: PortfolioView }) {
           </div>
         </section>
       )}
+
+      {(v.reach?.length ?? 0) > 0 && <ReachSection items={v.reach || []} index={idx()} />}
 
       {(v.experiences.length > 0 || v.education.length > 0) && (
         <section className="mx-auto max-w-6xl px-5 py-16">

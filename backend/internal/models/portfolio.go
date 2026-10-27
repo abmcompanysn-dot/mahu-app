@@ -42,10 +42,12 @@ type Portfolio struct {
 	Education   []PortfolioItem    `bson:"education" json:"education"`
 	// Chiffres cles (titre = valeur, description = libelle), modele Motion.
 	Highlights []PortfolioItem `bson:"highlights,omitempty" json:"highlights,omitempty"`
-	CVURL      string          `bson:"cvUrl,omitempty" json:"cvUrl,omitempty"`
-	PrintedAt  *time.Time      `bson:"printedAt,omitempty" json:"printedAt,omitempty"` // carte physique imprimee (admin)
-	Published  bool            `bson:"published" json:"published"`
-	ExpiresAt  time.Time       `bson:"expiresAt" json:"expiresAt"`
-	CreatedAt  time.Time       `bson:"createdAt" json:"createdAt"`
-	UpdatedAt  time.Time       `bson:"updatedAt" json:"updatedAt"`
+	// Presence dans le monde (title = pays, org = comptes, period = vendeurs), modele Motion.
+	Reach     []PortfolioItem `bson:"reach,omitempty" json:"reach,omitempty"`
+	CVURL     string          `bson:"cvUrl,omitempty" json:"cvUrl,omitempty"`
+	PrintedAt *time.Time      `bson:"printedAt,omitempty" json:"printedAt,omitempty"` // carte physique imprimee (admin)
+	Published bool            `bson:"published" json:"published"`
+	ExpiresAt time.Time       `bson:"expiresAt" json:"expiresAt"`
+	CreatedAt time.Time       `bson:"createdAt" json:"createdAt"`
+	UpdatedAt time.Time       `bson:"updatedAt" json:"updatedAt"`
 }

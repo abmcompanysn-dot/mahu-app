@@ -43,6 +43,8 @@ export interface Portfolio {
   education: PortfolioItem[]
   /** Chiffres cles : title = valeur ("10+"), description = libelle. */
   highlights?: PortfolioItem[]
+  /** Presence dans le monde : title = pays, org = comptes, period = vendeurs. */
+  reach?: PortfolioItem[]
   cvUrl?: string
   published: boolean
   expiresAt?: string
