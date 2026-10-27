@@ -150,7 +150,7 @@ func (d *Deps) legacySavePortfolio(ctx context.Context, payload map[string]any, 
 		"school": clip(str(payload, "school"), 140), "field": clip(str(payload, "field"), 140), "level": clip(str(payload, "level"), 60),
 		"skills": cleanStrings(payload["skills"], 20, 40), "languages": cleanStrings(payload["languages"], 8, 40),
 		"projects": cleanItems(payload["projects"], 20), "experiences": cleanItems(payload["experiences"], 10),
-		"education": cleanItems(payload["education"], 8), "highlights": cleanItems(payload["highlights"], 6), "cvUrl": cleanLink(str(payload, "cvUrl")),
+		"education": cleanItems(payload["education"], 8), "highlights": cleanItems(payload["highlights"], 6), "cvUrl": cleanLink(str(payload, "cvUrl")), "hideEmail": payload["hideEmail"] == true,
 		"published": boolField(payload, "published"), "updatedAt": time.Now(),
 	}
 	if _, err := db.Collection(models.PortfoliosCollection).UpdateOne(ctx, bson.M{"_id": p.ID}, bson.M{"$set": set}); err != nil {
@@ -183,6 +183,15 @@ func (d *Deps) legacyGetPortfolioPublic(ctx context.Context, slug string) (map[s
 		return map[string]any{"error": "Ce portfolio a expire.", "expired": true}, nil
 	}
 	profile, _ := d.legacyGetProfileData(ctx, user.ProfileURL)
+	if p.HideEmail && profile != nil {
+		// copie : le profil vient peut-etre du cache partage
+		masked := make(map[string]any, len(profile))
+		for k, v := range profile {
+			masked[k] = v
+		}
+		masked["Email"] = ""
+		profile = masked
+	}
 	return map[string]any{"portfolio": p, "profile": profile, "profileUrl": user.ProfileURL}, nil
 }
 

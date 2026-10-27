@@ -287,6 +287,10 @@ export default function PortfolioEditorPage() {
           <Switch id="published" checked={p.published} onCheckedChange={(v) => set("published", v)} />
           <Label htmlFor="published">Portfolio visible en ligne</Label>
         </div>
+        <div className="flex items-center gap-2">
+          <Switch id="hideEmail" checked={!!p.hideEmail} onCheckedChange={(v) => set("hideEmail", v)} />
+          <Label htmlFor="hideEmail">Masquer mon email</Label>
+        </div>
         <Button onClick={save} disabled={saving} className="ml-auto">
           {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Enregistrer
         </Button>

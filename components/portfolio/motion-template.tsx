@@ -6,6 +6,7 @@ import { animate, motion, useInView, useReducedMotion, useScroll, useSpring, use
 import { ArrowUpRight, Mail, MapPin, Phone } from "lucide-react"
 import { videoEmbed, type PortfolioItem, type PortfolioView } from "@/lib/portfolio"
 import { ReachSection } from "@/components/portfolio/reach-globe"
+import { StoryPlayerButton, StorySection } from "@/components/portfolio/story-section"
 
 // Modele "Motion" : portfolio anime sur mesure (fond vivant, nom qui
 // s'assemble, compteurs, captures en parallaxe, frise qui se dessine).
@@ -22,7 +23,7 @@ const GOLD = "#f5c451"
 
 const LINK_LABEL: Record<string, string> = {
   linkedin: "LinkedIn", github: "GitHub", website: "Site web", instagram: "Instagram", twitter: "X",
-  facebook: "Facebook", youtube: "YouTube", tiktok: "TikTok", whatsapp: "WhatsApp", behance: "Behance",
+  facebook: "Facebook", youtube: "YouTube", tiktok: "TikTok", whatsapp: "WhatsApp", behance: "Behance", snapchat: "Snapchat",
 }
 
 function host(url?: string) {
@@ -135,11 +136,9 @@ function Hero({ v }: { v: PortfolioView }) {
             </motion.p>
           )}
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.3, duration: 0.7, ease: EASE }} className="mt-8 flex flex-wrap gap-3">
-            {v.email && (
-              <a href={`mailto:${v.email}`} className="group inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 font-bold text-black transition-transform hover:scale-[1.04]">
-                Me contacter <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-              </a>
-            )}
+            <a href={v.email ? `mailto:${v.email}` : "#contact"} className="group inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 font-bold text-black transition-transform hover:scale-[1.04]">
+              Me contacter <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+            </a>
             {v.cvUrl && (
               <a href={v.cvUrl} className="inline-flex items-center gap-2 rounded-full border border-white/20 px-6 py-3 font-bold hover:bg-white/10">
                 Télécharger mon CV
@@ -361,6 +360,9 @@ export function MotionTemplate({ v }: { v: PortfolioView }) {
       <style>{KEYFRAMES}</style>
       <motion.div style={{ scaleX: progress, background: `linear-gradient(90deg, ${BLUE}, ${GOLD})` }} className="fixed inset-x-0 top-0 z-50 h-1 origin-left" />
 
+      {(v.story?.length ?? 0) > 0 && (
+        <StoryPlayerButton intro={`Bonjour, je m'appelle ${v.name}${v.title ? `, je suis ${v.title.toLowerCase()}` : ""}. Bienvenue dans mon histoire. Faites défiler la page : je vous raconte mon parcours.`} />
+      )}
       <Hero v={v} />
       <SkillsMarquee skills={v.skills} />
       <Highlights items={highlights} />
@@ -373,6 +375,8 @@ export function MotionTemplate({ v }: { v: PortfolioView }) {
           </Reveal>
         </section>
       )}
+
+      {(v.story?.length ?? 0) > 0 && <StorySection items={v.story || []} index={idx()} />}
 
       {v.projects.length > 0 && (
         <section className="mx-auto max-w-6xl px-5 py-16">

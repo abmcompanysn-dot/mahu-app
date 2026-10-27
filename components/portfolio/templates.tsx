@@ -15,7 +15,7 @@ const F = {
 
 const LINK_LABEL: Record<string, string> = {
   linkedin: "LinkedIn", github: "GitHub", website: "Site web", instagram: "Instagram", twitter: "X",
-  facebook: "Facebook", youtube: "YouTube", tiktok: "TikTok", whatsapp: "WhatsApp", behance: "Behance",
+  facebook: "Facebook", youtube: "YouTube", tiktok: "TikTok", whatsapp: "WhatsApp", behance: "Behance", snapchat: "Snapchat",
 }
 
 function contactList(v: PortfolioView) {

@@ -43,11 +43,15 @@ type Portfolio struct {
 	// Chiffres cles (titre = valeur, description = libelle), modele Motion.
 	Highlights []PortfolioItem `bson:"highlights,omitempty" json:"highlights,omitempty"`
 	// Presence dans le monde (title = pays, org = comptes, period = vendeurs), modele Motion.
-	Reach     []PortfolioItem `bson:"reach,omitempty" json:"reach,omitempty"`
+	Reach []PortfolioItem `bson:"reach,omitempty" json:"reach,omitempty"`
+	// Mon histoire (period = annee, org = lieu), modele Motion.
+	Story     []PortfolioItem `bson:"story,omitempty" json:"story,omitempty"`
 	CVURL     string          `bson:"cvUrl,omitempty" json:"cvUrl,omitempty"`
 	PrintedAt *time.Time      `bson:"printedAt,omitempty" json:"printedAt,omitempty"` // carte physique imprimee (admin)
 	Published bool            `bson:"published" json:"published"`
-	ExpiresAt time.Time       `bson:"expiresAt" json:"expiresAt"`
-	CreatedAt time.Time       `bson:"createdAt" json:"createdAt"`
-	UpdatedAt time.Time       `bson:"updatedAt" json:"updatedAt"`
+	// Email du compte masque sur le portfolio public (contact par le formulaire).
+	HideEmail bool      `bson:"hideEmail,omitempty" json:"hideEmail,omitempty"`
+	ExpiresAt time.Time `bson:"expiresAt" json:"expiresAt"`
+	CreatedAt time.Time `bson:"createdAt" json:"createdAt"`
+	UpdatedAt time.Time `bson:"updatedAt" json:"updatedAt"`
 }

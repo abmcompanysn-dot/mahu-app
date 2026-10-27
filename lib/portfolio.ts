@@ -45,7 +45,11 @@ export interface Portfolio {
   highlights?: PortfolioItem[]
   /** Presence dans le monde : title = pays, org = comptes, period = vendeurs. */
   reach?: PortfolioItem[]
+  /** Mon histoire (modele Motion) : period = annee, org = lieu. */
+  story?: PortfolioItem[]
   cvUrl?: string
+  /** Masquer l'email du compte sur le portfolio public. */
+  hideEmail?: boolean
   published: boolean
   expiresAt?: string
 }
