@@ -17,12 +17,13 @@ import { PORTFOLIO_PRICE, PORTFOLIO_TEMPLATES, emptyPortfolio, videoEmbed, type 
 // Editeur du portfolio etudiant (offre a 3 500 FCFA, valable un an).
 // Le contenu est le meme pour les 5 modeles : changer de modele ne perd rien.
 
-type ListKey = "projects" | "experiences" | "education"
+type ListKey = "projects" | "experiences" | "education" | "highlights"
 
 const LISTS: Array<{ key: ListKey; title: string; add: string; withOrg: boolean; withMedia: boolean }> = [
   { key: "projects", title: "Projets", add: "Ajouter un projet", withOrg: false, withMedia: true },
   { key: "experiences", title: "Expériences (stages, jobs, associations)", add: "Ajouter une expérience", withOrg: true, withMedia: false },
   { key: "education", title: "Formation", add: "Ajouter une formation", withOrg: true, withMedia: false },
+  { key: "highlights", title: "Chiffres clés (ex. « 10+ » · « projets livrés »)", add: "Ajouter un chiffre", withOrg: false, withMedia: false },
 ]
 
 export default function PortfolioEditorPage() {
@@ -72,9 +73,9 @@ export default function PortfolioEditorPage() {
 
   const set = <K extends keyof Portfolio>(k: K, v: Portfolio[K]) => setP((prev) => ({ ...prev, [k]: v }))
   const setItem = (key: ListKey, i: number, field: keyof PortfolioItem, value: string) =>
-    setP((prev) => ({ ...prev, [key]: prev[key].map((it, j) => (j === i ? { ...it, [field]: value } : it)) }))
-  const addItem = (key: ListKey) => setP((prev) => ({ ...prev, [key]: [...prev[key], { title: "" }] }))
-  const removeItem = (key: ListKey, i: number) => setP((prev) => ({ ...prev, [key]: prev[key].filter((_, j) => j !== i) }))
+    setP((prev) => ({ ...prev, [key]: (prev[key] ?? []).map((it, j) => (j === i ? { ...it, [field]: value } : it)) }))
+  const addItem = (key: ListKey) => setP((prev) => ({ ...prev, [key]: [...(prev[key] ?? []), { title: "" }] }))
+  const removeItem = (key: ListKey, i: number) => setP((prev) => ({ ...prev, [key]: (prev[key] ?? []).filter((_, j) => j !== i) }))
 
   const uploadProjectImage = async (i: number, file?: File) => {
     if (!file) return
@@ -223,7 +224,7 @@ export default function PortfolioEditorPage() {
       {LISTS.map((list) => (
         <section key={list.key} className="space-y-3">
           <h2 className="font-semibold">{list.title}</h2>
-          {p[list.key].map((it, i) => (
+          {(p[list.key] ?? []).map((it, i) => (
             <div key={i} className="grid gap-3 rounded-xl border p-4 sm:grid-cols-2">
               <Input value={it.title} onChange={(e) => setItem(list.key, i, "title", e.target.value)} placeholder="Titre" className="sm:col-span-2" />
               {list.withOrg && (

@@ -140,7 +140,7 @@ func (d *Deps) legacySavePortfolio(ctx context.Context, payload map[string]any, 
 		"school": clip(str(payload, "school"), 140), "field": clip(str(payload, "field"), 140), "level": clip(str(payload, "level"), 60),
 		"skills": cleanStrings(payload["skills"], 20, 40), "languages": cleanStrings(payload["languages"], 8, 40),
 		"projects": cleanItems(payload["projects"], 12), "experiences": cleanItems(payload["experiences"], 10),
-		"education": cleanItems(payload["education"], 8), "cvUrl": cleanLink(str(payload, "cvUrl")),
+		"education": cleanItems(payload["education"], 8), "highlights": cleanItems(payload["highlights"], 6), "cvUrl": cleanLink(str(payload, "cvUrl")),
 		"published": boolField(payload, "published"), "updatedAt": time.Now(),
 	}
 	if _, err := db.Collection(models.PortfoliosCollection).UpdateOne(ctx, bson.M{"_id": p.ID}, bson.M{"$set": set}); err != nil {

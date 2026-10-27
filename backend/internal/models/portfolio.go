@@ -9,7 +9,7 @@ import (
 const PortfoliosCollection = "portfolios"
 
 // Modeles de portfolio proposes aux etudiants (voir components/portfolio/).
-var PortfolioTemplates = []string{"eclat", "nuit", "campus", "atelier", "plan"}
+var PortfolioTemplates = []string{"eclat", "nuit", "campus", "atelier", "plan", "motion"}
 
 // PortfolioItem est une ligne de projet, d'experience ou de formation.
 type PortfolioItem struct {
@@ -40,10 +40,12 @@ type Portfolio struct {
 	Projects    []PortfolioItem    `bson:"projects" json:"projects"`
 	Experiences []PortfolioItem    `bson:"experiences" json:"experiences"`
 	Education   []PortfolioItem    `bson:"education" json:"education"`
-	CVURL       string             `bson:"cvUrl,omitempty" json:"cvUrl,omitempty"`
-	PrintedAt   *time.Time         `bson:"printedAt,omitempty" json:"printedAt,omitempty"` // carte physique imprimee (admin)
-	Published   bool               `bson:"published" json:"published"`
-	ExpiresAt   time.Time          `bson:"expiresAt" json:"expiresAt"`
-	CreatedAt   time.Time          `bson:"createdAt" json:"createdAt"`
-	UpdatedAt   time.Time          `bson:"updatedAt" json:"updatedAt"`
+	// Chiffres cles (titre = valeur, description = libelle), modele Motion.
+	Highlights []PortfolioItem `bson:"highlights,omitempty" json:"highlights,omitempty"`
+	CVURL      string          `bson:"cvUrl,omitempty" json:"cvUrl,omitempty"`
+	PrintedAt  *time.Time      `bson:"printedAt,omitempty" json:"printedAt,omitempty"` // carte physique imprimee (admin)
+	Published  bool            `bson:"published" json:"published"`
+	ExpiresAt  time.Time       `bson:"expiresAt" json:"expiresAt"`
+	CreatedAt  time.Time       `bson:"createdAt" json:"createdAt"`
+	UpdatedAt  time.Time       `bson:"updatedAt" json:"updatedAt"`
 }

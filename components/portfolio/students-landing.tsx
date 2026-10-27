@@ -45,7 +45,7 @@ const steps = [
 ]
 
 // Course de defilement d'une capture dans un ecran 9/19 (en % de la capture).
-const SHOT_END: Record<PortfolioTemplate, string> = { eclat: "-67.9%", nuit: "-66.8%", campus: "-67.1%", atelier: "-65.5%", plan: "-77.7%" }
+const SHOT_END: Partial<Record<PortfolioTemplate, string>> = { eclat: "-67.9%", nuit: "-66.8%", campus: "-67.1%", atelier: "-65.5%", plan: "-77.7%" }
 
 function shot(id: PortfolioTemplate) {
   return `/portfolio/shots/${id}.webp`

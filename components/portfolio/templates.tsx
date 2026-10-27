@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import { videoEmbed, type PortfolioItem, type PortfolioView } from "@/lib/portfolio"
+import { MotionTemplate } from "@/components/portfolio/motion-template"
 
 // Les 5 modeles de portfolio etudiant. Ils ne recoivent que des donnees (pas
 // d'etat) : la meme vue sert a la page publique, aux demos et a l'apercu de
@@ -423,6 +424,7 @@ export function PortfolioRender({ view }: { view: PortfolioView }) {
     case "campus": return <Campus v={view} />
     case "atelier": return <Atelier v={view} />
     case "plan": return <Plan v={view} />
+    case "motion": return <MotionTemplate v={view} />
     default: return <Eclat v={view} />
   }
 }

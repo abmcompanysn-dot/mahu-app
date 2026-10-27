@@ -1,7 +1,8 @@
 // Portfolio etudiant : donnees partagees par l'editeur du tableau de bord, la
 // page publique /portfolio/[profil] et les modeles de demonstration.
 
-export type PortfolioTemplate = "eclat" | "nuit" | "campus" | "atelier" | "plan"
+// "motion" : modele anime sur mesure, absent du choix public (PORTFOLIO_TEMPLATES).
+export type PortfolioTemplate = "eclat" | "nuit" | "campus" | "atelier" | "plan" | "motion"
 
 export const PORTFOLIO_TEMPLATES: Array<{ id: PortfolioTemplate; name: string; tagline: string }> = [
   { id: "eclat", name: "Éclat", tagline: "Clair et élégant, façon magazine" },
@@ -40,6 +41,8 @@ export interface Portfolio {
   projects: PortfolioItem[]
   experiences: PortfolioItem[]
   education: PortfolioItem[]
+  /** Chiffres cles : title = valeur ("10+"), description = libelle. */
+  highlights?: PortfolioItem[]
   cvUrl?: string
   published: boolean
   expiresAt?: string
