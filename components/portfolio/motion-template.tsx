@@ -356,7 +356,7 @@ export function MotionTemplate({ v }: { v: PortfolioView }) {
   const idx = () => String(++n).padStart(2, "0")
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[#06070b] text-white" style={{ fontFamily: F.sans }}>
+    <div className="min-h-screen overflow-x-clip bg-[#06070b] text-white" style={{ fontFamily: F.sans }}>
       <style>{KEYFRAMES}</style>
       <motion.div style={{ scaleX: progress, background: `linear-gradient(90deg, ${BLUE}, ${GOLD})` }} className="fixed inset-x-0 top-0 z-50 h-1 origin-left" />
 
