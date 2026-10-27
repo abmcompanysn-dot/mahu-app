@@ -29,6 +29,7 @@ type Portfolio struct {
 	ID          primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
 	UserID      primitive.ObjectID `bson:"userId" json:"-"`
 	Template    string             `bson:"template" json:"template"`
+	Title       string             `bson:"title,omitempty" json:"title,omitempty"` // metier, aussi imprime sur la carte
 	Headline    string             `bson:"headline" json:"headline"`
 	About       string             `bson:"about" json:"about"`
 	School      string             `bson:"school" json:"school"`
@@ -40,6 +41,7 @@ type Portfolio struct {
 	Experiences []PortfolioItem    `bson:"experiences" json:"experiences"`
 	Education   []PortfolioItem    `bson:"education" json:"education"`
 	CVURL       string             `bson:"cvUrl,omitempty" json:"cvUrl,omitempty"`
+	PrintedAt   *time.Time         `bson:"printedAt,omitempty" json:"printedAt,omitempty"` // carte physique imprimee (admin)
 	Published   bool               `bson:"published" json:"published"`
 	ExpiresAt   time.Time          `bson:"expiresAt" json:"expiresAt"`
 	CreatedAt   time.Time          `bson:"createdAt" json:"createdAt"`

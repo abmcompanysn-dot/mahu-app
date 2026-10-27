@@ -85,6 +85,7 @@ function Eclat({ v }: { v: PortfolioView }) {
           <div className="min-w-0">
             <p className="text-sm font-semibold uppercase tracking-[0.18em]" style={{ color: accent }}>{studies(v)}</p>
             <h1 className="mt-4 text-5xl font-extrabold leading-[1.02] tracking-tight sm:text-7xl" style={{ fontFamily: F.serif }}>{v.name}</h1>
+            {v.title && <p className="mt-4 text-2xl font-bold" style={{ color: accent }}>{v.title}</p>}
             {v.headline && <p className="mt-5 max-w-xl text-xl leading-snug" style={{ color: muted }}>{v.headline}</p>}
             <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm">
               {contactList(v).map((c) => <a key={c.href} href={c.href} className="font-semibold underline decoration-2 underline-offset-4" style={{ textDecorationColor: accent }}>{c.label}</a>)}
@@ -140,6 +141,7 @@ function Nuit({ v }: { v: PortfolioView }) {
       <div className="relative mx-auto max-w-3xl px-5 py-14 text-center sm:py-20">
         <Avatar v={v} className="mx-auto h-32 w-32 rounded-full bg-[#1a1f2b] text-3xl text-[#d4af37]" ring={`0 0 0 3px #07090f, 0 0 0 5px ${gold}`} />
         <h1 className="mt-7 text-4xl font-extrabold tracking-tight sm:text-5xl" style={{ fontFamily: F.display }}>{v.name}</h1>
+        {v.title && <p className="mt-2 text-xl font-bold" style={{ color: gold }}>{v.title}</p>}
         {v.headline && <p className="mx-auto mt-3 max-w-xl text-lg" style={{ color: muted }}>{v.headline}</p>}
         <p className="mt-4 text-sm font-semibold uppercase tracking-[0.2em]" style={{ color: gold }}>{studies(v)}</p>
         <div className="mt-7 flex flex-wrap justify-center gap-2">
@@ -194,6 +196,7 @@ function Campus({ v }: { v: PortfolioView }) {
           <Avatar v={v} className="h-28 w-28 shrink-0 rounded-[28px] bg-white/25 text-3xl" ring="0 0 0 5px rgba(255,255,255,0.45)" />
           <div className="min-w-0">
             <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl" style={{ fontFamily: F.display }}>{v.name}</h1>
+            {v.title && <p className="mt-1 text-xl font-bold">{v.title}</p>}
             {v.headline && <p className="mt-2 text-lg text-white/90">{v.headline}</p>}
             <p className="mt-3 inline-block rounded-full bg-white/20 px-4 py-1 text-sm font-semibold">{studies(v)}</p>
           </div>
@@ -255,6 +258,7 @@ function Atelier({ v }: { v: PortfolioView }) {
             <div className="min-w-0">
               <p className="text-sm" style={{ fontFamily: F.mono, color: green }}>$ whoami</p>
               <h1 className="mt-1 text-4xl font-bold tracking-tight sm:text-5xl" style={{ fontFamily: F.mono }}>{v.name}</h1>
+              {v.title && <p className="mt-1 font-bold" style={{ fontFamily: F.mono, color: green }}>{v.title}</p>}
               {v.headline && <p className="mt-2" style={{ color: muted }}>{v.headline}</p>}
               <p className="mt-2 text-sm" style={{ fontFamily: F.mono }}>{studies(v)}</p>
             </div>
@@ -327,6 +331,7 @@ function Plan({ v }: { v: PortfolioView }) {
             <div className="min-w-0 pt-4 sm:pt-0">
               <p className="text-xs uppercase tracking-[0.3em]" style={{ fontFamily: F.mono, color: orange }}>Dossier technique</p>
               <h1 className="mt-3 text-4xl font-extrabold uppercase leading-none tracking-tight sm:text-6xl" style={{ fontFamily: F.display }}>{v.name}</h1>
+              {v.title && <p className="mt-3 text-xl font-bold uppercase tracking-wide" style={{ color: orange }}>{v.title}</p>}
               {v.headline && <p className="mt-4 max-w-2xl text-lg leading-snug" style={{ color: text }}>{v.headline}</p>}
               <div className="mt-5 flex flex-wrap gap-2 text-xs" style={{ fontFamily: F.mono }}>
                 {contactList(v).map((c) => <a key={c.href} href={c.href} className="border px-3 py-1.5 hover:bg-white/10" style={{ borderColor: soft }}>{c.label}</a>)}

@@ -116,6 +116,10 @@ func (d *Deps) runLegacyAction(ctx context.Context, action string, payload map[s
 		return d.legacyAdminCreateReseller(ctx, payload, user)
 	case "adminDeactivateCard":
 		return d.legacyAdminDeactivateCard(ctx, payload, user)
+	case "adminListPortfolioCards":
+		return d.legacyAdminListPortfolioCards(ctx, user)
+	case "adminMarkPortfolioCardsPrinted":
+		return d.legacyAdminMarkPortfolioCardsPrinted(ctx, payload, user)
 	case "adminActivatePortfolio":
 		return d.legacyAdminActivatePortfolio(ctx, payload, user)
 	case "adminBroadcastMessage":

@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { Loader2, Search } from "lucide-react"
+import { Loader2, Printer, Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useAdminAuth } from "@/contexts/admin-auth-context"
 import { adminApi, type CardOrder } from "@/lib/admin-api"
 import { formatXof } from "@/lib/shop-api"
+import { buildStudentCardsHtml, type StudentCard } from "@/lib/student-cards-print"
 
 const PAYMENT_LABELS: Record<CardOrder["paymentStatus"], string> = {
   en_attente: "En attente",
@@ -33,6 +34,27 @@ export default function AdminOrdersPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [savingId, setSavingId] = useState<string | null>(null)
+
+  // Commande "Portfolio etudiant" payee : impression de la feuille de 9 cartes de l'etudiant.
+  const printStudentCard = async (o: CardOrder) => {
+    if (!token) return
+    const win = window.open("", "_blank")
+    if (!win) {
+      setError("Autorise les fenetres pop-up pour ce site, puis recommence.")
+      return
+    }
+    win.document.write("<p style='font-family:sans-serif;padding:24px'>Preparation de la carte...</p>")
+    const res = (await adminApi.listPortfolioCards(token)) as { cards?: Array<StudentCard & { email: string }> }
+    const card = res.cards?.find((c) => c.email.toLowerCase() === o.email.toLowerCase())
+    if (!card) {
+      win.document.body.innerHTML = "<p style='font-family:sans-serif;padding:24px'>Aucun portfolio actif pour " + o.email.replace(/[<>&]/g, "") + ".</p>"
+      return
+    }
+    const html = await buildStudentCardsHtml([card])
+    win.document.open()
+    win.document.write(html)
+    win.document.close()
+  }
 
   const load = useCallback(async () => {
     if (!token) return
@@ -169,7 +191,18 @@ export default function AdminOrdersPage() {
                               <div className="text-xs text-muted-foreground">{o.deliveryAddress}</div>
                             )}
                           </TableCell>
-                          <TableCell className="text-sm">{o.productName}</TableCell>
+                          <TableCell className="text-sm">
+                            {o.productName}
+                            {!pending && /portfolio/i.test(o.productName) && (
+                              <button
+                                type="button"
+                                onClick={() => printStudentCard(o)}
+                                className="mt-1 flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+                              >
+                                <Printer className="h-3.5 w-3.5" /> Imprimer la carte (9 ex.)
+                              </button>
+                            )}
+                          </TableCell>
                           <TableCell className="text-right tabular-nums whitespace-nowrap">
                             {formatXof(o.depositXof)}
                           </TableCell>

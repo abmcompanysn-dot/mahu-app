@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/url"
 	"strings"
 	"time"
@@ -135,7 +136,7 @@ func (d *Deps) legacySavePortfolio(ctx context.Context, payload map[string]any, 
 		template = p.Template
 	}
 	set := bson.M{
-		"template": template, "headline": clip(str(payload, "headline"), 140), "about": clip(str(payload, "about"), 2000),
+		"template": template, "title": clip(str(payload, "title"), 60), "headline": clip(str(payload, "headline"), 140), "about": clip(str(payload, "about"), 2000),
 		"school": clip(str(payload, "school"), 140), "field": clip(str(payload, "field"), 140), "level": clip(str(payload, "level"), 60),
 		"skills": cleanStrings(payload["skills"], 20, 40), "languages": cleanStrings(payload["languages"], 8, 40),
 		"projects": cleanItems(payload["projects"], 12), "experiences": cleanItems(payload["experiences"], 10),
@@ -223,4 +224,67 @@ func (d *Deps) legacyAdminActivatePortfolio(ctx context.Context, payload map[str
 	d.logAction(ctx, "adminActivatePortfolio", models.LogStatusSuccess, "Portfolio active pour "+email+" par "+user.Email, user.Email)
 	return map[string]any{"success": true, "expiresAt": p.ExpiresAt, "profileUrl": target.ProfileURL,
 		"message": "Portfolio actif jusqu'au " + p.ExpiresAt.Format("02/01/2006") + "."}, nil
+}
+
+// ---- admin : cartes etudiants a imprimer (planches A4 de 3 x 3)
+
+func (d *Deps) legacyAdminListPortfolioCards(ctx context.Context, user *models.User) (map[string]any, error) {
+	if _, err := d.checkStaffAccess(user); err != nil {
+		return nil, err
+	}
+	cursor, err := db.Collection(models.PortfoliosCollection).Find(ctx, bson.M{"expiresAt": bson.M{"$gt": time.Now()}},
+		options.Find().SetSort(bson.M{"createdAt": -1}))
+	if err != nil {
+		return nil, err
+	}
+	var portfolios []models.Portfolio
+	if err := cursor.All(ctx, &portfolios); err != nil {
+		return nil, err
+	}
+	cards := []map[string]any{}
+	for _, p := range portfolios {
+		var u models.User
+		if err := db.Collection(models.UsersCollection).FindOne(ctx, bson.M{"_id": p.UserID}).Decode(&u); err != nil || u.ProfileURL == "" {
+			continue
+		}
+		name, photo := u.Name, ""
+		if profile, _ := d.legacyGetProfileData(ctx, u.ProfileURL); profile != nil {
+			if data, ok := profile["data"].(map[string]any); ok {
+				profile = data
+			}
+			if s, _ := profile["Nom_Complet"].(string); s != "" {
+				name = s
+			}
+			photo, _ = profile["URL_Photo"].(string)
+		}
+		cards = append(cards, map[string]any{
+			"id": p.ID.Hex(), "name": name, "email": u.Email, "photo": photo, "profileUrl": u.ProfileURL,
+			"title": p.Title, "skills": p.Skills, "field": p.Field, "level": p.Level, "school": p.School, "expiresAt": p.ExpiresAt, "printedAt": p.PrintedAt,
+		})
+	}
+	return map[string]any{"success": true, "cards": cards}, nil
+}
+
+func (d *Deps) legacyAdminMarkPortfolioCardsPrinted(ctx context.Context, payload map[string]any, user *models.User) (map[string]any, error) {
+	if _, err := d.checkStaffAccess(user); err != nil {
+		return nil, err
+	}
+	ids := []primitive.ObjectID{}
+	list, _ := payload["ids"].([]any)
+	for _, v := range list {
+		s, _ := v.(string)
+		if id, err := primitive.ObjectIDFromHex(s); err == nil {
+			ids = append(ids, id)
+		}
+	}
+	if len(ids) == 0 {
+		return map[string]any{"success": false, "error": "Aucune carte selectionnee."}, nil
+	}
+	now := time.Now()
+	res, err := db.Collection(models.PortfoliosCollection).UpdateMany(ctx, bson.M{"_id": bson.M{"$in": ids}}, bson.M{"$set": bson.M{"printedAt": now}})
+	if err != nil {
+		return nil, err
+	}
+	d.logAction(ctx, "adminMarkPortfolioCardsPrinted", models.LogStatusSuccess, fmt.Sprintf("%d carte(s) etudiant marquee(s) imprimee(s)", res.ModifiedCount), user.Email)
+	return map[string]any{"success": true, "updated": res.ModifiedCount}, nil
 }

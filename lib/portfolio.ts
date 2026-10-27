@@ -28,6 +28,8 @@ export interface PortfolioItem {
 
 export interface Portfolio {
   template: PortfolioTemplate
+  /** Metier affiche sous le nom et sur la carte imprimee (ex. « Technicien en mecatronique »). */
+  title?: string
   headline: string
   about: string
   school: string
@@ -55,7 +57,7 @@ export interface PortfolioView extends Portfolio {
 }
 
 export const emptyPortfolio = (): Portfolio => ({
-  template: "eclat", headline: "", about: "", school: "", field: "", level: "",
+  template: "eclat", title: "", headline: "", about: "", school: "", field: "", level: "",
   skills: [], languages: [], projects: [], experiences: [], education: [], cvUrl: "", published: true,
 })
 
@@ -93,6 +95,7 @@ export function toView(portfolio: Portfolio, profile: ProfileLike | null | undef
 export const SAMPLE_PORTFOLIO: PortfolioView = {
   template: "eclat",
   name: "Awa Diop",
+  title: "Développeuse web et mobile",
   photo: "/portfolio/demo-awa.jpg",
   headline: "Étudiante en informatique, passionnée de design d'applications",
   about:
@@ -145,6 +148,7 @@ export const SAMPLE_PORTFOLIO: PortfolioView = {
 export const SAMPLE_MECA: PortfolioView = {
   template: "plan",
   name: "Ibrahima Sarr",
+  title: "Technicien en mécatronique",
   photo: "/portfolio/demo-ibrahima.jpg",
   headline: "Technicien en mécatronique : conception, usinage et maintenance de systèmes automatisés",
   about:

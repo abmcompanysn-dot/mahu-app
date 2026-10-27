@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { useAuth } from "@/hooks/use-auth"
 import { callAppScript } from "@/lib/api"
 import { uploadToCloudinary, uploadVideoToCloudinary } from "@/lib/cloudinary"
+import { buildCardPreviewHtml } from "@/lib/student-cards-print"
 import { PORTFOLIO_PRICE, PORTFOLIO_TEMPLATES, emptyPortfolio, videoEmbed, type Portfolio, type PortfolioItem } from "@/lib/portfolio"
 
 // Editeur du portfolio etudiant (offre a 3 500 FCFA, valable un an).
@@ -25,7 +26,7 @@ const LISTS: Array<{ key: ListKey; title: string; add: string; withOrg: boolean;
 ]
 
 export default function PortfolioEditorPage() {
-  const { token } = useAuth()
+  const { token, dashboardData } = useAuth()
   const [loading, setLoading] = useState(true)
   const [active, setActive] = useState(false)
   const [profileUrl, setProfileUrl] = useState("")
@@ -52,6 +53,22 @@ export default function PortfolioEditorPage() {
       setLoading(false)
     })
   }, [token])
+
+  const skillList = (s: string) => s.split(",").map((x) => x.trim()).filter(Boolean)
+
+  // Apercu de la carte imprimee, mis a jour pendant la saisie.
+  const [cardHtml, setCardHtml] = useState("")
+  const cardName = dashboardData?.profile?.Nom_Complet || ""
+  useEffect(() => {
+    if (!active || !profileUrl) return
+    const t = setTimeout(() => {
+      buildCardPreviewHtml({
+        id: "apercu", name: cardName || "Ton nom", profileUrl, title: p.title, skills: skillList(skills), field: p.field,
+        expiresAt: p.expiresAt || new Date().toISOString(),
+      }).then(setCardHtml)
+    }, 300)
+    return () => clearTimeout(t)
+  }, [active, profileUrl, cardName, p.title, skills, p.field, p.expiresAt])
 
   const set = <K extends keyof Portfolio>(k: K, v: Portfolio[K]) => setP((prev) => ({ ...prev, [k]: v }))
   const setItem = (key: ListKey, i: number, field: keyof PortfolioItem, value: string) =>
@@ -156,6 +173,10 @@ export default function PortfolioEditorPage() {
 
       <section className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5 sm:col-span-2">
+          <Label htmlFor="title">Ton métier</Label>
+          <Input id="title" maxLength={60} value={p.title || ""} onChange={(e) => set("title", e.target.value)} placeholder="Technicien en mécatronique, Développeuse web, Comptable..." />
+        </div>
+        <div className="space-y-1.5 sm:col-span-2">
           <Label htmlFor="headline">Ta phrase d'accroche</Label>
           <Input id="headline" maxLength={140} value={p.headline} onChange={(e) => set("headline", e.target.value)} placeholder="Étudiante en informatique, passionnée de design d'applications" />
         </div>
@@ -187,6 +208,16 @@ export default function PortfolioEditorPage() {
           <Label htmlFor="languages">Langues</Label>
           <Input id="languages" value={languages} onChange={(e) => setLanguages(e.target.value)} placeholder="Français, Wolof, Anglais" />
         </div>
+      </section>
+
+      <section className="space-y-3">
+        <div>
+          <h2 className="font-semibold">Ta carte professionnelle</h2>
+          <p className="text-sm text-muted-foreground">
+            Elle est imprimée avec ton nom{cardName ? "" : " (à renseigner dans ton profil)"}, ton métier et tes premières compétences. Le QR code ouvre ton portfolio.
+          </p>
+        </div>
+        {cardHtml && <iframe title="Aperçu de ta carte" srcDoc={cardHtml} className="h-[440px] w-full rounded-xl border-0 sm:h-[230px]" />}
       </section>
 
       {LISTS.map((list) => (

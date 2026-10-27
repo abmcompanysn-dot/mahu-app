@@ -378,6 +378,10 @@ export const adminApi = {
 
   activatePortfolio: (token: string, email: string) => callAppScript("adminActivatePortfolio", { email }, token),
 
+  listPortfolioCards: (token: string) => callAppScript("adminListPortfolioCards", {}, token),
+
+  markPortfolioCardsPrinted: (token: string, ids: string[]) => callAppScript("adminMarkPortfolioCardsPrinted", { ids }, token),
+
   broadcastMessage: (token: string, subject: string, title: string, message: string) =>
     callAppScript("adminBroadcastMessage", { subject, title, message }, token),
 
