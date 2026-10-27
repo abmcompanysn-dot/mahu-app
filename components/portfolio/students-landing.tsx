@@ -572,7 +572,7 @@ function PriceCounter() {
 
 function FinalCta({ freeCardsLeft }: { freeCardsLeft: number }) {
   return (
-    <section className="mx-auto max-w-6xl px-5 pb-28 pt-6">
+    <section className="mx-auto max-w-6xl px-5 pb-10 pt-6">
       <Reveal>
         <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#f1d77e] via-[#d4af37] to-[#8f6f17] p-8 text-black sm:p-14">
           <div className="absolute inset-0 bg-[linear-gradient(115deg,transparent_35%,rgba(255,255,255,0.45)_50%,transparent_65%)] [animation:mahu-shine_5s_ease-in-out_infinite]" />
@@ -652,6 +652,12 @@ export function StudentsLanding({ freeCardsLeft = 0 }: { freeCardsLeft?: number 
       <Templates />
       <Steps />
       <FinalCta freeCardsLeft={freeCardsLeft} />
+      <p className="pb-28 text-center text-sm text-white/60 lg:pb-12">
+        Suis Mahu sur TikTok :{" "}
+        <a href="https://www.tiktok.com/@mahu_2026" target="_blank" rel="noopener noreferrer" className="font-bold text-white underline underline-offset-4">
+          @mahu_2026
+        </a>
+      </p>
       <StickyMobileCta freeCardsLeft={freeCardsLeft} />
     </main>
   )

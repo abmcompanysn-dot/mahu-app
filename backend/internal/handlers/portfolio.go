@@ -329,3 +329,16 @@ func freeCardRanks(ctx context.Context) (map[primitive.ObjectID]int, error) {
 	}
 	return ranks, nil
 }
+
+// portfolioFreeCardRank : rang (1 a 100) de la Smart Card offerte, 0 sinon.
+func portfolioFreeCardRank(ctx context.Context, userID primitive.ObjectID) int {
+	p, err := findPortfolio(ctx, userID)
+	if err != nil || p == nil {
+		return 0
+	}
+	ranks, err := freeCardRanks(ctx)
+	if err != nil {
+		return 0
+	}
+	return ranks[p.ID]
+}

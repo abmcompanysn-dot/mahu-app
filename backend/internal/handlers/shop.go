@@ -168,6 +168,8 @@ type depositCheckoutRequest struct {
 	Password        string `json:"password"`
 	Origin          string `json:"origin"`
 	ProfileURL      string `json:"profileUrl"`
+	// Offre etudiante : "team" = l'equipe Mahu remplit le portfolio (meme prix).
+	PortfolioService string `json:"portfolioService"`
 }
 
 // CreateDepositCheckout starts a signup paid by deposit: stores a pending
@@ -240,6 +242,9 @@ func (d *Deps) CreateDepositCheckout(w http.ResponseWriter, r *http.Request) {
 		WantedProfileURL: normalizeProfileSlug(req.ProfileURL),
 		PaymentStatus:    models.OrderPaymentPending, DeliveryStatus: models.OrderDeliveryToPrepare,
 		CreatedAt: now, UpdatedAt: now,
+	}
+	if product.Category == models.ProductCategoryPortfolio && req.PortfolioService == "team" {
+		order.AdminNote = portfolioTeamNote
 	}
 
 	d.startSignupCheckout(w, r, order, fmt.Sprintf("Acompte carte Mahu - %s", product.Name), req.Origin)
@@ -446,6 +451,7 @@ func (d *Deps) finalizeCardOrder(ctx context.Context, reference, invoiceToken st
 
 	// Offre etudiante : rien a livrer, le portfolio s'active pour un an.
 	isPortfolio := false
+	freeCard := 0
 	var product models.Product
 	if err := db.Collection(models.ProductsCollection).FindOne(ctx, bson.M{"_id": order.ProductID}).Decode(&product); err == nil &&
 		product.Category == models.ProductCategoryPortfolio {
@@ -453,7 +459,19 @@ func (d *Deps) finalizeCardOrder(ctx context.Context, reference, invoiceToken st
 		if err := activatePortfolio(ctx, user.ID); err != nil {
 			d.logAction(ctx, "finalizeCardOrder", models.LogStatusError, "Portfolio non active: "+err.Error(), order.Email)
 		}
-		_, _ = coll.UpdateOne(ctx, bson.M{"_id": order.ID}, bson.M{"$set": bson.M{"deliveryStatus": models.OrderDeliveryDelivered}})
+		// Les 100 premiers recoivent une Smart Card V2 : la commande reste
+		// "a preparer" tant qu'elle n'est pas remise.
+		set := bson.M{"deliveryStatus": models.OrderDeliveryDelivered}
+		if rank := portfolioFreeCardRank(ctx, user.ID); rank > 0 {
+			freeCard = rank
+			set["deliveryStatus"] = models.OrderDeliveryToPrepare
+			note := fmt.Sprintf("Smart Card V2 offerte n°%d/100 a remettre.", rank)
+			if order.AdminNote != "" {
+				note = order.AdminNote + " " + note
+			}
+			set["adminNote"] = note
+		}
+		_, _ = coll.UpdateOne(ctx, bson.M{"_id": order.ID}, bson.M{"$set": set})
 	}
 
 	remaining := order.ProductPriceXof - order.DepositXof
@@ -475,6 +493,14 @@ func (d *Deps) finalizeCardOrder(ctx context.Context, reference, invoiceToken st
 		if isPortfolio {
 			subject = "Bienvenue ! Ton portfolio Mahu est pret"
 			html = fmt.Sprintf(portfolioPaidEmailHTML, order.ClientName, loginURL)
+			extra := ""
+			if order.AdminNote != "" && strings.HasPrefix(order.AdminNote, portfolioTeamNote) {
+				extra += "<p>Tu as choisi de <strong>confier ton portfolio a l'equipe Mahu</strong> : nous te contactons tres vite pour recuperer ton CV et tes informations.</p>"
+			}
+			if freeCard > 0 {
+				extra += fmt.Sprintf("<p>Tu fais partie des 100 premiers : ta <strong>Smart Card V2 avec puce NFC</strong> est offerte (n°%d/100). Nous te contactons pour te la remettre.</p>", freeCard)
+			}
+			html = strings.Replace(html, "</div>", extra+"</div>", 1)
 		}
 		if err := d.Email.Send(order.Email, subject, html); err != nil {
 			d.logAction(context.Background(), "finalizeCardOrder", models.LogStatusError, "Email client non envoye: "+err.Error(), order.Email)
@@ -790,3 +816,5 @@ const portfolioPaidEmailHTML = `<div style="font-family:sans-serif;padding:20px;
   <p>Connecte-toi, choisis ton modele et ajoute tes projets : ton portfolio est en ligne tout de suite.</p>
   <p><a href="%s" style="background:#000;color:#fff;padding:12px 24px;text-decoration:none;display:inline-block;">Creer mon portfolio</a></p>
 </div>`
+
+const portfolioTeamNote = "Portfolio a remplir par l'equipe Mahu : contacter le client pour son CV et ses informations."

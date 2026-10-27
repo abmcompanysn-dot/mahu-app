@@ -43,10 +43,11 @@ body {{ position:relative; width:{w}px; height:{h}px; overflow:hidden; font-fami
 .row + .row {{ margin-top:{16 if s else 10}px; }}
 .r1 {{ background:rgba(255,255,255,.07); border:2px solid rgba(255,255,255,.12); }}
 .r2 {{ background:linear-gradient(120deg,#f1d77e,#d4af37 55%,#a8841f); color:#000; }}
-.label {{ font-size:{36 if s else 26}px; font-weight:700; }}
+.label {{ font-size:{32 if s else 26}px; font-weight:700; white-space:nowrap; }}
 .val {{ font-size:{48 if s else 34}px; font-weight:900; white-space:nowrap; }}
 .r1 .val s {{ display:none; }}
 .note {{ margin-top:{24 if s else 14}px; text-align:center; font-size:{30 if s else 21}px; font-weight:700; color:rgba(255,255,255,.75); }}
+.tt {{ margin-top:{8 if s else 4}px; text-align:center; font-size:{26 if s else 18}px; font-weight:700; color:rgba(255,255,255,.6); }}
 .url {{ margin-top:{12 if s else 6}px; text-align:center; font-size:{34 if s else 24}px; font-weight:900; }}
 </style></head><body>
 <div class="top">
@@ -68,6 +69,7 @@ body {{ position:relative; width:{w}px; height:{h}px; overflow:hidden; font-fami
   <div class="row r2"><span class="label">Ta Smartcard V2 (puce NFC)</span><span class="val">OFFERTE</span></div>
   <p class="note">Pour les 100 premiers étudiants qui créent leur portfolio</p>
   <p class="url">call.mahu.cards/etudiants</p>
+  <p class="tt">TikTok @mahu_2026</p>
 </div>
 </body></html>"""
 

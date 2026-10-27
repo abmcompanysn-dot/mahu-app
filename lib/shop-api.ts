@@ -62,6 +62,8 @@ export const shopApi = {
     deliveryAddress: string
     password: string
     profileUrl?: string
+    /** Offre etudiante : "team" si l'equipe Mahu remplit le portfolio. */
+    portfolioService?: "self" | "team"
   }) =>
     parse<{ checkoutUrl: string; reference: string }>(
       await fetch(`${SHOP_BASE_URL}/deposit-checkout`, {

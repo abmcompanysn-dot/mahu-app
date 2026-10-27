@@ -3,6 +3,7 @@
 import { Header } from "@/components/landing/header"
 import { Hero } from "@/components/landing/hero"
 import { ComputerHero, ComputerModels } from "@/components/landing/computer-hero"
+import { StudentsTeaser } from "@/components/landing/students-teaser"
 import { PhoneShowcase } from "@/components/landing/phone-showcase"
 import { CardShowcase } from "@/components/landing/card-showcase"
 import { AiShowcase } from "@/components/landing/ai-showcase"
@@ -23,6 +24,7 @@ export default function Home() {
       <Header onSupportClick={() => setSupportModalOpen(true)} />
       <ComputerHero />
       <ComputerModels />
+      <StudentsTeaser />
       <Hero />
       <PhoneShowcase />
       <CardShowcase />

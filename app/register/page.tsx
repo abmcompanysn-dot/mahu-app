@@ -15,6 +15,10 @@ import {
   User,
   Phone,
   MapPin,
+  Gift,
+  GraduationCap,
+  PenLine,
+  Users,
 } from "lucide-react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -22,7 +26,8 @@ import { Button } from "@/components/ui/button"
 import { useAuth } from "@/hooks/use-auth"
 import { cn } from "@/lib/utils"
 import { shopApi, formatXof, PRODUCT_CATEGORY_LABELS, type Product } from "@/lib/shop-api"
-import { api } from "@/lib/api"
+import { api, callAppScript } from "@/lib/api"
+import { PORTFOLIO_PRICE } from "@/lib/portfolio"
 
 type Mode = "code" | "order"
 
@@ -53,6 +58,11 @@ function RegisterForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { register } = useAuth()
+  // Lien de l'offre etudiante (/etudiants, affiches) : parcours dedie, sans
+  // les autres cartes ni les ordinateurs.
+  const studentMode = searchParams.get("product") === "portfolio-etudiant"
+  const [portfolioService, setPortfolioService] = useState<"self" | "team">("self")
+  const [freeCardsLeft, setFreeCardsLeft] = useState<number | null>(null)
   const [mode, setMode] = useState<Mode>(
     searchParams.get("code") || searchParams.get("mode") === "code" ? "code" : "order"
   )
@@ -89,6 +99,14 @@ function RegisterForm() {
       .then((r) => setProfileStatus(r.available ? "free" : "taken"))
       .catch(() => setProfileStatus("taken"))
   }, [wantedProfile])
+
+  useEffect(() => {
+    if (!studentMode) return
+    callAppScript("getPortfolioOffer", {}).then((r) => {
+      const n = (r as unknown as { freeCardsLeft?: number }).freeCardsLeft
+      if (typeof n === "number") setFreeCardsLeft(n)
+    })
+  }, [studentMode])
 
   useEffect(() => {
     shopApi
@@ -180,7 +198,7 @@ function RegisterForm() {
   const handleOrderSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!productId) {
-      setError("Choisissez votre carte")
+      setError(studentMode ? "Chargement de l'offre en cours, réessaie dans un instant." : "Choisissez votre carte")
       return
     }
     if (!validatePasswords()) return
@@ -195,6 +213,7 @@ function RegisterForm() {
         deliveryAddress: formData.deliveryAddress,
         password: formData.password,
         profileUrl,
+        ...(studentMode ? { portfolioService } : {}),
       })
       window.location.href = checkoutUrl
       return
@@ -284,11 +303,11 @@ function RegisterForm() {
         <div className="rounded-3xl bg-card/50 border border-border/50 backdrop-blur-xl p-6 sm:p-8 shadow-2xl">
           <div className="flex items-center justify-between mb-8">
             <Link
-              href="/"
+              href={studentMode ? "/etudiants" : "/"}
               className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
-              <span className="text-sm">Accueil</span>
+              <span className="text-sm">{studentMode ? "Offre étudiants" : "Accueil"}</span>
             </Link>
             <span className="text-2xl font-bold text-foreground">Mahu</span>
           </div>
@@ -309,10 +328,25 @@ function RegisterForm() {
               </motion.div>
             ) : (
               <motion.div key="register" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-                <h1 className="text-2xl font-bold text-foreground mb-2">Creer un compte</h1>
-                <p className="text-muted-foreground mb-6">
-                  Commandez votre carte avec un acompte des {formatXof(Math.min(depositXof, ...products.map((p) => p.depositXof)))}, ou activez celle que vous avez deja.
-                </p>
+                {studentMode ? (
+                  <>
+                    <p className="mb-3 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+                      <GraduationCap className="h-4 w-4" /> Offre étudiants
+                    </p>
+                    <h1 className="text-2xl font-bold text-foreground mb-2">Crée ton portfolio + CV</h1>
+                    <p className="text-muted-foreground mb-6">
+                      Ton portfolio et ton CV en ligne pendant 1 an pour {PORTFOLIO_PRICE}. Tu remplis tes infos toi-même, ou tu confies tout à
+                      l&apos;équipe Mahu, au même prix.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <h1 className="text-2xl font-bold text-foreground mb-2">Creer un compte</h1>
+                    <p className="text-muted-foreground mb-6">
+                      Commandez votre carte avec un acompte des {formatXof(Math.min(depositXof, ...products.map((p) => p.depositXof)))}, ou activez celle que vous avez deja.
+                    </p>
+                  </>
+                )}
 
                 {profileStatus !== "none" && (
                   <div
@@ -332,7 +366,7 @@ function RegisterForm() {
                   </div>
                 )}
 
-                <div className="grid grid-cols-2 gap-2 p-1 mb-6 rounded-xl bg-muted/30 border border-border/50">
+                {!studentMode && <div className="grid grid-cols-2 gap-2 p-1 mb-6 rounded-xl bg-muted/30 border border-border/50">
                   {(
                     [
                       { key: "order", label: "Commander ma carte", icon: ShoppingBag },
@@ -357,9 +391,9 @@ function RegisterForm() {
                       {tab.label}
                     </button>
                   ))}
-                </div>
+                </div>}
 
-                {mode === "code" ? (
+                {mode === "code" && !studentMode ? (
                   <form onSubmit={handleCodeSubmit} className="space-y-4">
                     <Field icon={KeyRound} label="Code de la carte">
                       <input
@@ -427,6 +461,55 @@ function RegisterForm() {
                   </form>
                 ) : (
                   <form onSubmit={handleOrderSubmit} className="space-y-4">
+                    {studentMode ? (
+                      <div className="space-y-4">
+                        <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 text-sm">
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="font-medium text-foreground">Portfolio + CV en ligne · 1 an</span>
+                            <span className="whitespace-nowrap font-bold text-foreground">{PORTFOLIO_PRICE}</span>
+                          </div>
+                          <div className="mt-2 flex items-center justify-between gap-3">
+                            <span className="flex items-center gap-2 text-foreground">
+                              <Gift className="h-4 w-4 text-primary" /> Smart Card V2 (puce NFC)
+                              <span className="whitespace-nowrap text-xs text-muted-foreground line-through">15 000 FCFA</span>
+                            </span>
+                            <span className="font-bold text-primary">{freeCardsLeft === 0 ? "-" : "Offerte"}</span>
+                          </div>
+                          <p className="mt-2 text-xs text-muted-foreground">
+                            {freeCardsLeft === 0
+                              ? "Les 100 Smart Cards offertes ont toutes été attribuées."
+                              : `Offerte aux 100 premiers inscrits${freeCardsLeft !== null ? ` · plus que ${freeCardsLeft}` : ""}.`}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="block text-sm font-medium text-muted-foreground mb-2">Qui remplit ton portfolio ?</p>
+                          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                            {(
+                              [
+                                { key: "self", icon: PenLine, title: "Je le remplis moi-même", text: "Depuis ton espace, en 10 minutes." },
+                                { key: "team", icon: Users, title: "L'équipe Mahu le fait", text: "On te contacte pour ton CV et tes infos. Même prix." },
+                              ] as const
+                            ).map((o) => (
+                              <button
+                                key={o.key}
+                                type="button"
+                                onClick={() => setPortfolioService(o.key)}
+                                className={cn(
+                                  "flex gap-3 rounded-xl border p-3 text-left transition-colors",
+                                  portfolioService === o.key ? "border-primary bg-primary/10" : "border-border/50 bg-muted/20 hover:border-primary/40"
+                                )}
+                              >
+                                <o.icon className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                                <span>
+                                  <span className="block text-sm font-medium text-foreground">{o.title}</span>
+                                  <span className="block text-xs text-muted-foreground">{o.text}</span>
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
                     <div>
                       <p className="block text-sm font-medium text-muted-foreground mb-2">Choisissez votre carte ou votre ordinateur</p>
                       {productsError && <p className="text-sm text-destructive">{productsError}</p>}
@@ -477,6 +560,7 @@ function RegisterForm() {
                         ))}
                       </div>
                     </div>
+                    )}
 
                     <Field icon={User} label="Nom complet">
                       <input
@@ -502,7 +586,7 @@ function RegisterForm() {
                         autoComplete="tel"
                       />
                     </Field>
-                    <Field icon={MapPin} label="Adresse de livraison">
+                    <Field icon={MapPin} label={studentMode ? "Ville / quartier (pour te remettre ta Smart Card)" : "Adresse de livraison"}>
                       <input
                         type="text"
                         name="deliveryAddress"
@@ -516,7 +600,7 @@ function RegisterForm() {
                     {emailField}
                     {passwordFields}
 
-                    {selectedProduct && (
+                    {selectedProduct && !studentMode && (
                       <div className="p-4 rounded-xl bg-muted/30 border border-border/50 text-sm space-y-1">
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Acompte a payer maintenant</span>
@@ -543,6 +627,8 @@ function RegisterForm() {
                           <Loader2 className="w-5 h-5 animate-spin" />
                           Redirection vers PayDunya...
                         </>
+                      ) : studentMode ? (
+                        `Payer ${PORTFOLIO_PRICE}`
                       ) : (
                         `Payer l'acompte (${formatXof(deposit)})`
                       )}

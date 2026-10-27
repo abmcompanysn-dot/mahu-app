@@ -23,6 +23,7 @@ export function Header({ onSupportClick }: HeaderProps) {
   }, [])
 
   const navLinks = [
+    { href: "/etudiants", label: "Étudiants" },
     { href: "#technology", label: "Technologie" },
     { href: "#about", label: "A Propos" },
   ]
