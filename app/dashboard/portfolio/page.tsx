@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { ExternalLink, ImagePlus, Loader2, Plus, Trash2 } from "lucide-react"
+import { ExternalLink, ImagePlus, Loader2, Plus, Trash2, Video } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -10,11 +10,11 @@ import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { useAuth } from "@/hooks/use-auth"
 import { callAppScript } from "@/lib/api"
-import { uploadToCloudinary } from "@/lib/cloudinary"
-import { PORTFOLIO_PRICE, PORTFOLIO_TEMPLATES, emptyPortfolio, type Portfolio, type PortfolioItem } from "@/lib/portfolio"
+import { uploadToCloudinary, uploadVideoToCloudinary } from "@/lib/cloudinary"
+import { PORTFOLIO_PRICE, PORTFOLIO_TEMPLATES, emptyPortfolio, videoEmbed, type Portfolio, type PortfolioItem } from "@/lib/portfolio"
 
 // Editeur du portfolio etudiant (offre a 3 500 FCFA, valable un an).
-// Le contenu est le meme pour les 4 modeles : changer de modele ne perd rien.
+// Le contenu est le meme pour les 5 modeles : changer de modele ne perd rien.
 
 type ListKey = "projects" | "experiences" | "education"
 
@@ -35,6 +35,7 @@ export default function PortfolioEditorPage() {
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null)
   const [uploading, setUploading] = useState<number | null>(null)
+  const [uploadingVideo, setUploadingVideo] = useState<number | null>(null)
 
   useEffect(() => {
     if (!token) return
@@ -67,6 +68,20 @@ export default function PortfolioEditorPage() {
     else setMessage({ ok: false, text: res.error || "Image non envoyée, réessaie." })
   }
 
+  // Videos de realisation : 100 Mo max, au-dela on conseille YouTube.
+  const uploadProjectVideo = async (i: number, file?: File) => {
+    if (!file) return
+    if (file.size > 100 * 1024 * 1024) {
+      setMessage({ ok: false, text: "Vidéo trop lourde (100 Mo max). Mets-la sur YouTube et colle le lien." })
+      return
+    }
+    setUploadingVideo(i)
+    const res = await uploadVideoToCloudinary(file)
+    setUploadingVideo(null)
+    if (res.success && res.url) setItem("projects", i, "videoUrl", res.url)
+    else setMessage({ ok: false, text: res.error || "Vidéo non envoyée, réessaie." })
+  }
+
   const save = async () => {
     if (!token) return
     setSaving(true)
@@ -93,7 +108,7 @@ export default function PortfolioEditorPage() {
           </p>
           <div className="mt-6 flex flex-col items-center gap-3">
             <Link href="/etudiants" className="rounded-full bg-primary px-6 py-3 font-semibold text-primary-foreground">Découvrir l'offre étudiante</Link>
-            <p className="text-sm text-muted-foreground">Déjà inscrit ? Écris-nous à contact@mahu.cards pour l'activer sur ton compte.</p>
+            <p className="text-sm text-muted-foreground">Déjà inscrit ? Écris-nous à contact@mahu.cards : on active l'offre directement sur ton compte.</p>
           </div>
         </div>
       </div>
@@ -195,6 +210,25 @@ export default function PortfolioEditorPage() {
                     {it.imageUrl ? "Changer l'image" : "Ajouter une image"}
                     <input type="file" accept="image/*" className="hidden" onChange={(e) => uploadProjectImage(i, e.target.files?.[0])} />
                   </label>
+                  <Input
+                    value={it.tools || ""}
+                    onChange={(e) => setItem(list.key, i, "tools", e.target.value)}
+                    placeholder="Outils, machines, logiciels (ex. SolidWorks, tour, Arduino)"
+                    className="sm:col-span-2"
+                  />
+                  <Input
+                    value={it.videoUrl || ""}
+                    onChange={(e) => setItem(list.key, i, "videoUrl", e.target.value)}
+                    placeholder="Vidéo de la réalisation (lien YouTube ou Vimeo)"
+                  />
+                  <label className="flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm text-muted-foreground hover:bg-muted">
+                    {uploadingVideo === i ? <Loader2 className="h-4 w-4 animate-spin" /> : <Video className="h-4 w-4" />}
+                    {uploadingVideo === i ? "Envoi de la vidéo..." : it.videoUrl ? "Changer la vidéo" : "Envoyer une vidéo"}
+                    <input type="file" accept="video/*" className="hidden" onChange={(e) => uploadProjectVideo(i, e.target.files?.[0])} />
+                  </label>
+                  {it.videoUrl && !videoEmbed(it.videoUrl) && (
+                    <p className="text-xs text-destructive sm:col-span-2">Ce lien vidéo n&apos;est pas lisible : utilise un lien YouTube, Vimeo ou envoie le fichier.</p>
+                  )}
                 </>
               )}
               <button type="button" onClick={() => removeItem(list.key, i)} className="inline-flex items-center gap-1 text-sm text-destructive sm:col-span-2">

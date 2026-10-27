@@ -376,6 +376,8 @@ export const adminApi = {
 
   deactivateCard: (token: string, code: string) => callAppScript("adminDeactivateCard", { code }, token),
 
+  activatePortfolio: (token: string, email: string) => callAppScript("adminActivatePortfolio", { email }, token),
+
   broadcastMessage: (token: string, subject: string, title: string, message: string) =>
     callAppScript("adminBroadcastMessage", { subject, title, message }, token),
 

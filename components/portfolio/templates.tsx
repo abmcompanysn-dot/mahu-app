@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
-import type { PortfolioItem, PortfolioView } from "@/lib/portfolio"
+import { videoEmbed, type PortfolioItem, type PortfolioView } from "@/lib/portfolio"
 
-// Les 4 modeles de portfolio etudiant. Ils ne recoivent que des donnees (pas
+// Les 5 modeles de portfolio etudiant. Ils ne recoivent que des donnees (pas
 // d'etat) : la meme vue sert a la page publique, aux demos et a l'apercu de
 // l'editeur. Polices chargees par app/portfolio/layout.tsx.
 
@@ -37,6 +37,20 @@ function Avatar({ v, className, ring }: { v: PortfolioView; className: string; r
       {initials(v.name)}
     </div>
   )
+}
+
+// Video de realisation si le projet en a une, sinon son image.
+function ProjectMedia({ p, className }: { p: PortfolioItem; className: string }) {
+  const video = videoEmbed(p.videoUrl)
+  if (video?.kind === "iframe") {
+    return (
+      <div className={`${className} relative bg-black`}>
+        <iframe src={video.src} title={p.title} loading="lazy" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen className="absolute inset-0 h-full w-full border-0" />
+      </div>
+    )
+  }
+  if (video) return <video src={video.src} poster={p.imageUrl || undefined} controls playsInline preload="metadata" className={`${className} bg-black object-cover`} />
+  return p.imageUrl ? <img src={p.imageUrl} alt="" className={`${className} object-cover`} /> : null
 }
 
 function studies(v: PortfolioView) {
@@ -88,7 +102,7 @@ function Eclat({ v }: { v: PortfolioView }) {
             <div className="mt-6 grid gap-6 sm:grid-cols-2">
               {v.projects.map((p, i) => (
                 <article key={i} className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5">
-                  {p.imageUrl && <img src={p.imageUrl} alt="" className="aspect-[16/10] w-full object-cover" />}
+                  <ProjectMedia p={p} className="aspect-[16/10] w-full" />
                   <div className="p-5">
                     <h3 className="text-lg font-bold">{p.title}</h3>
                     {p.description && <p className="mt-2 text-sm leading-relaxed" style={{ color: muted }}>{p.description}</p>}
@@ -141,7 +155,7 @@ function Nuit({ v }: { v: PortfolioView }) {
             <div className="space-y-4">
               {v.projects.map((p, i) => (
                 <article key={i} className="grid gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4 sm:grid-cols-[180px_minmax(0,1fr)]">
-                  {p.imageUrl ? <img src={p.imageUrl} alt="" className="aspect-[4/3] w-full rounded-xl object-cover" /> : <div className="hidden sm:block" />}
+                  {p.imageUrl || p.videoUrl ? <ProjectMedia p={p} className="aspect-[4/3] w-full overflow-hidden rounded-xl" /> : <div className="hidden sm:block" />}
                   <div className="min-w-0 text-left">
                     <h3 className="text-lg font-bold" style={{ fontFamily: F.display }}>{p.title}</h3>
                     {p.description && <p className="mt-1.5 text-sm leading-relaxed" style={{ color: muted }}>{p.description}</p>}
@@ -199,7 +213,7 @@ function Campus({ v }: { v: PortfolioView }) {
             <div className="grid gap-4 sm:grid-cols-2">
               {v.projects.map((p, i) => (
                 <article key={i} className="overflow-hidden rounded-3xl" style={{ background: tints[i % tints.length] }}>
-                  {p.imageUrl && <img src={p.imageUrl} alt="" className="aspect-[16/9] w-full object-cover" />}
+                  <ProjectMedia p={p} className="aspect-[16/9] w-full" />
                   <div className="p-5">
                     <h3 className="text-lg font-bold">{p.title}</h3>
                     {p.description && <p className="mt-1.5 text-sm leading-relaxed" style={{ color: muted }}>{p.description}</p>}
@@ -258,7 +272,7 @@ function Atelier({ v }: { v: PortfolioView }) {
             <div className="grid gap-4 sm:grid-cols-3">
               {v.projects.map((p, i) => (
                 <article key={i} className="flex flex-col rounded-xl border border-white/10 bg-[#161b22] p-4">
-                  {p.imageUrl && <img src={p.imageUrl} alt="" className="mb-3 aspect-[16/10] w-full rounded-lg object-cover" />}
+                  <ProjectMedia p={p} className="mb-3 aspect-[16/10] w-full overflow-hidden rounded-lg" />
                   <h3 className="font-bold" style={{ fontFamily: F.mono }}>{p.title}</h3>
                   {p.description && <p className="mt-1.5 text-sm leading-relaxed" style={{ color: muted }}>{p.description}</p>}
                   {p.link && <a href={p.link} className="mt-auto pt-3 text-sm" style={{ fontFamily: F.mono, color: green }}>→ voir</a>}
@@ -277,11 +291,133 @@ function Atelier({ v }: { v: PortfolioView }) {
   )
 }
 
+// ---------------------------------------------------------------- Plan
+
+// Mecanique, mecatronique, procedes de fabrication : style plan technique
+// (fond bleu quadrille, cadre et cartouche, fiches techniques reperees).
+function Plan({ v }: { v: PortfolioView }) {
+  const line = "rgba(214,232,255,0.9)", soft = "rgba(214,232,255,0.45)", text = "#d6e8ff", muted = "#9fb6d4", orange = "#ff9f43"
+  const grid = {
+    backgroundColor: "#0b2d52",
+    backgroundImage:
+      "linear-gradient(rgba(255,255,255,0.09) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.09) 1px, transparent 1px), linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px)",
+    backgroundSize: "100px 100px, 100px 100px, 20px 20px, 20px 20px",
+  }
+  const axis = (dir: string) => `repeating-linear-gradient(to ${dir}, ${soft} 0 10px, transparent 10px 14px, ${soft} 14px 16px, transparent 16px 20px)`
+  const Label = ({ n, children }: { n: string; children: string }) => (
+    <h2 className="mb-5 flex items-center gap-3 text-xs font-bold uppercase tracking-[0.25em]" style={{ fontFamily: F.mono, color: orange }}>
+      <span className="border px-1.5 py-0.5" style={{ borderColor: orange }}>{n}</span>
+      {children}
+      <span className="h-px flex-1" style={{ background: "rgba(255,159,67,0.4)" }} />
+    </h2>
+  )
+  const cartouche = ([["Filière", v.field], ["Niveau", v.level], ["Établissement", v.school], ["Lieu", v.location]] as Array<[string, string]>).filter((r) => r[1])
+  return (
+    <div className="min-h-screen p-3 text-white sm:p-6" style={{ ...grid, fontFamily: F.sans }}>
+      <div className="mx-auto max-w-5xl border-2 p-1.5" style={{ borderColor: line }}>
+        <div className="border px-5 py-10 sm:px-10 sm:py-14" style={{ borderColor: soft }}>
+          <header className="grid gap-8 sm:grid-cols-[180px_minmax(0,1fr)] sm:items-center">
+            {/* photo avec axes de symetrie, comme un percage cote */}
+            <div className="relative mx-auto h-40 w-40 sm:h-44 sm:w-44">
+              <span className="absolute -top-3.5 left-1/2 h-[calc(100%+28px)] w-px -translate-x-1/2" style={{ background: axis("bottom") }} />
+              <span className="absolute -left-3.5 top-1/2 h-px w-[calc(100%+28px)] -translate-y-1/2" style={{ background: axis("right") }} />
+              <Avatar v={v} className="relative h-full w-full rounded-full bg-[#123b68] text-4xl" ring={`0 0 0 6px #0b2d52, 0 0 0 7px ${soft}`} />
+              <span className="absolute -bottom-7 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px]" style={{ fontFamily: F.mono, color: muted }}>VUE DE FACE · ÉCH. 1:1</span>
+            </div>
+            <div className="min-w-0 pt-4 sm:pt-0">
+              <p className="text-xs uppercase tracking-[0.3em]" style={{ fontFamily: F.mono, color: orange }}>Dossier technique</p>
+              <h1 className="mt-3 text-4xl font-extrabold uppercase leading-none tracking-tight sm:text-6xl" style={{ fontFamily: F.display }}>{v.name}</h1>
+              {v.headline && <p className="mt-4 max-w-2xl text-lg leading-snug" style={{ color: text }}>{v.headline}</p>}
+              <div className="mt-5 flex flex-wrap gap-2 text-xs" style={{ fontFamily: F.mono }}>
+                {contactList(v).map((c) => <a key={c.href} href={c.href} className="border px-3 py-1.5 hover:bg-white/10" style={{ borderColor: soft }}>{c.label}</a>)}
+                {v.cvUrl && <a href={v.cvUrl} className="px-3 py-1.5 font-bold text-black" style={{ background: orange }}>CV.PDF ↓</a>}
+              </div>
+            </div>
+          </header>
+
+          {cartouche.length > 0 && (
+            <dl className="mt-12 grid grid-cols-2 border text-sm sm:ml-auto sm:max-w-xl" style={{ borderColor: line, fontFamily: F.mono }}>
+              {cartouche.map(([k, val], i) => (
+                <div key={k} className={`px-3 py-2 ${i % 2 === 0 ? "border-r" : ""} ${i < cartouche.length - 2 ? "border-b" : ""}`} style={{ borderColor: soft }}>
+                  <dt className="text-[10px] uppercase tracking-widest" style={{ color: muted }}>{k}</dt>
+                  <dd className="mt-0.5 font-bold">{val}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+
+          {v.about && <section className="mt-14"><Label n="A">Note de présentation</Label><p className="max-w-3xl text-lg leading-relaxed" style={{ color: text }}>{v.about}</p></section>}
+
+          {v.projects.length > 0 && (
+            <section className="mt-14">
+              <Label n="B">Réalisations</Label>
+              <div className="grid gap-8">
+                {v.projects.map((p, i) => {
+                  const rep = String(i + 1).padStart(2, "0")
+                  const tools = (p.tools || "").split(",").map((t) => t.trim()).filter(Boolean)
+                  return (
+                    <article key={i} className="grid border sm:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]" style={{ borderColor: line }}>
+                      <div className="relative border-b sm:border-b-0 sm:border-r" style={{ borderColor: line }}>
+                        {p.imageUrl || p.videoUrl ? (
+                          <ProjectMedia p={p} className="aspect-[16/10] w-full" />
+                        ) : (
+                          <div className="flex aspect-[16/10] w-full items-center justify-center text-6xl font-black" style={{ fontFamily: F.mono, color: "rgba(214,232,255,0.25)" }}>{rep}</div>
+                        )}
+                        <span className="pointer-events-none absolute left-2 top-2 px-2 py-0.5 text-[10px] font-bold text-black" style={{ background: orange, fontFamily: F.mono }}>REP. {rep}</span>
+                      </div>
+                      <div className="flex flex-col p-5">
+                        <h3 className="text-xl font-bold leading-snug" style={{ fontFamily: F.display }}>{p.title}</h3>
+                        {p.description && <p className="mt-2 text-sm leading-relaxed" style={{ color: text }}>{p.description}</p>}
+                        {tools.length > 0 && (
+                          <div className="mt-4 border-t pt-3" style={{ borderColor: soft }}>
+                            <p className="text-[10px] uppercase tracking-widest" style={{ fontFamily: F.mono, color: muted }}>Moyens mis en œuvre</p>
+                            <ul className="mt-2 flex flex-wrap gap-1.5">
+                              {tools.map((t) => <li key={t} className="border px-2 py-0.5 text-xs" style={{ borderColor: soft, fontFamily: F.mono }}>{t}</li>)}
+                            </ul>
+                          </div>
+                        )}
+                        {p.link && <a href={p.link} className="mt-auto pt-4 text-sm font-bold" style={{ fontFamily: F.mono, color: orange }}>Voir le dossier →</a>}
+                      </div>
+                    </article>
+                  )
+                })}
+              </div>
+            </section>
+          )}
+
+          {v.skills.length > 0 && (
+            <section className="mt-14">
+              <Label n="C">Machines, logiciels et procédés</Label>
+              <ul className="grid grid-cols-2 gap-px border sm:grid-cols-4" style={{ borderColor: line, background: soft }}>
+                {v.skills.map((s) => (
+                  <li key={s} className="flex items-center gap-2 bg-[#0b2d52] px-3 py-3 text-sm font-semibold">
+                    <span className="h-2 w-2 shrink-0" style={{ background: orange }} />
+                    {s}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          <div className="mt-14 grid gap-12 sm:grid-cols-2">
+            {v.experiences.length > 0 && <section><Label n="D">Stages et atelier</Label><Timeline items={v.experiences} dot={orange} muted={muted} /></section>}
+            {v.education.length > 0 && <section><Label n="E">Formation</Label><Timeline items={v.education} dot={orange} muted={muted} /></section>}
+          </div>
+
+          {v.languages.length > 0 && <p className="mt-12 text-sm" style={{ fontFamily: F.mono, color: muted }}>LANGUES : {v.languages.join(" · ").toUpperCase()}</p>}
+          <p className="mt-10 text-right text-[10px] tracking-widest" style={{ fontFamily: F.mono, color: muted }}>FOLIO 01/01</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function PortfolioRender({ view }: { view: PortfolioView }) {
   switch (view.template) {
     case "nuit": return <Nuit v={view} />
     case "campus": return <Campus v={view} />
     case "atelier": return <Atelier v={view} />
+    case "plan": return <Plan v={view} />
     default: return <Eclat v={view} />
   }
 }

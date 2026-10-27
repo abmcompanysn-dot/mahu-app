@@ -9,7 +9,7 @@ import (
 const PortfoliosCollection = "portfolios"
 
 // Modeles de portfolio proposes aux etudiants (voir components/portfolio/).
-var PortfolioTemplates = []string{"eclat", "nuit", "campus", "atelier"}
+var PortfolioTemplates = []string{"eclat", "nuit", "campus", "atelier", "plan"}
 
 // PortfolioItem est une ligne de projet, d'experience ou de formation.
 type PortfolioItem struct {
@@ -19,6 +19,8 @@ type PortfolioItem struct {
 	Description string `bson:"description,omitempty" json:"description,omitempty"`
 	Link        string `bson:"link,omitempty" json:"link,omitempty"`
 	ImageURL    string `bson:"imageUrl,omitempty" json:"imageUrl,omitempty"`
+	VideoURL    string `bson:"videoUrl,omitempty" json:"videoUrl,omitempty"`
+	Tools       string `bson:"tools,omitempty" json:"tools,omitempty"` // outils, machines, logiciels
 }
 
 // Portfolio est le portfolio numerique d'un etudiant (offre "Portfolio

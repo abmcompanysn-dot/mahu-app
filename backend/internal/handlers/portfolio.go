@@ -109,6 +109,7 @@ func cleanItems(raw any, maxItems int) []models.PortfolioItem {
 		item := models.PortfolioItem{
 			Title: clip(str(m, "title"), 120), Org: clip(str(m, "org"), 120), Period: clip(str(m, "period"), 60),
 			Description: clip(str(m, "description"), 1200), Link: cleanLink(str(m, "link")), ImageURL: cleanLink(str(m, "imageUrl")),
+			VideoURL: cleanLink(str(m, "videoUrl")), Tools: clip(str(m, "tools"), 200),
 		}
 		if item.Title != "" {
 			out = append(out, item)
@@ -180,7 +181,7 @@ var portfolioProduct = models.Product{
 	Slug: "portfolio-etudiant", Name: "Portfolio étudiant + carte digitale (1 an)", PriceXof: 3500, DepositXof: 3500,
 	Category: models.ProductCategoryPortfolio, ImageURL: "/products/portfolio-etudiant.png",
 	Description: "Ton portfolio numérique en ligne avec un modèle au choix, et ta carte digitale professionnelle Mahu, valables un an.",
-	Features:    []string{"4 modèles de portfolio au choix", "Projets, compétences, formation, CV", "Carte digitale professionnelle Mahu", "Valable 1 an", "Réservé aux étudiants"},
+	Features:    []string{"5 modèles de portfolio au choix", "Projets avec vidéos, compétences, formation, CV", "Carte digitale professionnelle Mahu", "Valable 1 an", "Réservé aux étudiants"},
 }
 
 // EnsurePortfolioProduct ajoute l'offre etudiante au catalogue si elle manque.
@@ -193,4 +194,33 @@ func EnsurePortfolioProduct(ctx context.Context) error {
 	p.CreatedAt, p.UpdatedAt = now, now
 	_, err := db.Collection(models.ProductsCollection).UpdateOne(ctx, bson.M{"slug": p.Slug}, bson.M{"$setOnInsert": p}, options.Update().SetUpsert(true))
 	return err
+}
+
+// ---- admin : activation pour un compte deja existant (paiement hors ligne)
+
+func (d *Deps) legacyAdminActivatePortfolio(ctx context.Context, payload map[string]any, user *models.User) (map[string]any, error) {
+	if _, err := d.checkStaffAccess(user); err != nil {
+		return nil, err
+	}
+	email := strings.ToLower(strings.TrimSpace(str(payload, "email")))
+	if email == "" {
+		return map[string]any{"success": false, "error": "Email requis."}, nil
+	}
+	var target models.User
+	if err := db.Collection(models.UsersCollection).FindOne(ctx, bson.M{"email": email}).Decode(&target); err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return map[string]any{"success": false, "error": "Aucun compte avec cet email."}, nil
+		}
+		return nil, err
+	}
+	if err := activatePortfolio(ctx, target.ID); err != nil {
+		return nil, err
+	}
+	p, err := findPortfolio(ctx, target.ID)
+	if err != nil || p == nil {
+		return nil, err
+	}
+	d.logAction(ctx, "adminActivatePortfolio", models.LogStatusSuccess, "Portfolio active pour "+email+" par "+user.Email, user.Email)
+	return map[string]any{"success": true, "expiresAt": p.ExpiresAt, "profileUrl": target.ProfileURL,
+		"message": "Portfolio actif jusqu'au " + p.ExpiresAt.Format("02/01/2006") + "."}, nil
 }

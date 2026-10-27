@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { PortfolioRender } from "@/components/portfolio/templates"
-import { PORTFOLIO_PRICE, PORTFOLIO_TEMPLATES, SAMPLE_PORTFOLIO, type PortfolioTemplate } from "@/lib/portfolio"
+import { PORTFOLIO_PRICE, PORTFOLIO_TEMPLATES, sampleFor, type PortfolioTemplate } from "@/lib/portfolio"
 
 // Demonstration gratuite de chaque modele, avec un portfolio d'exemple.
 export function generateStaticParams() {
@@ -30,7 +30,7 @@ export default async function TemplateDemoPage({ params }: { params: Promise<{ t
         </span>
         <Link href="/register?product=portfolio-etudiant" className="rounded-full bg-[#d4af37] px-4 py-1.5 font-bold text-black">Le mien pour {PORTFOLIO_PRICE}</Link>
       </div>
-      <PortfolioRender view={{ ...SAMPLE_PORTFOLIO, template: t.id as PortfolioTemplate }} />
+      <PortfolioRender view={sampleFor(t.id as PortfolioTemplate)} />
     </>
   )
 }

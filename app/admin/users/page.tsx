@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useAdminAuth } from "@/contexts/admin-auth-context"
 import { adminApi, type AdminUserRow } from "@/lib/admin-api"
 import { UserDetailsDialog } from "@/components/admin/user-details-dialog"
+import { PortfolioActivation } from "@/components/admin/portfolio-activation"
 
 export default function AdminUsersPage() {
   const { token } = useAdminAuth()
@@ -90,6 +91,8 @@ export default function AdminUsersPage() {
       <div className="max-w-5xl mx-auto space-y-6">
         <h1 className="text-2xl font-bold text-foreground">Utilisateurs</h1>
         <p className="text-sm text-muted-foreground">Cliquez sur un email pour voir la fiche complete.</p>
+
+        <PortfolioActivation token={token} />
 
         <div className="relative max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
