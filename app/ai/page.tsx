@@ -157,7 +157,7 @@ function ListenButton({ token, text }: { token: string | null; text: string }) {
 }
 
 export default function AiPage() {
-  const { token, isAuthenticated } = useAuth()
+  const { token, isAuthenticated, isLoading: authLoading } = useAuth()
 
   const [modelsInfo, setModelsInfo] = useState<AiModelsResponse | null>(null)
   const [selectedModel, setSelectedModel] = useState<string>("")
@@ -554,9 +554,44 @@ export default function AiPage() {
   }, [token])
 
   if (!isAuthenticated) {
+    // Visiteur non connecte : presentation + connexion (avant, le chargement
+    // tournait sans fin).
+    if (authLoading) {
+      return (
+        <div className="flex items-center justify-center h-full">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      )
+    }
     return (
-      <div className="flex items-center justify-center h-full">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="flex h-full flex-col items-center justify-center overflow-y-auto px-6 py-12 text-center">
+        <AiLogo size="lg" />
+        <h1 className="mt-6 text-3xl font-bold text-foreground sm:text-4xl">Mahu IA</h1>
+        <p className="mt-3 max-w-md text-muted-foreground">
+          Discute avec les meilleurs modèles d&apos;IA, crée des images, des voix off et des vidéos, directement dans ton espace Mahu.
+        </p>
+        <div className="mt-8 grid w-full max-w-md grid-cols-2 gap-3 text-left text-sm">
+          {[
+            { icon: Bot, label: "Assistant de discussion" },
+            { icon: ImagePlus, label: "Création d'images" },
+            { icon: Volume2, label: "Voix off" },
+            { icon: Film, label: "Vidéos" },
+          ].map((f) => (
+            <div key={f.label} className="flex items-center gap-2 rounded-xl border border-border/60 bg-muted/30 px-3 py-3">
+              <f.icon className="h-4 w-4 text-primary" />
+              <span className="text-foreground">{f.label}</span>
+            </div>
+          ))}
+        </div>
+        <div className="mt-8 flex w-full max-w-md flex-col gap-3 sm:flex-row">
+          <Button asChild className="flex-1 py-6 text-base">
+            <Link href="/login?next=/ai">Se connecter</Link>
+          </Button>
+          <Button asChild variant="outline" className="flex-1 py-6 text-base">
+            <Link href="/register">Créer un compte</Link>
+          </Button>
+        </div>
+        <p className="mt-4 text-xs text-muted-foreground">Forfait gratuit inclus, sans carte bancaire.</p>
       </div>
     )
   }

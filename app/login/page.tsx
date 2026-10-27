@@ -9,6 +9,12 @@ import { Button } from "@/components/ui/button"
 import { useAuth } from "@/hooks/use-auth"
 import { SocialLoginButtons } from "@/components/auth/social-login-buttons"
 
+// Retour apres connexion : ?next=/ai (chemin interne uniquement).
+function nextPath() {
+  const next = new URLSearchParams(window.location.search).get("next") || ""
+  return next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard"
+}
+
 export default function LoginPage() {
   const router = useRouter()
   const { login } = useAuth()
@@ -30,8 +36,7 @@ export default function LoginPage() {
       if (result.success) {
         setSuccess(true)
         setTimeout(() => {
-          // Toujours rediriger vers le dashboard apres connexion
-          router.push("/dashboard")
+          router.push(nextPath())
         }, 1000)
       } else {
         setError(result.error || "Email ou mot de passe incorrect")
@@ -46,7 +51,7 @@ export default function LoginPage() {
   const handleSocialSuccess = () => {
     setSuccess(true)
     setTimeout(() => {
-      router.push("/dashboard")
+      router.push(nextPath())
     }, 1000)
   }
 
