@@ -6,7 +6,7 @@ import { StudentsLanding } from "@/components/portfolio/students-landing"
 export const metadata = {
   title: "Portfolio étudiant · Mahu",
   description:
-    "Ton portfolio en ligne avec les vidéos de tes réalisations et ta carte de visite Mahu, pour 3 500 FCFA (1 an). Smart Card NFC offerte aux 100 premiers inscrits.",
+    "Ton portfolio + CV en ligne avec les vidéos de tes réalisations, pour 3 500 FCFA (1 an). Smart Card NFC offerte aux 100 premiers inscrits.",
 }
 
 // Rendu a chaque visite : le compteur doit refleter les inscriptions.

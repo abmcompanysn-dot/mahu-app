@@ -64,7 +64,7 @@ body {{ position:relative; width:{w}px; height:{h}px; overflow:hidden; font-fami
   <span class="free">GRATUITE</span>
 </div>
 <div class="offer">
-  <div class="row r1"><span class="label">Ton portfolio en ligne · 1 an</span><span class="val">3 500 FCFA</span></div>
+  <div class="row r1"><span class="label">Ton portfolio + CV en ligne · 1 an</span><span class="val">3 500 FCFA</span></div>
   <div class="row r2"><span class="label">Ta Smartcard V2 (puce NFC)</span><span class="val">OFFERTE</span></div>
   <p class="note">Pour les 100 premiers étudiants qui créent leur portfolio</p>
   <p class="url">call.mahu.cards/etudiants</p>

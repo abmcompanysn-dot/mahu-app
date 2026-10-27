@@ -32,7 +32,7 @@ const CYCLE_MS = 6500
 const FREE_CARDS = 100
 
 const included = [
-  { icon: FolderKanban, title: "Ton portfolio en ligne", text: "Projets, compétences, expériences, formation et CV, sur une page à ton nom." },
+  { icon: FolderKanban, title: "Ton portfolio + ton CV", text: "Projets, compétences, expériences et formation sur une page à ton nom, avec ton CV à télécharger." },
   { icon: Video, title: "Les vidéos de tes réalisations", text: "Ton appli, ta maquette, ton exposé : la vidéo se lit directement dans ton portfolio." },
   { icon: CreditCard, title: "Ta Smart Card Mahu", text: "Ta carte de visite numérique avec puce NFC : un tap sur un téléphone et ton contact s'ouvre. Offerte aux 100 premiers inscrits." },
   { icon: BadgeCheck, title: "5 modèles, valable 1 an", text: "Change de modèle quand tu veux, ton contenu suit. Un seul paiement." },
@@ -245,7 +245,7 @@ function Hero({ freeCardsLeft }: { freeCardsLeft: number }) {
             transition={{ duration: 0.7, delay: 0.55, ease: EASE }}
             className="mt-6 max-w-xl text-lg text-white/70"
           >
-            Un vrai portfolio à ton nom, avec les vidéos de tes réalisations, et ta carte digitale professionnelle Mahu. Prêt en 10 minutes.
+            Ton portfolio et ton CV en ligne, à ton nom, avec les vidéos de tes réalisations. Prêt en 10 minutes.
           </motion.p>
 
           <motion.div
@@ -259,7 +259,7 @@ function Hero({ freeCardsLeft }: { freeCardsLeft: number }) {
             </ShineButton>
             <div className="leading-tight">
               <p className="text-3xl font-black">{PORTFOLIO_PRICE}</p>
-              <p className="text-sm text-white/55">portfolio + Smart Card · 1 an</p>
+              <p className="text-sm text-white/55">portfolio + CV · 1 an</p>
             </div>
           </motion.div>
 
@@ -579,7 +579,7 @@ function FinalCta({ freeCardsLeft }: { freeCardsLeft: number }) {
           <div className="relative grid items-center gap-8 lg:grid-cols-[minmax(0,1fr)_auto]">
             <div>
               <h2 className="text-3xl font-black leading-tight sm:text-5xl">Ton avenir mérite une belle vitrine.</h2>
-              <p className="mt-3 text-lg font-medium text-black/70">Portfolio + vidéos pendant 1 an, et ta Smart Card NFC offerte aux 100 premiers.</p>
+              <p className="mt-3 text-lg font-medium text-black/70">Portfolio + CV + vidéos pendant 1 an, et ta Smart Card NFC offerte aux 100 premiers.</p>
               {freeCardsLeft > 0 && (
                 <p className="mt-3 inline-flex items-center gap-2 rounded-full bg-black/10 px-4 py-1.5 text-sm font-bold">
                   <Gift className="h-4 w-4" /> Smart Card offerte · plus que {freeCardsLeft} sur {FREE_CARDS}
@@ -617,7 +617,7 @@ function StickyMobileCta({ freeCardsLeft }: { freeCardsLeft: number }) {
           <div className="leading-tight">
             <p className="font-black">{PORTFOLIO_PRICE}</p>
             <p className="text-xs text-white/55">
-              {freeCardsLeft > 0 ? `Smart Card offerte · plus que ${freeCardsLeft}` : "portfolio + Smart Card · 1 an"}
+              {freeCardsLeft > 0 ? `Smart Card offerte · plus que ${freeCardsLeft}` : "portfolio + CV · 1 an"}
             </p>
           </div>
           <Link href={ORDER} className="rounded-xl bg-[#d4af37] px-5 py-3 font-bold text-black">
