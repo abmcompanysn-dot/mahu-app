@@ -4,9 +4,10 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react"
 import { AnimatePresence, motion, useInView } from "framer-motion"
 import { Headphones, MapPin, Square } from "lucide-react"
 import type { PortfolioItem } from "@/lib/portfolio"
+import { StoryScene } from "@/components/portfolio/story-scenes"
 
 // "Mon histoire" du modele Motion : un chapitre par etape (period = annee,
-// org = lieu). Au defilement, l'annee, le lieu et la progression suivent le
+// org = lieu). Au defilement, une scene animee, le lieu et la progression suivent le
 // lecteur, la couleur d'ambiance change a chaque chapitre. Le bouton
 // "Ecouter mon histoire" lance une musique africaine generee en direct et une
 // voix douce qui lit chaque chapitre quand on y arrive.
@@ -84,7 +85,7 @@ function startAfricanMusic() {
   const ctx = new AC()
   const master = ctx.createGain()
   master.gain.value = 0
-  master.gain.linearRampToValueAtTime(0.32, ctx.currentTime + 2.5)
+  master.gain.linearRampToValueAtTime(0.6, ctx.currentTime + 2.5)
   const echo = ctx.createDelay()
   echo.delayTime.value = 0.33
   const fb = ctx.createGain()
@@ -156,11 +157,11 @@ function startAfricanMusic() {
       const chord = Math.floor(bar / 2) % ROOTS.length
       const pattern = PATTERNS[chord]
       // kora : ostinato
-      pluck(KORA[pattern[pos]], next, 0.11, 1.4)
+      pluck(KORA[pattern[pos]], next, 0.16, 1.4)
       // balafon : notes aiguës legeres sur certains temps
       if ((pos === 2 || pos === 5) && Math.random() < 0.55) pluck(KORA[5 + Math.floor(Math.random() * 4)] * 2, next + eighth / 2, 0.05, 0.3, "sine")
       // basse
-      if (pos === 0 || pos === 3) pluck(ROOTS[chord], next, 0.22, 1.1, "sine")
+      if (pos === 0 || pos === 3) pluck(ROOTS[chord], next, 0.3, 1.1, "sine")
       // djembe 6/8
       if (pos === 0) drum(next, "bass")
       if (pos === 2) drum(next, "tone")
@@ -177,7 +178,7 @@ function startAfricanMusic() {
   const duck = (speaking: boolean) => {
     master.gain.cancelScheduledValues(ctx.currentTime)
     master.gain.setValueAtTime(master.gain.value, ctx.currentTime)
-    master.gain.linearRampToValueAtTime(speaking ? 0.1 : 0.32, ctx.currentTime + 0.6)
+    master.gain.linearRampToValueAtTime(speaking ? 0.2 : 0.6, ctx.currentTime + 0.6)
   }
 
   return {
@@ -195,7 +196,7 @@ function startAfricanMusic() {
 // ------------------------------------------------------------ chapitres
 
 function chapterText(it: PortfolioItem) {
-  return [it.period, it.title, it.description].filter(Boolean).join(". ").replace(/\s*·\s*/g, ", ")
+  return [it.title, it.description].filter(Boolean).join(". ").replace(/\s*·\s*/g, ", ")
 }
 
 function Chapter({ item, i, onActive }: { item: PortfolioItem; i: number; onActive: (i: number) => void }) {
@@ -213,9 +214,7 @@ function Chapter({ item, i, onActive }: { item: PortfolioItem; i: number; onActi
         viewport={{ amount: 0.4 }}
         transition={{ duration: 0.9, ease: EASE }}
       >
-        <p className="mb-3 bg-clip-text text-6xl font-extrabold text-transparent lg:hidden" style={{ fontFamily: "'Sora', sans-serif", backgroundImage: `linear-gradient(120deg, ${color}, #fff)` }}>
-          {item.period}
-        </p>
+        <StoryScene index={i} className="mb-6 w-full shadow-[0_30px_80px_-20px_rgba(0,0,0,0.8)] lg:hidden" />
         <p className="text-sm uppercase tracking-[0.3em] text-white/45" style={{ fontFamily: "'Space Mono', monospace" }}>
           Chapitre {String(i + 1).padStart(2, "0")}
         </p>
@@ -245,9 +244,6 @@ export function StorySection({ items, index }: { items: PortfolioItem[]; index: 
   const spoken = useRef(-1)
   const item = items[active] || items[0]
   const color = COLORS[active % COLORS.length]
-  const progress = (active + 1) / items.length
-  const R = 54
-  const C = 2 * Math.PI * R
 
   // la voix lit le chapitre affiche (une fois par chapitre, tant que l'ecoute est active)
   useEffect(() => {
@@ -276,12 +272,12 @@ export function StorySection({ items, index }: { items: PortfolioItem[]; index: 
         </div>
       </div>
 
-      {/* telephone : barre fixe annee + progression pendant toute la section */}
+      {/* telephone : barre fixe lieu + progression pendant toute la section */}
       <div className="sticky top-0 z-20 mt-6 border-b border-white/10 bg-[#06070b]/80 px-5 py-3 backdrop-blur-xl lg:hidden">
         <div className="flex items-center justify-between gap-3">
           <AnimatePresence mode="wait">
-            <motion.span key={item?.period} initial={{ y: 12, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -12, opacity: 0 }} className="text-lg font-extrabold" style={{ color, fontFamily: "'Sora', sans-serif" }}>
-              {item?.period}
+            <motion.span key={item?.org} initial={{ y: 12, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -12, opacity: 0 }} className="truncate text-base font-extrabold" style={{ color, fontFamily: "'Sora', sans-serif" }}>
+              {item?.org || item?.title}
             </motion.span>
           </AnimatePresence>
           <div className="flex gap-1.5">
@@ -295,26 +291,15 @@ export function StorySection({ items, index }: { items: PortfolioItem[]; index: 
       <div className="relative mx-auto grid max-w-6xl gap-10 px-5 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
         <div className="hidden lg:block">
           <div className="sticky top-24 flex h-[70vh] flex-col justify-center">
-            <div className="relative h-40 w-40">
-              <svg viewBox="0 0 128 128" className="h-full w-full -rotate-90">
-                <circle cx="64" cy="64" r={R} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="6" />
-                <motion.circle
-                  cx="64" cy="64" r={R} fill="none" strokeWidth="6" strokeLinecap="round"
-                  strokeDasharray={C}
-                  animate={{ strokeDashoffset: C * (1 - progress), stroke: color }}
-                  transition={{ duration: 0.8, ease: EASE }}
-                />
-              </svg>
-              <span className="absolute inset-0 flex items-center justify-center text-3xl font-extrabold" style={{ fontFamily: "'Sora', sans-serif" }}>
-                {active + 1}<span className="text-base text-white/40">/{items.length}</span>
-              </span>
-            </div>
-            <div className="mt-8 text-7xl font-extrabold tracking-tighter xl:text-8xl" style={{ fontFamily: "'Sora', sans-serif" }}>
+            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-3xl shadow-[0_40px_100px_-30px_rgba(0,0,0,0.9)]">
               <AnimatePresence mode="wait">
-                <motion.p key={item?.period} initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -40, opacity: 0 }} transition={{ duration: 0.5, ease: EASE }} style={{ color }}>
-                  {item?.period}
-                </motion.p>
+                <motion.div key={active} initial={{ opacity: 0, scale: 1.04 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} transition={{ duration: 0.7, ease: EASE }} className="absolute inset-0">
+                  <StoryScene index={active} className="h-full w-full" />
+                </motion.div>
               </AnimatePresence>
+              <span className="absolute left-4 top-4 rounded-full bg-black/50 px-3 py-1 text-xs font-bold backdrop-blur" style={{ fontFamily: "'Space Mono', monospace" }}>
+                {active + 1} / {items.length}
+              </span>
             </div>
             <AnimatePresence mode="wait">
               <motion.p key={item?.org} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }} className="mt-6 flex items-center gap-2 text-lg text-white/70">
