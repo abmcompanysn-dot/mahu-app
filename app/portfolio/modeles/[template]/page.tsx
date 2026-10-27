@@ -11,7 +11,12 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: { params: Promise<{ template: string }> }) {
   const { template } = await params
   const t = PORTFOLIO_TEMPLATES.find((x) => x.id === template)
-  return { title: t ? `Modèle ${t.name} · Portfolio Mahu` : "Portfolio Mahu" }
+  const title = t ? `Modèle ${t.name} · Portfolio Mahu` : "Portfolio Mahu"
+  return {
+    title,
+    openGraph: { title, images: [{ url: "/og-portfolio.png", width: 1200, height: 630, alt: "Portfolio étudiant Mahu" }] },
+    twitter: { card: "summary_large_image", images: ["/og-portfolio.png"] },
+  }
 }
 
 export default async function TemplateDemoPage({ params }: { params: Promise<{ template: string }> }) {

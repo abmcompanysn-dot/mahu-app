@@ -41,7 +41,9 @@ export async function generateMetadata({ params }: { params: Promise<{ username:
   return {
     title: `${name} · Portfolio`,
     description: data.portfolio.headline || [data.portfolio.level, data.portfolio.field, data.portfolio.school].filter(Boolean).join(" · "),
-    openGraph: { title: `${name} · Portfolio`, images: data.profile?.URL_Photo ? [data.profile.URL_Photo] : undefined },
+    // Apercu du lien : la photo de l'etudiant, sinon l'image "Portfolio etudiant".
+    openGraph: { title: `${name} · Portfolio`, images: [data.profile?.URL_Photo || "/og-portfolio.png"] },
+    twitter: { card: "summary_large_image", images: [data.profile?.URL_Photo || "/og-portfolio.png"] },
   }
 }
 

@@ -7,6 +7,12 @@ export const metadata = {
   title: "Portfolio étudiant · Mahu",
   description:
     "Ton portfolio + CV en ligne avec les vidéos de tes réalisations, pour 3 500 FCFA (1 an). Smart Card NFC offerte aux 100 premiers inscrits.",
+  openGraph: {
+    title: "Ton portfolio + CV en ligne · Smart Card offerte",
+    description: "3 500 FCFA pour 1 an. Smart Card NFC offerte aux 100 premiers étudiants inscrits.",
+    images: [{ url: "/og-etudiants.png", width: 1200, height: 630, alt: "Offre étudiants Mahu" }],
+  },
+  twitter: { card: "summary_large_image", images: ["/og-etudiants.png"] },
 }
 
 // Rendu a chaque visite : le compteur doit refleter les inscriptions.
