@@ -56,6 +56,7 @@ func main() {
 	deps.ResumeOutreach(context.Background())
 	go deps.RunCloudPCReaper(context.Background())
 	go deps.RunBlankCardExpiry(context.Background())
+	go deps.RunKitDaily(context.Background())
 
 	mux := http.NewServeMux()
 
