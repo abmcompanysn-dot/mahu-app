@@ -465,6 +465,13 @@ export const adminApi = {
   outreachSenders: (token: string) =>
     request<{ senders: OutreachSender[] }>(`${ADMIN_BASE_URL}/outreach/senders`, token),
 
+  // Tous les comptes Mahu avec un email (comptes desactives exclus).
+  outreachAllUsers: (token: string) =>
+    request<{ recipients: Array<{ email: string; firstName: string; lastName: string }> }>(
+      `${ADMIN_BASE_URL}/outreach/all-users`,
+      token
+    ),
+
   outreachTest: (token: string, draft: OutreachDraft, testTo: string) =>
     request<{ success: boolean }>(`${ADMIN_BASE_URL}/outreach/test`, token, {
       method: "POST",

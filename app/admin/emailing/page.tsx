@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Eye, Loader2, Send, Star, Upload } from "lucide-react"
+import { Eye, Loader2, Send, Star, Upload, Users } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -33,6 +33,26 @@ Avant d'aller plus loin, nous voulons connaître votre avis sur ces 3 mois : qu'
 Une note en un clic suffit. Et si vous avez 2 minutes, un commentaire nous aidera énormément à améliorer la carte.
 
 Merci pour votre confiance,`
+
+// Modele « Bon debut de mois », envoye a tous les utilisateurs le 1er du mois.
+function monthTemplate(now = new Date()) {
+  const month = now.toLocaleDateString("fr-FR", { month: "long" })
+  const de = /^[aeiou]/i.test(month) ? `d'${month}` : `de ${month}`
+  return {
+    subject: `{prenom}, bon début de mois ${de} !`,
+    body: `Bonjour {prenom},
+
+Un nouveau mois commence, et toute l'équipe MAHU tenait à vous le souhaiter : bon début de mois ${de} !
+
+Peut-être que c'est ce mois-ci que tout bascule : le client que vous attendiez, la rencontre qui change tout, le projet que vous repoussez depuis trop longtemps. Nous vous souhaitons des portes qui s'ouvrent à chaque rencontre.
+
+Pensez à mettre votre profil à jour (photo, poste, liens, WhatsApp) : chaque personne qui touche votre carte verra la meilleure version de vous. Tout se modifie en un clic sur call.mahu.cards.
+
+Et si un proche, un collègue ou un étudiant a besoin de sa carte, notre catalogue 2026 est ici : call.mahu.cards/kit/Catalogue-MAHU-2026.pdf
+
+Merci d'être là, merci pour votre confiance.`,
+  }
+}
 
 const STATUS_LABELS: Record<OutreachCampaign["status"], string> = {
   brouillon: "Brouillon",
@@ -95,6 +115,30 @@ export default function AdminEmailingPage() {
       setFileName("")
       setError(err instanceof Error ? err.message : "Fichier illisible")
     }
+  }
+
+  const [loadingUsers, setLoadingUsers] = useState(false)
+  const loadAllUsers = async () => {
+    if (!token) return
+    setError("")
+    setLoadingUsers(true)
+    try {
+      const { recipients: list } = await adminApi.outreachAllUsers(token)
+      if (list.length === 0) throw new Error("Aucun utilisateur avec un email.")
+      setFileRecipients(list)
+      setFileName("Tous les utilisateurs MAHU")
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Chargement impossible")
+    } finally {
+      setLoadingUsers(false)
+    }
+  }
+
+  const applyMonthTemplate = () => {
+    const t = monthTemplate()
+    setSubject(t.subject)
+    setBody(t.body)
+    setAskFeedback(false)
   }
 
   const showPreview = async () => {
@@ -236,6 +280,13 @@ export default function AdminEmailingPage() {
                   </div>
                 )}
 
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button type="button" variant="outline" size="sm" onClick={applyMonthTemplate}>
+                    Modèle : Bon début de mois
+                  </Button>
+                  <span className="text-xs text-muted-foreground">Remplit l&apos;objet et le message (sans note).</span>
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="subject">Objet</Label>
                   <Input id="subject" value={subject} onChange={(e) => setSubject(e.target.value)} maxLength={200} />
@@ -271,6 +322,10 @@ export default function AdminEmailingPage() {
                         }}
                       />
                     </label>
+                    <Button type="button" variant="outline" size="sm" onClick={loadAllUsers} disabled={loadingUsers}>
+                      {loadingUsers ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Users className="w-4 h-4 mr-2" />}
+                      Tous les utilisateurs MAHU
+                    </Button>
                     {fileName && (
                       <span className="text-sm text-muted-foreground">
                         {fileName}{" "}

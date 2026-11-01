@@ -162,6 +162,7 @@ func main() {
 	})))
 
 	protected.Handle("GET /api/admin/outreach/senders", adminOnly(http.HandlerFunc(deps.AdminOutreachSenders)))
+	protected.Handle("GET /api/admin/outreach/all-users", adminOnly(http.HandlerFunc(deps.AdminOutreachAllUsers)))
 	protected.Handle("POST /api/admin/outreach/test", adminOnly(http.HandlerFunc(deps.AdminOutreachTest)))
 	protected.Handle("POST /api/admin/outreach/preview", adminOnly(http.HandlerFunc(deps.AdminOutreachPreview)))
 	protected.Handle("GET /api/admin/outreach/campaigns", adminOnly(http.HandlerFunc(deps.AdminListOutreachCampaigns)))
