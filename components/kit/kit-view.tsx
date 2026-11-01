@@ -168,6 +168,9 @@ export default function KitView() {
   }
 
   const today = todayDakar()
+  // La bande des jours ne montre que le mois du jour choisi.
+  const monthDays = plan.days.filter((d) => d.date.slice(0, 7) === day.date.slice(0, 7))
+  const monthLabel = new Date(`${day.date.slice(0, 7)}-15T12:00:00Z`).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white">
       <div className="max-w-3xl mx-auto px-4 py-8 sm:py-12">
@@ -177,8 +180,9 @@ export default function KitView() {
           <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7cc4ff]">Kit de communication</span>
         </div>
 
-        <div className="mt-6 flex gap-1.5 overflow-x-auto pb-2 -mx-4 px-4">
-          {plan.days.map((d) => {
+        <p className="mt-6 text-sm font-bold capitalize text-white/70">{monthLabel}</p>
+        <div className="mt-2 flex gap-1.5 overflow-x-auto pb-2 -mx-4 px-4">
+          {monthDays.map((d) => {
             const n = Number(d.date.slice(8))
             const active = d.date === date
             return (
