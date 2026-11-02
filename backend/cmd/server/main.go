@@ -50,6 +50,9 @@ func main() {
 	if err := handlers.EnsureComputerProducts(context.Background()); err != nil {
 		log.Printf("[shop] computer products: %v", err)
 	}
+	if err := handlers.EnsureBuBeesProduct(context.Background()); err != nil {
+		log.Printf("[shop] bu bees product: %v", err)
+	}
 
 	deps := &handlers.Deps{Env: env, FirebaseAuth: firebaseAuth, Email: emailutil.NewSender(env)}
 

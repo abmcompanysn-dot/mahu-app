@@ -112,6 +112,28 @@ func EnsureComputerProducts(ctx context.Context) error {
 	return nil
 }
 
+// buBeesProduct : carte MAHU Bu Bees, edition Teranga (lancement novembre 2026,
+// page de vente en wolof /bu-bees). Nom du client et QR code imprimes au recto.
+var buBeesProduct = models.Product{
+	Slug: "carte-bu-bees", Name: "MAHU Bu Bees — Édition Teranga", PriceXof: 13900, Category: models.ProductCategoryNfcCard,
+	Material: "PVC Premium", ImageURL: "/products/carte-bu-bees.png",
+	Description: "La nouvelle Smart Card aux couleurs du Sénégal : votre nom et votre QR code au recto, « Sénégal Rek · Tech bi MAHU » au verso.",
+	Features:    []string{"Couleurs de la Teranga", "Votre nom imprimé", "Grand QR code au recto", "Puce NFC", "PVC Premium"},
+}
+
+// EnsureBuBeesProduct ajoute la carte Bu Bees au catalogue si elle manque,
+// en tete de la boutique (ensuite modifiable dans l'admin Catalogue).
+func EnsureBuBeesProduct(ctx context.Context) error {
+	p := buBeesProduct
+	now := time.Now()
+	p.ID = primitive.NewObjectID()
+	p.Active = true
+	p.SortOrder = 0
+	p.CreatedAt, p.UpdatedAt = now, now
+	_, err := db.Collection(models.ProductsCollection).UpdateOne(ctx, bson.M{"slug": p.Slug}, bson.M{"$setOnInsert": p}, options.Update().SetUpsert(true))
+	return err
+}
+
 func findProducts(ctx context.Context, filter bson.M) ([]models.Product, error) {
 	cursor, err := db.Collection(models.ProductsCollection).Find(ctx, filter,
 		options.Find().SetSort(bson.D{{Key: "sortOrder", Value: 1}, {Key: "createdAt", Value: 1}}))
