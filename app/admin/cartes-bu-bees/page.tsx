@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { Download, Loader2, Printer } from "lucide-react"
+import { Download, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -10,11 +10,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useAdminAuth } from "@/contexts/admin-auth-context"
 import { adminApi, type PhysicalCard } from "@/lib/admin-api"
-import { buildBuBeesCardsHtml, cardUrl, type BuBeesCard, type BuBeesFormat } from "@/lib/bu-bees-cards-print"
+import { cardUrl, downloadBuBeesPdf, type BuBeesCard, type BuBeesFormat } from "@/lib/bu-bees-card-pdf"
 
 // Generateur de cartes MAHU Bu Bees : on tape les noms des clients (marches,
-// terrain), chaque nom recoit un code carte neuf, et on imprime les cartes
-// avec le nom et le QR code de chacun. Le client scanne sa carte, l'inscription
+// terrain), chaque nom recoit un code carte neuf, et on telecharge le PDF des
+// cartes avec le nom et le QR code de chacun. Le client scanne sa carte, l'inscription
 // s'ouvre avec le code deja rempli : il active sa carte sur place.
 // Mode « lot sans nom » : N cartes vierges, chacune avec son code tire au
 // hasard (jamais deux fois le meme, voir newCardCodes cote backend).
@@ -29,7 +29,7 @@ function downloadCsv(cards: BuBeesCard[]) {
   const rows = [["code", "nom", "lien a ecrire dans la puce"], ...cards.map((c) => [c.code, c.name, cardUrl(c.code)])]
   const csv = rows.map((r) => r.map((v) => `"${v.replace(/"/g, '""')}"`).join(";")).join("\r\n")
   const a = document.createElement("a")
-  a.href = URL.createObjectURL(new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" }))
+  a.href = URL.createObjectURL(new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" }))
   a.download = `cartes-bu-bees-${new Date().toISOString().slice(0, 10)}.csv`
   a.click()
   URL.revokeObjectURL(a.href)
@@ -76,53 +76,51 @@ export default function BuBeesCardsPage() {
     [names]
   )
 
-  // La fenetre s'ouvre avant l'attente (sinon le navigateur la bloque).
-  const openPrint = async (toPrint: BuBeesCard[], work?: () => Promise<BuBeesCard[] | null>) => {
-    const win = window.open("", "_blank")
-    if (!win) {
-      setError("Autorisez les fenêtres pop-up pour ce site, puis recommencez.")
-      return
+  // Les codes sont enregistres avant le PDF : si le telechargement echoue,
+  // les cartes restent dans la liste ci-dessous pour les retelecharger.
+  const downloadPdf = async (toPrint: BuBeesCard[]) => {
+    try {
+      await downloadBuBeesPdf(toPrint, format)
+      return true
+    } catch (err) {
+      setError(`PDF non téléchargé (${err instanceof Error ? err.message : "erreur"}). Les cartes sont enregistrées : sélectionnez-les ci-dessous pour retélécharger.`)
+      return false
     }
-    win.document.write("<p style='font-family:sans-serif;padding:24px'>Préparation des cartes...</p>")
-    const final = work ? await work() : toPrint
-    if (!final) {
-      win.close()
-      return
-    }
-    const html = await buildBuBeesCardsHtml(final, format, window.location.origin)
-    win.document.open()
-    win.document.write(html)
-    win.document.close()
   }
 
-  const generate = () =>
-    openPrint([], async () => {
-      if (!token || count === 0) return null
-      setBusy(true)
-      setError("")
-      setMessage("")
-      try {
-        const res =
-          mode === "names"
-            ? await adminApi.generateNamedCards(token, list, LABEL, PREFIX)
-            : await adminApi.generateCardLot(token, count, LABEL, PREFIX)
-        if (!res.success || !res.codes || res.codes.length !== count) {
-          setError(res.error || "Les codes n'ont pas été créés.")
-          return null
-        }
-        const made = res.codes.map((code, i) => ({ name: mode === "names" ? list[i] : "", code }))
-        setLastBatch(made)
-        setMessage(`${made.length} carte(s) créée(s) (${res.batchId}). La page d'impression est ouverte.`)
-        setNames("")
-        await load()
-        return made
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Erreur")
-        return null
-      } finally {
-        setBusy(false)
+  const generate = async () => {
+    if (!token || count === 0) return
+    setBusy(true)
+    setError("")
+    setMessage("")
+    try {
+      const res =
+        mode === "names"
+          ? await adminApi.generateNamedCards(token, list, LABEL, PREFIX)
+          : await adminApi.generateCardLot(token, count, LABEL, PREFIX)
+      if (!res.success || !res.codes || res.codes.length !== count) {
+        setError(res.error || "Les codes n'ont pas été créés.")
+        return
       }
-    })
+      const made = res.codes.map((code, i) => ({ name: mode === "names" ? list[i] : "", code }))
+      setLastBatch(made)
+      setNames("")
+      if (await downloadPdf(made)) setMessage(`${made.length} carte(s) créée(s) (${res.batchId}), PDF téléchargé.`)
+      await load()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur")
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const redownload = async () => {
+    setBusy(true)
+    setError("")
+    setMessage("")
+    if (await downloadPdf(chosen)) setMessage(`PDF de ${chosen.length} carte(s) téléchargé.`)
+    setBusy(false)
+  }
 
   const count = mode === "names" ? list.length : Math.max(0, Math.min(500, Math.floor(quantity) || 0))
 
@@ -188,7 +186,7 @@ export default function BuBeesCardsPage() {
               />
             )}
             <div className="flex flex-wrap items-center gap-4 text-sm">
-              <span className="text-muted-foreground">Impression :</span>
+              <span className="text-muted-foreground">PDF :</span>
               <label className="flex items-center gap-2">
                 <input type="radio" checked={format === "a4"} onChange={() => setFormat("a4")} />
                 Feuilles A4 (9 cartes par feuille, à découper)
@@ -200,8 +198,8 @@ export default function BuBeesCardsPage() {
             </div>
             <div className="flex flex-wrap items-center gap-3">
               <Button disabled={busy || count === 0} onClick={generate}>
-                {busy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Printer className="w-4 h-4 mr-2" />}
-                Créer {count || ""} carte(s) et imprimer
+                {busy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
+                Créer {count || ""} carte(s) et télécharger le PDF
               </Button>
               {lastBatch.length > 0 && (
                 <Button variant="outline" onClick={() => downloadCsv(lastBatch)}>
@@ -221,9 +219,9 @@ export default function BuBeesCardsPage() {
                 <Download className="w-4 h-4 mr-2" />
                 CSV NFC
               </Button>
-              <Button size="sm" disabled={chosen.length === 0} onClick={() => openPrint(chosen)}>
-                <Printer className="w-4 h-4 mr-2" />
-                Réimprimer la sélection ({chosen.length})
+              <Button size="sm" disabled={busy || chosen.length === 0} onClick={redownload}>
+                <Download className="w-4 h-4 mr-2" />
+                PDF de la sélection ({chosen.length})
               </Button>
             </div>
           </CardHeader>
