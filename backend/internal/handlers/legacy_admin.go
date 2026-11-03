@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	crand "crypto/rand"
 	"errors"
 	"fmt"
 	"math/rand"
@@ -145,17 +146,91 @@ func (d *Deps) legacyAdminGenerateCardCodes(ctx context.Context, payload map[str
 	quantity := intField(payload, "quantity", 10)
 	prefix := strings.ToUpper(orDefault(str(payload, "prefix"), "MH"))
 	batchID := "LOT-" + strings.ToUpper(randomAlnum(5))
+	// Generateur de cartes (admin « Generateur Bu Bees ») : avec "names", un
+	// code par nom, le nom garde dans le commentaire pour pouvoir reimprimer ;
+	// avec "label" seul, un lot de cartes sans nom marque « label : ».
+	label := str(payload, "label")
+	var names []string
+	for _, n := range stringSlice(payload, "names") {
+		if n = strings.TrimSpace(n); n != "" {
+			names = append(names, n)
+		}
+	}
+	if len(names) > 0 {
+		quantity = len(names)
+	}
+	if quantity < 1 || quantity > 500 {
+		return map[string]any{"success": false, "error": "Quantite entre 1 et 500."}, nil
+	}
 
+	codes, err := newCardCodes(ctx, prefix, quantity)
+	if err != nil {
+		return nil, err
+	}
 	docs := make([]any, 0, quantity)
-	for i := 0; i < quantity; i++ {
-		code := fmt.Sprintf("%s-%s", prefix, strings.ToUpper(randomAlnum(6)))
-		docs = append(docs, models.PhysicalCard{CodeCarte: code, Statut: models.CardStatusBlank, Commentaire: "Genere par Admin", BatchID: batchID})
+	for i, code := range codes {
+		comment := "Genere par Admin"
+		switch {
+		case len(names) > 0:
+			comment = orDefault(label, "Carte") + " : " + names[i]
+		case label != "":
+			comment = label + " : "
+		}
+		docs = append(docs, models.PhysicalCard{CodeCarte: code, Statut: models.CardStatusBlank, Commentaire: comment, BatchID: batchID})
 	}
 	if _, err := db.Collection(models.PhysicalCardsCollection).InsertMany(ctx, docs); err != nil {
 		return nil, err
 	}
 
-	return map[string]any{"success": true, "message": fmt.Sprintf("%d codes generes (Lot: %s).", quantity, batchID), "batchId": batchID}, nil
+	return map[string]any{"success": true, "message": fmt.Sprintf("%d codes generes (Lot: %s).", quantity, batchID), "batchId": batchID, "codes": codes}, nil
+}
+
+// cardCodeChars : 32 caracteres sans 0/O ni 1/I (lisibles a la main), et
+// 256 % 32 == 0, donc un octet aleatoire donne un caractere sans biais.
+const cardCodeChars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+
+// newCardCodes tire n codes « PREFIXE-XXXXXXXX » au hasard (crypto/rand : un
+// code ne se devine pas a partir des autres) et ecarte ceux qui existent deja
+// en base ou dans le lot : un code imprime n'est jamais attribue deux fois.
+// L'index unique sur codeCarte reste le dernier rempart.
+func newCardCodes(ctx context.Context, prefix string, n int) ([]string, error) {
+	seen := make(map[string]bool, n)
+	codes := make([]string, 0, n)
+	for round := 0; len(codes) < n; round++ {
+		if round == 10 {
+			return nil, errors.New("Impossible de tirer des codes uniques, reessayez.")
+		}
+		candidates := make([]string, 0, n-len(codes))
+		for len(candidates) < n-len(codes) {
+			buf := make([]byte, 8)
+			if _, err := crand.Read(buf); err != nil {
+				return nil, err
+			}
+			for i := range buf {
+				buf[i] = cardCodeChars[int(buf[i])%len(cardCodeChars)]
+			}
+			if c := prefix + "-" + string(buf); !seen[c] {
+				seen[c] = true
+				candidates = append(candidates, c)
+			}
+		}
+		taken, err := db.Collection(models.PhysicalCardsCollection).Distinct(ctx, "codeCarte", bson.M{"codeCarte": bson.M{"$in": candidates}})
+		if err != nil {
+			return nil, err
+		}
+		exists := make(map[string]bool, len(taken))
+		for _, t := range taken {
+			if s, ok := t.(string); ok {
+				exists[s] = true
+			}
+		}
+		for _, c := range candidates {
+			if !exists[c] {
+				codes = append(codes, c)
+			}
+		}
+	}
+	return codes, nil
 }
 
 func (d *Deps) legacyAdminUpdateCardSale(ctx context.Context, payload map[string]any, user *models.User) (map[string]any, error) {

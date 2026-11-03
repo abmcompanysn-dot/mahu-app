@@ -368,6 +368,19 @@ export const adminApi = {
     return res as ApiBatchResponse
   },
 
+  // Un code neuf par nom (generateur de cartes nominatives, ex. Bu Bees) ;
+  // le nom est garde dans le commentaire de la carte (« label : nom »).
+  generateNamedCards: async (token: string, names: string[], label: string, prefix: string) => {
+    const res = await callAppScript("adminGenerateCardCodes", { names, label, prefix }, token)
+    return res as ApiBatchResponse & { codes?: string[] }
+  },
+
+  // Lot de cartes sans nom : codes neufs tires au hasard, marques « label : ».
+  generateCardLot: async (token: string, quantity: number, label: string, prefix: string) => {
+    const res = await callAppScript("adminGenerateCardCodes", { quantity, label, prefix }, token)
+    return res as ApiBatchResponse & { codes?: string[] }
+  },
+
   assignCardLot: (token: string, codes: string, resellerEmail: string) =>
     callAppScript("adminAssignCardLot", { codes, resellerEmail }, token),
 

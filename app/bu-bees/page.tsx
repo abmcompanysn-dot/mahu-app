@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { Anton } from "next/font/google"
 import { BarChart3, Camera, Nfc, QrCode, Scissors, Share2, ShoppingBag, Store, Truck, UserRound, Utensils, Wallet } from "lucide-react"
+import type { Product } from "@/lib/shop-api"
 
 // Page de vente de la carte MAHU Bu Bees (edition Teranga), en wolof, pour
 // les entrepreneurs et commercants senegalais. Produit "carte-bu-bees".
@@ -16,7 +17,30 @@ export const metadata = {
   twitter: { card: "summary_large_image", images: ["/bu-bees/og.jpg"] },
 }
 
+// Rendu a chaque visite : la liste des prix vient du catalogue de la boutique.
+export const dynamic = "force-dynamic"
+
 const anton = Anton({ weight: "400", subsets: ["latin"] })
+
+const BACKEND_URL = process.env.BACKEND_URL || "http://127.0.0.1:4000"
+const SERVICE_API_KEY = process.env.BACKEND_API_KEY || ""
+
+// Catalogue public (meme source que /register), lu cote serveur.
+async function getProducts(): Promise<Product[]> {
+  try {
+    const res = await fetch(new URL("/api/shop/products", BACKEND_URL), {
+      headers: { "x-api-key": SERVICE_API_KEY },
+      cache: "no-store",
+    })
+    if (!res.ok) return []
+    const data = (await res.json()) as { products?: Product[] }
+    return (data.products || []).filter((p) => p.active !== false)
+  } catch {
+    return []
+  }
+}
+
+const fcfa = (n: number) => n.toLocaleString("fr-FR").replace(/\u202f|\u00a0/g, " ")
 
 const ORDER = "/register?product=carte-bu-bees"
 const GREEN = "#00853F"
@@ -90,7 +114,8 @@ function Stripes({ className = "" }: { className?: string }) {
   )
 }
 
-export default function BuBeesPage() {
+export default async function BuBeesPage() {
+  const products = await getProducts()
   return (
     <div lang="wo" className="min-h-screen overflow-x-clip bg-[#03110a] text-white">
       <Stripes className="h-2" />
@@ -212,6 +237,49 @@ export default function BuBeesPage() {
             </div>
           ))}
         </div>
+
+        {products.length > 0 && (
+          <>
+            <h2 className={`${anton.className} mt-20 text-3xl sm:text-4xl tracking-wide`}>NJËG YI</h2>
+            <p className="mt-2 text-white/60">Kàrt yépp ak njëg yi. Tànnal bi la neex.</p>
+            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {products.map((p) => {
+                const featured = p.slug === "carte-bu-bees"
+                return (
+                  <div
+                    key={p._id}
+                    className={`flex flex-col rounded-2xl border p-5 ${featured ? "border-[#FDEF42]/60 bg-[#FDEF42]/[0.07]" : "border-white/10 bg-white/[0.04]"}`}
+                  >
+                    {p.imageUrl && (
+                      <div className="mb-4 flex h-32 items-center justify-center overflow-hidden rounded-xl bg-black/30">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={p.imageUrl} alt="" className="max-h-full max-w-full object-contain" loading="lazy" />
+                      </div>
+                    )}
+                    {featured && (
+                      <span className="mb-1 text-xs font-bold uppercase tracking-[0.2em]" style={{ color: YELLOW }}>
+                        Bu bees
+                      </span>
+                    )}
+                    <h3 className="font-bold leading-snug">{p.name}</h3>
+                    {p.material && <p className="mt-1 text-sm text-white/50">{p.material}</p>}
+                    <p className="mt-3 text-white/70">
+                      {p.priceIsFrom && <span className="text-sm">Dale ci </span>}
+                      <b className={`${anton.className} text-2xl tracking-wide text-white`}>{fcfa(p.priceXof)}</b> FCFA
+                    </p>
+                    <a
+                      href={`/register?product=${encodeURIComponent(p.slug)}`}
+                      className={`mt-4 inline-flex justify-center rounded-xl px-4 py-2.5 font-bold ${featured ? "text-[#06301b]" : "bg-white/10 hover:bg-white/15"}`}
+                      style={featured ? { background: YELLOW } : undefined}
+                    >
+                      Jënd
+                    </a>
+                  </div>
+                )
+              })}
+            </div>
+          </>
+        )}
 
         <h2 className={`${anton.className} mt-20 text-3xl sm:text-4xl tracking-wide`}>LAAJ YI</h2>
         <div className="mt-6 space-y-3">
