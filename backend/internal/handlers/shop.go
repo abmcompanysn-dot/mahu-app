@@ -115,10 +115,10 @@ func EnsureComputerProducts(ctx context.Context) error {
 // buBeesProduct : carte MAHU Bu Bees, edition Teranga (lancement novembre 2026,
 // page de vente en wolof /bu-bees). Nom du client et QR code imprimes au recto.
 var buBeesProduct = models.Product{
-	Slug: "carte-bu-bees", Name: "MAHU Bu Bees — Édition Teranga", PriceXof: 13900, Category: models.ProductCategoryNfcCard,
+	Slug: "carte-bu-bees", Name: "Carte de visite digitale Bu Bees NFC — Édition limitée", PriceXof: 8375, Category: models.ProductCategoryNfcCard,
 	Material: "PVC Premium", ImageURL: "/products/carte-bu-bees.png",
 	Description: "La nouvelle Smart Card aux couleurs du Sénégal : votre nom et votre QR code au recto, « Sénégal Rek · Tech bi MAHU » au verso.",
-	Features:    []string{"Couleurs de la Teranga", "Votre nom imprimé", "Grand QR code au recto", "Puce NFC", "PVC Premium"},
+	Features:    []string{"Édition limitée : 8 375 FCFA au lieu de 13 900", "Votre nom imprimé", "Grand QR code au recto", "Puce NFC", "Livraison en 24 h"},
 }
 
 // EnsureBuBeesProduct ajoute la carte Bu Bees au catalogue si elle manque,

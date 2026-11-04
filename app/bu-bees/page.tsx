@@ -8,10 +8,10 @@ import type { Product } from "@/lib/shop-api"
 export const metadata = {
   title: "MAHU Bu Bees · Kàrt bu bees bi ngir sa business",
   description:
-    "MAHU Bu Bees : kàrt bu xelu, ci melo Teranga. Laal ko ak téléphone, kiliyaan bi gis sa nimero, sa WhatsApp ak sa boutik. 13 900 FCFA.",
+    "MAHU Bu Bees : kàrt bu xelu, ci melo Teranga. Laal ko ak téléphone, kiliyaan bi gis sa nimero, sa WhatsApp ak sa boutik. Édition limitée : 8 375 FCFA ci barabu 13 900, livraison ci 24 waxtu.",
   openGraph: {
     title: "MAHU Bu Bees · Sénégal Rek, Tech bi MAHU",
-    description: "Sa business, ci benn kàrt. 13 900 FCFA.",
+    description: "Sa business, ci benn kàrt. Édition limitée : 8 375 FCFA ci barabu 13 900.",
     images: [{ url: "/bu-bees/og.jpg", width: 1200, height: 630, alt: "Carte MAHU Bu Bees" }],
   },
   twitter: { card: "summary_large_image", images: ["/bu-bees/og.jpg"] },
@@ -43,6 +43,10 @@ async function getProducts(): Promise<Product[]> {
 const fcfa = (n: number) => n.toLocaleString("fr-FR").replace(/\u202f|\u00a0/g, " ")
 
 const ORDER = "/register?product=carte-bu-bees"
+const WHATSAPP = "https://wa.me/221769047999?text=" + encodeURIComponent("Salaam, bëgg naa kàrt MAHU Bu Bees bi (8 375 FCFA).")
+// Promo de lancement « edition limitee » : 10 cartes a 8 375 FCFA au lieu de 13 900.
+const PRICE = "8 375"
+const OLD_PRICE = "13 900"
 const GREEN = "#00853F"
 const YELLOW = "#FDEF42"
 const RED = "#E31B23"
@@ -65,7 +69,7 @@ const benefits = [
 ]
 
 const steps = [
-  { title: "Jënd sa kàrt", text: "13 900 FCFA. Sa tur lañuy bind ci kàrt bi, mel ni kàrtu banque." },
+  { title: "Jënd sa kàrt", text: "8 375 FCFA ci barabu 13 900 (édition limitée). Sa tur lañuy bind ci kàrt bi, mel ni kàrtu banque." },
   { title: "Defar sa profil", text: "Sa nataal, sa nimero, sa boutik, sa produits. Danuy la dimbali, bul sonn." },
   { title: "Laal, jaay", text: "Kiliyaan bi laal kàrt bi walla mu scanner QR code bi : mu nekk sa kiliyaan." },
 ]
@@ -142,6 +146,12 @@ export default async function BuBeesPage() {
               <p className="text-sm font-bold uppercase tracking-[0.25em]" style={{ color: YELLOW }}>
                 Sénégal rek · Tech bi MAHU
               </p>
+              <span
+                className="mt-4 inline-block rounded-full px-4 py-1.5 text-xs font-extrabold uppercase tracking-[0.2em] text-white"
+                style={{ background: RED }}
+              >
+                Édition limitée · 10 kàrt rek
+              </span>
               <h1 className={`${anton.className} mt-4 text-5xl sm:text-7xl leading-[1.02] tracking-wide`}>
                 SA BUSINESS,
                 <br />
@@ -160,9 +170,22 @@ export default async function BuBeesPage() {
                   Jënd sa kàrt
                 </a>
                 <span className="text-white/70">
-                  <b className={`${anton.className} text-3xl tracking-wide text-white`}>13 900</b> FCFA rek
+                  <s className="mr-2 text-white/50">{OLD_PRICE}</s>
+                  <b className={`${anton.className} text-4xl tracking-wide`} style={{ color: YELLOW }}>
+                    {PRICE}
+                  </b>{" "}
+                  FCFA
+                  <span className="ml-2 rounded-md px-2 py-0.5 text-sm font-extrabold text-white" style={{ background: RED }}>
+                    -40 %
+                  </span>
                 </span>
               </div>
+              <p className="mt-4 text-white/70">
+                Livraison ci 24 waxtu ·{" "}
+                <a href={WHATSAPP} className="font-bold text-white underline underline-offset-4">
+                  WhatsApp : 76 904 79 99
+                </a>
+              </p>
             </div>
 
             <div className="relative mx-auto w-full max-w-md h-[300px] sm:h-[380px]">
@@ -265,6 +288,7 @@ export default async function BuBeesPage() {
                     {p.material && <p className="mt-1 text-sm text-white/50">{p.material}</p>}
                     <p className="mt-3 text-white/70">
                       {p.priceIsFrom && <span className="text-sm">Dale ci </span>}
+                      {featured && p.priceXof < 13900 && <s className="mr-2 text-white/40">{OLD_PRICE}</s>}
                       <b className={`${anton.className} text-2xl tracking-wide text-white`}>{fcfa(p.priceXof)}</b> FCFA
                     </p>
                     <a
@@ -297,7 +321,7 @@ export default async function BuBeesPage() {
             Sénégal rek
           </p>
           <h2 className={`${anton.className} mt-3 text-4xl sm:text-5xl tracking-wide`}>TECH BI, MAHU.</h2>
-          <p className="mt-3 text-white/85">Sa kàrt Bu Bees, ak sa tur ci kaw. 13 900 FCFA rek.</p>
+          <p className="mt-3 text-white/85">Sa kàrt Bu Bees, ak sa tur ci kaw. {PRICE} FCFA ci barabu {OLD_PRICE}, livraison ci 24 waxtu. Édition limitée : 10 kàrt rek.</p>
           <a
             href={ORDER}
             className="mt-7 inline-flex rounded-2xl px-7 py-4 text-lg font-extrabold text-[#06301b] hover:brightness-105"
