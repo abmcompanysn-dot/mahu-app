@@ -5,8 +5,9 @@ import { motion, AnimatePresence } from "framer-motion"
 import { 
   Phone, Mail, MapPin, Download, Copy, Check, Send,
   Linkedin, Twitter, Instagram, Facebook, Globe, Github,
-  MessageCircle, Youtube, Music, Link2, Lock, KeyRound, ShoppingBag
+  MessageCircle, Youtube, Ghost, AtSign, Pin, Link2, Lock, KeyRound, ShoppingBag
 } from "lucide-react"
+import { TikTokIcon } from "@/components/icons/brand-icons"
 import Link from "next/link"
 import { api } from "@/lib/api"
 import { LEAD_CHANNELS, PHONE_PREFIXES, formatLeadContact, type LeadChannel } from "@/lib/lead-contact"
@@ -45,7 +46,11 @@ const socialIcons: Record<string, React.ElementType> = {
   facebook: Facebook,
   github: Github,
   youtube: Youtube,
-  tiktok: Music,
+  tiktok: TikTokIcon,
+  snapchat: Ghost,
+  telegram: Send,
+  threads: AtSign,
+  pinterest: Pin,
   whatsapp: MessageCircle,
   website: Globe,
   default: Link2,

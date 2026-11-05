@@ -5,8 +5,9 @@ import { motion, AnimatePresence } from "framer-motion"
 import { 
   User, Briefcase, Link as LinkIcon, Palette, 
   Camera, Save, Loader2, Plus, Trash2, Check,
-  Linkedin, Twitter, Instagram, Globe, Github, Mail, Phone, Facebook, Youtube, MessageCircle
+  Linkedin, Twitter, Instagram, Globe, Github, Mail, Phone, Facebook, Youtube, MessageCircle, Ghost, Send, AtSign, Pin
 } from "lucide-react"
+import { TikTokIcon } from "@/components/icons/brand-icons"
 import { Button } from "@/components/ui/button"
 import { PhonePreview } from "@/components/dashboard/phone-preview"
 import { ConfidentialModeToggle, LeadCaptureToggle } from "@/components/dashboard/lead-capture-toggle"
@@ -24,11 +25,16 @@ const tabs = [
 
 const socialPlatforms = [
   { id: "linkedin", label: "LinkedIn", icon: Linkedin, placeholder: "https://linkedin.com/in/username" },
-  { id: "twitter", label: "Twitter", icon: Twitter, placeholder: "https://twitter.com/username" },
+  { id: "twitter", label: "X (Twitter)", icon: Twitter, placeholder: "https://x.com/username" },
   { id: "instagram", label: "Instagram", icon: Instagram, placeholder: "https://instagram.com/username" },
   { id: "facebook", label: "Facebook", icon: Facebook, placeholder: "https://facebook.com/username" },
   { id: "github", label: "GitHub", icon: Github, placeholder: "https://github.com/username" },
   { id: "youtube", label: "YouTube", icon: Youtube, placeholder: "https://youtube.com/@username" },
+  { id: "tiktok", label: "TikTok", icon: TikTokIcon, placeholder: "https://tiktok.com/@username" },
+  { id: "snapchat", label: "Snapchat", icon: Ghost, placeholder: "https://snapchat.com/add/username" },
+  { id: "telegram", label: "Telegram", icon: Send, placeholder: "https://t.me/username" },
+  { id: "threads", label: "Threads", icon: AtSign, placeholder: "https://threads.net/@username" },
+  { id: "pinterest", label: "Pinterest", icon: Pin, placeholder: "https://pinterest.com/username" },
   { id: "whatsapp", label: "WhatsApp", icon: MessageCircle, placeholder: "+33612345678" },
   { id: "website", label: "Site web", icon: Globe, placeholder: "https://votre-site.com" },
   { id: "email", label: "Email", icon: Mail, placeholder: "email@exemple.com" },
@@ -450,7 +456,7 @@ export default function ProfilePage() {
                 className="space-y-4"
               >
                 {socialLinks.map((link, index) => {
-                  const platform = socialPlatforms.find(p => p.id === link.type) || socialPlatforms[7]
+                  const platform = socialPlatforms.find(p => p.id === link.type) || socialPlatforms.find(p => p.id === "website")!
                   const Icon = platform.icon
                   
                   return (

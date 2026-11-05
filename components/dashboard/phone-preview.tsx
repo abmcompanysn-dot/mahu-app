@@ -2,7 +2,8 @@
 
 // v6 - Supports both Profile and UserProfile types
 import { motion } from "framer-motion"
-import { Linkedin, Mail, Phone, Globe, MapPin, Instagram, Twitter, Facebook, Youtube, Github, MessageCircle, Link as LinkIcon } from "lucide-react"
+import { Linkedin, Mail, Phone, Globe, MapPin, Instagram, Twitter, Facebook, Youtube, Github, MessageCircle, Ghost, Send, AtSign, Pin, Link as LinkIcon } from "lucide-react"
+import { TikTokIcon } from "@/components/icons/brand-icons"
 import { useSiteOrigin } from "@/hooks/use-site-origin"
 
 const socialIcons: Record<string, React.ComponentType<{ className?: string; style?: React.CSSProperties }>> = {
@@ -16,6 +17,11 @@ const socialIcons: Record<string, React.ComponentType<{ className?: string; styl
   youtube: Youtube,
   github: Github,
   whatsapp: MessageCircle,
+  tiktok: TikTokIcon,
+  snapchat: Ghost,
+  telegram: Send,
+  threads: AtSign,
+  pinterest: Pin,
   default: LinkIcon,
 }
 
@@ -30,6 +36,11 @@ const socialColors: Record<string, string> = {
   youtube: "#FF0000",
   github: "#333333",
   whatsapp: "#25D366",
+  tiktok: "#111111",
+  snapchat: "#FFC300",
+  telegram: "#26A5E4",
+  threads: "#111111",
+  pinterest: "#E60023",
   default: "#6B7280",
 }
 
