@@ -214,6 +214,10 @@ func (d *Deps) legacyRegisterUser(ctx context.Context, email, password, enterpri
 	return map[string]any{"success": true, "newUser": true, "token": token, "profileUrl": user.ProfileURL}, nil
 }
 
+// defaultClientPassword : mot de passe provisoire donne aux clients livres (guide
+// imprime glisse avec la carte). Qui se connecte avec doit en choisir un autre.
+const defaultClientPassword = "mahu1234@"
+
 func (d *Deps) legacyLoginUser(ctx context.Context, email, password string) (map[string]any, error) {
 	email = strings.ToLower(strings.TrimSpace(email))
 	if limitUserLogin.blocked(ctx, email) {
@@ -250,11 +254,44 @@ func (d *Deps) legacyLoginUser(ctx context.Context, email, password string) (map
 	}
 
 	return map[string]any{
-		"success": true,
-		"newUser": user.OnboardingStatus != models.OnboardingCompleted,
-		"token":   token,
-		"role":    user.Role,
+		"success":            true,
+		"newUser":            user.OnboardingStatus != models.OnboardingCompleted,
+		"token":              token,
+		"role":               user.Role,
+		"mustChangePassword": user.MustChangePassword || password == defaultClientPassword,
 	}, nil
+}
+
+// legacyChangePassword : changement de mot de passe connecte (mot de passe
+// actuel + nouveau), utilise a la premiere connexion d'un compte livre avec
+// le mot de passe provisoire.
+func (d *Deps) legacyChangePassword(ctx context.Context, payload map[string]any, user *models.User) (map[string]any, error) {
+	current, next := str(payload, "currentPassword"), str(payload, "newPassword")
+	if user.PasswordHash == "" {
+		return map[string]any{"success": false, "error": "Ce compte se connecte sans mot de passe (Google, Facebook...)."}, nil
+	}
+	if valid, _, _ := legacyauth.VerifyPassword(user.PasswordHash, current); !valid {
+		return map[string]any{"success": false, "error": "Mot de passe actuel incorrect."}, nil
+	}
+	if len([]rune(next)) < 8 {
+		return map[string]any{"success": false, "error": "Le nouveau mot de passe doit contenir au moins 8 caracteres."}, nil
+	}
+	if next == defaultClientPassword || next == current {
+		return map[string]any{"success": false, "error": "Choisissez un mot de passe different du mot de passe provisoire."}, nil
+	}
+	stored, err := legacyauth.HashPassword(next)
+	if err != nil {
+		return nil, err
+	}
+	_, err = db.Collection(models.UsersCollection).UpdateOne(ctx, bson.M{"_id": user.ID}, bson.M{
+		"$set":   bson.M{"passwordHash": stored, "updatedAt": time.Now()},
+		"$unset": bson.M{"mustChangePassword": ""},
+	})
+	if err != nil {
+		return nil, err
+	}
+	d.logAction(ctx, "changePassword", models.LogStatusSuccess, "Mot de passe change", user.Email)
+	return map[string]any{"success": true, "message": "Mot de passe change."}, nil
 }
 
 func (d *Deps) legacyForgotPassword(ctx context.Context, email string) (map[string]any, error) {

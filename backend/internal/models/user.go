@@ -32,6 +32,9 @@ type User struct {
 	OnboardingStatus     string     `bson:"onboardingStatus,omitempty" json:"onboardingStatus,omitempty"`
 	ResetToken           string     `bson:"resetToken,omitempty" json:"-"`
 	ResetTokenExpiration *time.Time `bson:"resetTokenExpiration,omitempty" json:"-"`
+	// Compte cree par l'equipe avec un mot de passe provisoire : le client doit
+	// le changer a sa premiere connexion (voir legacyChangePassword).
+	MustChangePassword bool `bson:"mustChangePassword,omitempty" json:"-"`
 
 	// Disabled accounts are rejected at login (all paths - password, social,
 	// biometric) but keep their data, unlike a delete.

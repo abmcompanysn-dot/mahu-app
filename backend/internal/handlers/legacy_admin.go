@@ -62,7 +62,7 @@ func (d *Deps) legacyAdminRegisterClient(ctx context.Context, payload map[string
 	user := models.User{
 		ID: primitive.NewObjectID(), Email: email, Role: models.RoleEntreprise, PasswordHash: storedPassword,
 		ProfileURL: profileURL, NfcCardIDs: []string{}, OnboardingStatus: models.OnboardingCompleted,
-		CreatedAt: now, UpdatedAt: now,
+		MustChangePassword: true, CreatedAt: now, UpdatedAt: now,
 	}
 	if _, err := db.Collection(models.UsersCollection).InsertOne(ctx, user); err != nil {
 		return nil, err

@@ -36,7 +36,7 @@ export default function LoginPage() {
       if (result.success) {
         setSuccess(true)
         setTimeout(() => {
-          router.push(nextPath())
+          router.push(result.mustChangePassword ? "/changer-mot-de-passe" : nextPath())
         }, 1000)
       } else {
         setError(result.error || "Email ou mot de passe incorrect")

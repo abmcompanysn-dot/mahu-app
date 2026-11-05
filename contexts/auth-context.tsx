@@ -5,6 +5,10 @@ import { useRouter } from "next/navigation"
 import { api } from "@/lib/api"
 import { signInWithGooglePopup, signInWithFacebookPopup } from "@/lib/firebase"
 
+// Compte livre avec le mot de passe provisoire : a changer sur /changer-mot-de-passe
+// avant le tableau de bord (pose a la connexion, retire une fois change).
+export const MUST_CHANGE_PASSWORD_KEY = "mahu_must_change_password"
+
 // Types bases sur la reponse AppScript
 export interface AppScriptUser {
   ID_Unique: string
@@ -60,7 +64,7 @@ interface AuthContextValue {
   isAuthenticated: boolean
   dashboardData: AppScriptDashboardData | null
   user: AppScriptUser | null
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string; newUser?: boolean }>
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string; newUser?: boolean; mustChangePassword?: boolean }>
   register: (email: string, password: string, cardCode?: string, profileUrl?: string) => Promise<{ success: boolean; error?: string }>
   socialLogin: (provider: "google" | "facebook") => Promise<{ success: boolean; error?: string; newUser?: boolean }>
   hydrateFromToken: (token: string, role: string) => void
@@ -139,13 +143,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (result.success && result.token) {
       localStorage.setItem("mahu_token", result.token)
       localStorage.setItem("mahu_role", result.role || "Entreprise")
+      if (result.mustChangePassword) localStorage.setItem(MUST_CHANGE_PASSWORD_KEY, "1")
+      else localStorage.removeItem(MUST_CHANGE_PASSWORD_KEY)
       
       setToken(result.token)
       setRole(result.role || "Entreprise")
       setIsAuthenticated(true)
       setIsLoading(false)
       
-      return { success: true, newUser: result.newUser }
+      return { success: true, newUser: result.newUser, mustChangePassword: !!result.mustChangePassword }
     }
 
     setIsLoading(false)
@@ -233,6 +239,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     localStorage.removeItem("mahu_token")
     localStorage.removeItem("mahu_role")
+    localStorage.removeItem(MUST_CHANGE_PASSWORD_KEY)
     
     setToken(null)
     setRole(null)

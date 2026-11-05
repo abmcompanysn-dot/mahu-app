@@ -60,6 +60,8 @@ func (d *Deps) runLegacyAction(ctx context.Context, action string, payload map[s
 	}
 
 	switch action {
+	case "changePassword":
+		return d.legacyChangePassword(ctx, payload, user)
 	case "getDashboardData":
 		return d.legacyGetDashboardData(ctx, user)
 	case "saveProfile":

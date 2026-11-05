@@ -119,6 +119,8 @@ export interface ApiResponse<T = unknown> {
   token?: string
   newUser?: boolean
   role?: string
+  // loginUser : mot de passe provisoire, a changer avant le tableau de bord
+  mustChangePassword?: boolean
   // For getDashboardData response
   profile?: Profile
   profileUrl?: string
@@ -235,6 +237,9 @@ export const api = {
   
   resetPassword: (token: string, newPassword: string) =>
     callAppScript("resetPassword", { token, newPassword }),
+
+  changePassword: (token: string, currentPassword: string, newPassword: string) =>
+    callAppScript("changePassword", { currentPassword, newPassword }, token),
   
   logout: (token: string) =>
     callAppScript("logout", {}, token),

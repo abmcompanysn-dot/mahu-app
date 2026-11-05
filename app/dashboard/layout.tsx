@@ -1,6 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import { MUST_CHANGE_PASSWORD_KEY } from "@/contexts/auth-context"
 import { DashboardSidebar } from "@/components/dashboard/sidebar"
 import { DashboardHeader } from "@/components/dashboard/header"
 
@@ -11,6 +13,12 @@ export default function DashboardLayout({
 }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const router = useRouter()
+
+  // Mot de passe provisoire pas encore change : d'abord /changer-mot-de-passe.
+  useEffect(() => {
+    if (localStorage.getItem(MUST_CHANGE_PASSWORD_KEY)) router.replace("/changer-mot-de-passe")
+  }, [router])
 
   return (
     <div className="min-h-screen bg-background">
