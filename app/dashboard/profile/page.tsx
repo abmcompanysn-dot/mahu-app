@@ -20,6 +20,7 @@ const tabs = [
   { id: "images", label: "Images du profil", icon: Camera },
   { id: "info", label: "Informations", icon: User },
   { id: "links", label: "Liens sociaux", icon: LinkIcon },
+  { id: "services", label: "Services", icon: Briefcase },
   { id: "style", label: "Apparence", icon: Palette },
 ]
 
@@ -82,6 +83,8 @@ export default function ProfilePage() {
   })
   
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>([])
+  // Services affiches sous les reseaux sur la carte publique (Services_JSON).
+  const [services, setServices] = useState<Array<{ title: string; description?: string }>>([])
   const [selectedColor, setSelectedColor] = useState("#007AFF")
   const [hideBranding, setHideBranding] = useState(false)
 
@@ -106,6 +109,13 @@ export default function ProfilePage() {
       } catch {
         setSocialLinks([])
       }
+
+      try {
+        const list = JSON.parse(profile.Services_JSON || "[]")
+        setServices(Array.isArray(list) ? list : [])
+      } catch {
+        setServices([])
+      }
       
       setSelectedColor(profile.Couleur_Theme || "#007AFF")
       setHideBranding(profile.Cacher_Marque === "OUI")
@@ -126,6 +136,12 @@ export default function ProfilePage() {
         Telephone: formData.Telephone,
         URL_Profil: formData.URL_Profil,
         Liens_Sociaux_JSON: JSON.stringify(socialLinks),
+        Services_JSON: JSON.stringify(
+          services
+            .map((s) => ({ title: s.title.trim(), description: (s.description || "").trim() }))
+            .filter((s) => s.title)
+            .map((s) => (s.description ? s : { title: s.title }))
+        ),
         Couleur_Theme: selectedColor,
         Cacher_Marque: hideBranding ? "OUI" : "NON",
       }
@@ -199,6 +215,9 @@ export default function ProfilePage() {
     updated[index] = { ...updated[index], [field]: value }
     setSocialLinks(updated)
   }
+
+  const updateService = (index: number, field: "title" | "description", value: string) =>
+    setServices(services.map((s, i) => (i === index ? { ...s, [field]: value } : s)))
 
   const initials = formData.Nom_Complet
     ? formData.Nom_Complet.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
@@ -516,6 +535,64 @@ export default function ProfilePage() {
                 >
                   <Plus className="w-4 h-4" />
                   Ajouter un lien
+                </motion.button>
+              </motion.div>
+            )}
+
+            {/* Services Tab */}
+            {activeTab === "services" && (
+              <motion.div
+                key="services"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="space-y-4"
+              >
+                <p className="text-sm text-muted-foreground">
+                  Ce que vous proposez (ex. « Fret maritime Chine → Sénégal », « Location de véhicules »). Ils
+                  s&apos;affichent sur votre carte, sous vos réseaux.
+                </p>
+                {services.map((service, index) => (
+                  <div key={index} className="flex items-start gap-3">
+                    <div className="p-3 rounded-xl bg-muted/30 text-muted-foreground">
+                      <Briefcase className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1 space-y-2">
+                      <input
+                        type="text"
+                        value={service.title}
+                        onChange={(e) => updateService(index, "title", e.target.value)}
+                        placeholder="Nom du service"
+                        className="w-full px-4 py-2.5 rounded-xl bg-muted/30 border border-border/50 text-foreground focus:outline-none focus:border-primary/50 transition-colors"
+                      />
+                      <input
+                        type="text"
+                        value={service.description || ""}
+                        onChange={(e) => updateService(index, "description", e.target.value)}
+                        placeholder="Détail (optionnel) : prix, délai, zone..."
+                        className="w-full px-4 py-2.5 rounded-xl bg-muted/30 border border-border/50 text-foreground focus:outline-none focus:border-primary/50 transition-colors text-sm"
+                      />
+                    </div>
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => setServices(services.filter((_, i) => i !== index))}
+                      className="p-3 rounded-xl bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
+                      aria-label="Supprimer ce service"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </motion.button>
+                  </div>
+                ))}
+
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setServices([...services, { title: "", description: "" }])}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-4 rounded-xl border-2 border-dashed border-border/50 text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  Ajouter un service
                 </motion.button>
               </motion.div>
             )}

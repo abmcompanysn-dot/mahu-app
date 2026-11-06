@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { 
   Phone, Mail, MapPin, Download, Copy, Check, Send,
@@ -75,6 +75,7 @@ export function PublicProfileView({
   const [error, setError] = useState("")
   const [copied, setCopied] = useState<string | null>(null)
   const [showLeadForm, setShowLeadForm] = useState(false)
+  const leadFormRef = useRef<HTMLDivElement>(null)
   const [leadForm, setLeadForm] = useState({ name: "", contact: "", message: "", rating: 0 })
   const [leadChannel, setLeadChannel] = useState<LeadChannel>("whatsapp")
   const [leadPrefix, setLeadPrefix] = useState("221")
@@ -381,7 +382,11 @@ END:VCARD`
               )}
               <Button
                 variant="outline"
-                onClick={() => setShowLeadForm(!showLeadForm)}
+                onClick={() => {
+                  // Le formulaire est en bas de la carte : on l'ouvre et on y descend.
+                  setShowLeadForm(true)
+                  setTimeout(() => leadFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 80)
+                }}
                 className="flex items-center justify-center gap-2 py-4"
               >
                 <Send className="w-5 h-5" />
@@ -433,6 +438,7 @@ END:VCARD`
             )}
 
             {/* Lead Capture Form */}
+            <div ref={leadFormRef} className="scroll-mt-4" />
             <AnimatePresence>
               {(showLeadForm || profile.Lead_Capture_Actif === "OUI") && (
                 <motion.div
