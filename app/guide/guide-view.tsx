@@ -35,7 +35,7 @@ const UI: Record<Lang, {
     ],
     catalogue: "Catalogue MAHU 2026",
     catalogueDesc: "Toutes nos cartes et nos prix, 8 pages.",
-    catalogue1: "Catalogue en 1 page",
+    catalogue1: "Catalogue MAHU Tech en 1 page",
     catalogue1Desc: "Toute la gamme, images et prix, sur une seule page A4.",
     bubees: "Carte Bu Bees",
     bubeesDesc: "L'édition Teranga, en wolof et en français.",
@@ -58,7 +58,7 @@ const UI: Record<Lang, {
     ],
     catalogue: "MAHU 2026 catalogue",
     catalogueDesc: "All our cards and prices, 8 pages (in French).",
-    catalogue1: "One-page catalogue",
+    catalogue1: "MAHU Tech one-page catalogue",
     catalogue1Desc: "The whole range, pictures and prices, on one A4 page (in French).",
     bubees: "Bu Bees card",
     bubeesDesc: "The Teranga edition, in Wolof and French.",
@@ -81,7 +81,7 @@ const UI: Record<Lang, {
     ],
     catalogue: "Catalogue MAHU 2026",
     catalogueDesc: "Sunuy kàrt yépp ak seen njëg, 8 xët.",
-    catalogue1: "Catalogue ci benn xët",
+    catalogue1: "Catalogue MAHU Tech ci benn xët",
     catalogue1Desc: "Lépp, ak nataal yi ak njëg yi, ci benn xët A4.",
     bubees: "Kàrt Bu Bees",
     bubeesDesc: "Édition Teranga, ci wolof ak ci français.",
@@ -196,7 +196,7 @@ export function GuideView() {
 
           <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-5">
             <DocCard icon={Store} title={t.catalogue} desc={t.catalogueDesc} href="/kit/Catalogue-MAHU-2026.pdf" cta={t.open} />
-            <DocCard icon={FileText} title={t.catalogue1} desc={t.catalogue1Desc} href="/kit/Catalogue-MAHU-2026-1-page.pdf" cta={t.open} />
+            <DocCard icon={FileText} title={t.catalogue1} desc={t.catalogue1Desc} href="/kit/Catalogue-MAHU-Tech-2026-1-page.pdf" cta={t.open} />
             <div className="rounded-2xl border border-border bg-card p-5">
               <div className="flex items-start gap-4">
                 <div className="rounded-xl bg-[#00853F]/10 p-3 text-[#00853F]">
