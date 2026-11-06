@@ -139,9 +139,9 @@ export default function DashboardPage() {
   })) || []
 
   return (
-    <div className="grid lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Main Content */}
-      <div className="lg:col-span-2 space-y-6">
+      <div className="lg:col-span-2 space-y-6 min-w-0">
         {/* Welcome */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -181,7 +181,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Phone Preview Sidebar */}
-      <div className="lg:col-span-1">
+      <div className="lg:col-span-1 min-w-0">
         <div className="sticky top-24">
           <PhonePreview profile={phoneProfile} profileUrl={profileUrl} />
         </div>

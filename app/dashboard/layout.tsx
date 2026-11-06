@@ -28,11 +28,11 @@ export default function DashboardLayout({
         mobileOpen={mobileMenuOpen}
         onMobileOpenChange={setMobileMenuOpen}
       />
-      <div className={`transition-all duration-300 ${sidebarCollapsed ? "lg:ml-20" : "lg:ml-64"}`}>
+      <div className={`min-w-0 transition-all duration-300 ${sidebarCollapsed ? "lg:ml-20" : "lg:ml-64"}`}>
         <DashboardHeader 
           onMenuClick={() => setMobileMenuOpen(true)}
         />
-        <main className="p-4 lg:p-8">
+        <main className="min-w-0 overflow-x-clip p-4 lg:p-8">
           {children}
         </main>
       </div>

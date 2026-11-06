@@ -370,9 +370,9 @@ export default function ContactsPage() {
           transition={{ delay: 0.2 }}
           className="rounded-2xl bg-card/50 border border-border/50 backdrop-blur-sm overflow-hidden"
         >
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
+          <div className="md:overflow-x-auto">
+            <table className="block w-full md:table">
+              <thead className="hidden md:table-header-group">
                 <tr className="border-b border-border/50">
                   <th className="p-4 text-left">
                     <input
@@ -388,7 +388,7 @@ export default function ContactsPage() {
                   <th className="p-4 text-right text-sm font-medium text-muted-foreground">Actions</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="block md:table-row-group">
                 {filteredContacts.map((contact, index) => {
                   const contactType = getContactType(contact.contact)
                   const parsed = parseLeadContact(contact.contact)
@@ -399,9 +399,9 @@ export default function ContactsPage() {
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.3 + index * 0.05 }}
-                      className="border-b border-border/30 hover:bg-muted/20 transition-colors"
+                      className="flex flex-wrap items-center border-b border-border/30 hover:bg-muted/20 transition-colors md:table-row"
                     >
-                      <td className="p-4">
+                      <td className="p-4 pr-0 md:pr-4">
                         <input
                           type="checkbox"
                           checked={selectedContacts.includes(contact.id)}
@@ -409,7 +409,7 @@ export default function ContactsPage() {
                           className="w-4 h-4 rounded bg-muted/50 border-border/50"
                         />
                       </td>
-                      <td className="p-4">
+                      <td className="flex-1 min-w-0 p-4 md:w-auto">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
                             <span className="text-sm font-semibold text-primary">
@@ -424,8 +424,9 @@ export default function ContactsPage() {
                               ) : contactType === 'phone' ? (
                                 <Phone className="w-3 h-3" />
                               ) : null}
-                              <span className="truncate">{contact.contact}</span>
+                              <span className="truncate">{parsed.value || contact.contact}</span>
                             </div>
+                            <p className="text-xs text-muted-foreground lg:hidden">{formatDate(contact.date)}</p>
                           </div>
                         </div>
                       </td>
@@ -442,8 +443,8 @@ export default function ContactsPage() {
                       <td className="p-4 hidden lg:table-cell text-sm text-muted-foreground">
                         {formatDate(contact.date)}
                       </td>
-                      <td className="p-4">
-                        <div className="flex items-center justify-end gap-2">
+                      <td className="w-full px-4 pb-4 pt-0 md:w-auto md:p-4">
+                        <div className="flex flex-wrap items-center gap-2 md:justify-end">
                           <select
                             value={statusOf(contact)}
                             onChange={(e) => setContactStatus(contact, e.target.value as ContactStatus)}

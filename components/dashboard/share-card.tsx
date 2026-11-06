@@ -101,14 +101,14 @@ export function ShareCard({ options, username = "" }: ShareCardProps) {
 
         {/* Quick link display */}
         <div className="mt-4 flex items-center gap-2 p-3 rounded-xl bg-muted/30 border border-border/50">
-          <span className="flex-1 text-sm text-muted-foreground truncate">
+          <span className="flex-1 min-w-0 text-sm text-muted-foreground truncate">
             {host}/p/{username}
           </span>
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => handleAction("copy")}
-            className="px-3 py-1.5 text-xs font-medium bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors"
+            className="shrink-0 px-3 py-1.5 text-xs font-medium bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors"
           >
             {copiedLink ? "Copie !" : "Copier"}
           </motion.button>

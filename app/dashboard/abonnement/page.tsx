@@ -81,7 +81,7 @@ export default function AbonnementPage() {
         </div>
         <h1 className="relative text-3xl font-bold text-foreground mt-2">Debloque plus de puissance IA</h1>
         <p className="relative text-muted-foreground mt-2 max-w-xl">
-          {modelsInfo ? `Plan actuel : ${modelsInfo.plan}` : "Choisis le palier adapte a ton usage."}
+          {modelsInfo?.plan ? `Plan actuel : ${modelsInfo.plan}` : "Choisis le palier adapte a ton usage."}
         </p>
       </motion.div>
 

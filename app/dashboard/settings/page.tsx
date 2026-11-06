@@ -214,18 +214,18 @@ function SettingsPageInner() {
         transition={{ delay: 0.05 }}
         className="rounded-2xl bg-card/50 border border-border/50 backdrop-blur-sm overflow-hidden"
       >
-        <div className="flex items-center gap-4 p-6">
-          <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center">
+        <div className="flex flex-wrap items-center gap-4 p-4 sm:p-6">
+          <div className="w-16 h-16 shrink-0 rounded-full bg-primary/20 flex items-center justify-center">
             <span className="text-xl font-bold text-primary">{initials}</span>
           </div>
-          <div className="flex-1">
-            <h3 className="font-semibold text-foreground text-lg">{displayName}</h3>
-            <p className="text-muted-foreground">{email}</p>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-foreground text-lg truncate">{displayName}</h3>
+            <p className="text-muted-foreground truncate">{email}</p>
           </div>
           <Button 
             variant="outline" 
             onClick={handleLogout}
-            className="border-destructive/50 text-destructive hover:bg-destructive/10"
+            className="w-full sm:w-auto border-destructive/50 text-destructive hover:bg-destructive/10"
           >
             <LogOut className="w-4 h-4 mr-2" />
             Deconnexion

@@ -224,9 +224,9 @@ export default function ProfilePage() {
     : "?"
 
   return (
-    <div className="grid lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Editor Section */}
-      <div className="lg:col-span-2 space-y-6">
+      <div className="lg:col-span-2 space-y-6 min-w-0">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -284,7 +284,7 @@ export default function ProfilePage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="p-6 rounded-2xl bg-card/50 border border-border/50 backdrop-blur-sm"
+          className="p-4 sm:p-6 rounded-2xl bg-card/50 border border-border/50 backdrop-blur-sm"
         >
           <AnimatePresence mode="wait">
             {/* Images Tab */}
@@ -450,14 +450,14 @@ export default function ProfilePage() {
                 <div>
                   <label className="block text-sm font-medium text-muted-foreground mb-2">URL personnalisee</label>
                   <div className="flex">
-                    <span className="px-4 py-3 rounded-l-xl bg-muted/50 border border-r-0 border-border/50 text-muted-foreground text-sm">
+                    <span className="shrink-0 whitespace-nowrap px-3 sm:px-4 py-3 rounded-l-xl bg-muted/50 border border-r-0 border-border/50 text-muted-foreground text-sm">
                       {host}/p/
                     </span>
                     <input
                       type="text"
                       value={formData.URL_Profil}
                       onChange={(e) => setFormData({ ...formData, URL_Profil: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })}
-                      className="flex-1 px-4 py-3 rounded-r-xl bg-muted/30 border border-border/50 text-foreground focus:outline-none focus:border-primary/50 transition-colors"
+                      className="flex-1 min-w-0 px-3 sm:px-4 py-3 rounded-r-xl bg-muted/30 border border-border/50 text-foreground focus:outline-none focus:border-primary/50 transition-colors"
                       placeholder="jean-dupont"
                     />
                   </div>
@@ -654,7 +654,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Phone Preview */}
-      <div className="lg:col-span-1">
+      <div className="lg:col-span-1 min-w-0">
         <div className="sticky top-24">
           <p className="text-sm text-muted-foreground text-center mb-4">Apercu de votre carte</p>
           <PhonePreview 

@@ -40,6 +40,19 @@ interface RecentActivityProps {
   activities?: ActivityItem[]
 }
 
+// Date lisible : « A l'instant », « Il y a 5 min », « Il y a 2 h », « Hier », « 2 nov. ».
+function formatWhen(value: string): string {
+  const d = new Date(value)
+  if (!/^\d{4}-\d{2}-\d{2}/.test(value) || isNaN(d.getTime())) return value
+  const minutes = (Date.now() - d.getTime()) / 60000
+  if (minutes < 1) return "A l'instant"
+  if (minutes < 60) return `Il y a ${Math.floor(minutes)} min`
+  if (minutes < 24 * 60) return `Il y a ${Math.floor(minutes / 60)} h`
+  if (minutes < 48 * 60) return "Hier"
+  const sameYear = d.getFullYear() === new Date().getFullYear()
+  return d.toLocaleDateString("fr-FR", { day: "numeric", month: "short", ...(sameYear ? {} : { year: "numeric" }) })
+}
+
 export function RecentActivity({ activities }: RecentActivityProps) {
   // Transform activities to display format - NO demo data
   const displayActivities = activities && activities.length > 0 
@@ -47,7 +60,7 @@ export function RecentActivity({ activities }: RecentActivityProps) {
         id: act.id || String(idx),
         type: act.type || act.source || "view",
         text: act.text || (act.source ? `Vue depuis ${act.source}` : "Activite"),
-        time: act.time || act.date || act.timestamp || "Recemment",
+        time: formatWhen(act.time || act.date || act.timestamp || "Recemment"),
       }))
     : []
   
