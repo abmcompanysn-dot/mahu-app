@@ -1,0 +1,143 @@
+{
+  "fr": {
+    "kicker": "Avant de commencer",
+    "title": "Quel téléphone ? NFC et QR code",
+    "intro": "Votre carte s'ouvre de deux façons : en la touchant avec le téléphone (NFC) ou en scannant son QR code. Rien à installer, ni pour vous ni pour votre client.",
+    "blocks": [
+      {
+        "id": "iphone",
+        "title": "iPhone",
+        "badge": "Touchez le haut",
+        "items": [
+          "<b>iPhone XS, XR et plus récents</b> (11 à 17, SE 2ᵉ génération et après) : rien à activer. Écran allumé et déverrouillé, approchez le <b>haut de l'iPhone</b> de la carte. Une notification apparaît : touchez-la.",
+          "<b>iPhone 7, 8 et X</b> : ouvrez le Centre de contrôle et touchez <b>« Lecteur de tags NFC »</b>. Absent ? Réglages → Centre de contrôle → ajoutez-le.",
+          "<b>iPhone 6 et plus anciens</b> : pas de NFC. Utilisez le QR code."
+        ]
+      },
+      {
+        "id": "android",
+        "title": "Android",
+        "badge": "Touchez le dos",
+        "items": [
+          "La plupart des Android ont le NFC (Samsung, Tecno, Infinix, Itel, Xiaomi, Oppo, Huawei…). Quelques modèles d'entrée de gamme ne l'ont pas.",
+          "<b>Pour l'activer</b> : glissez le doigt du haut de l'écran vers le bas et touchez l'icône <b>NFC</b> (elle devient bleue).",
+          "<b>Pas d'icône ?</b> Ouvrez <b>Paramètres</b>, tapez « NFC » dans la loupe et activez. Samsung : Connexions → NFC et paiements sans contact.",
+          "<b>Où toucher ?</b> Au dos du téléphone, au milieu ou un peu plus haut. Gardez la carte à plat 2 secondes."
+        ]
+      },
+      {
+        "id": "qr",
+        "title": "QR code",
+        "badge": "Marche partout",
+        "items": [
+          "Pas de NFC ? Le QR code marche sur tous les téléphones avec appareil photo.",
+          "<b>iPhone</b> : ouvrez l'Appareil photo, visez le QR code, touchez le lien jaune.",
+          "<b>Android</b> : ouvrez l'Appareil photo ou Google Lens, visez le QR code, touchez le lien.",
+          "Votre QR code est aussi dans votre tableau de bord : <b>Partager votre carte → QR Code</b>, pour le montrer sur votre écran."
+        ]
+      }
+    ],
+    "tips_title": "Ça ne s'ouvre pas ?",
+    "tips": [
+      "Téléphone déverrouillé, écran allumé.",
+      "Enlevez une coque épaisse, métallique ou aimantée.",
+      "Ne bougez pas : carte à plat, 2 secondes.",
+      "La carte n'a pas de batterie : elle ne s'use pas et ne se recharge jamais."
+    ],
+    "powered": "Propulsé par"
+  },
+  "en": {
+    "kicker": "Before you start",
+    "title": "Which phone? NFC and QR code",
+    "intro": "Your card opens in two ways: by tapping it with the phone (NFC) or by scanning its QR code. Nothing to install, for you or for your client.",
+    "blocks": [
+      {
+        "id": "iphone",
+        "title": "iPhone",
+        "badge": "Tap the top",
+        "items": [
+          "<b>iPhone XS, XR and newer</b> (11 to 17, SE 2nd generation and later): nothing to turn on. With the screen on and unlocked, hold the <b>top of the iPhone</b> near the card. A notification appears: tap it.",
+          "<b>iPhone 7, 8 and X</b>: open Control Center and tap <b>“NFC Tag Reader”</b>. Not there? Settings → Control Center → add it.",
+          "<b>iPhone 6 and older</b>: no NFC. Use the QR code."
+        ]
+      },
+      {
+        "id": "android",
+        "title": "Android",
+        "badge": "Tap the back",
+        "items": [
+          "Most Android phones have NFC (Samsung, Tecno, Infinix, Itel, Xiaomi, Oppo, Huawei…). A few entry-level models do not.",
+          "<b>To turn it on</b>: swipe down from the top of the screen and tap the <b>NFC</b> icon (it turns blue).",
+          "<b>No icon?</b> Open <b>Settings</b>, type “NFC” in the search bar and turn it on. Samsung: Connections → NFC and contactless payments.",
+          "<b>Where to tap?</b> On the back of the phone, in the middle or slightly higher. Hold the card flat for 2 seconds."
+        ]
+      },
+      {
+        "id": "qr",
+        "title": "QR code",
+        "badge": "Works everywhere",
+        "items": [
+          "No NFC? The QR code works on every phone with a camera.",
+          "<b>iPhone</b>: open the Camera, point at the QR code, tap the yellow link.",
+          "<b>Android</b>: open the Camera or Google Lens, point at the QR code, tap the link.",
+          "Your QR code is also on your dashboard: <b>Partager votre carte → QR Code</b> (Share your card), to show it on your screen."
+        ]
+      }
+    ],
+    "tips_title": "It doesn't open?",
+    "tips": [
+      "Phone unlocked, screen on.",
+      "Remove a thick, metal or magnetic case.",
+      "Don't move: card flat, 2 seconds.",
+      "The card has no battery: it never wears out and never needs charging."
+    ],
+    "powered": "Powered by"
+  },
+  "wo": {
+    "kicker": "Balaa ngay tàmbali",
+    "title": "Ban téléphone ? NFC ak QR code",
+    "intro": "Sa kàrt mën nañu ko ubbi ñaari yoon : laal ko ak téléphone bi (NFC) walla scanner QR code bi. Dara soxlawul installer, du yaw, du sa kiliyaan.",
+    "blocks": [
+      {
+        "id": "iphone",
+        "title": "iPhone",
+        "badge": "Laalal kaw gi",
+        "items": [
+          "<b>iPhone XS, XR ak yi ci topp</b> (11 ba 17, SE 2ᵉ génération ak yi ci topp) : dara nga warul taal. Écran bi taal te ubbiku, jegalal <b>kaw iPhone bi</b> kàrt bi. Benn notification dina feeñ : bësal ko.",
+          "<b>iPhone 7, 8 ak X</b> : ubbil Centre de contrôle te bës <b>« Lecteur de tags NFC »</b>. Amul fa ? Réglages → Centre de contrôle → yokk ko.",
+          "<b>iPhone 6 ak yi ko jiitu</b> : amuñu NFC. Jëfandikoo QR code bi."
+        ]
+      },
+      {
+        "id": "android",
+        "title": "Android",
+        "badge": "Laalal ginnaaw gi",
+        "items": [
+          "Android yi ëpp am nañu NFC (Samsung, Tecno, Infinix, Itel, Xiaomi, Oppo, Huawei…). Yenn téléphone yu yomb amuñu ko.",
+          "<b>Ngir taal ko</b> : wàcceel sa baaraam ci kaw écran bi ba ci suuf te bës icône <b>NFC</b> bi (dina nekk bulo).",
+          "<b>Amul icône ?</b> Ubbil <b>Paramètres</b>, bind « NFC » ci loupe bi te taal ko. Samsung : Connexions → NFC et paiements sans contact.",
+          "<b>Fan lay laal ?</b> Ci ginnaawu téléphone bi, ci digg bi walla tuuti ci kaw. Tëralal kàrt bi 2 seconde."
+        ]
+      },
+      {
+        "id": "qr",
+        "title": "QR code",
+        "badge": "Fépp la dox",
+        "items": [
+          "Amul NFC ? QR code bi dina dox ci téléphone yépp yu am appareil photo.",
+          "<b>iPhone</b> : ubbil Appareil photo bi, jublu QR code bi, bës lien bu mboq bi.",
+          "<b>Android</b> : ubbil Appareil photo bi walla Google Lens, jublu QR code bi, bës lien bi.",
+          "Sa QR code nekk na itam ci sa tableau de bord : <b>Partager votre carte → QR Code</b>, ngir wone ko ci sa écran."
+        ]
+      }
+    ],
+    "tips_title": "Ubbikuwul ?",
+    "tips": [
+      "Téléphone bi ubbiku, écran bi taal.",
+      "Dindil coque bu dijj, bu weñ walla bu am aimant.",
+      "Bul yëngu : kàrt bi tëru, 2 seconde.",
+      "Kàrt bi amul batterie : du yàqu te du soxla recharge."
+    ],
+    "powered": "Ki ko def"
+  }
+}

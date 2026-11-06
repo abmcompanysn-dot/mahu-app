@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 170" role="img" aria-label="Scanner le QR code avec l'appareil photo">
+  <rect x="24" y="44" width="92" height="110" rx="10" fill="#fff" stroke="#cfd8ea" stroke-width="2"/>
+  <g fill="#0b1530">
+    <rect x="38" y="58" width="22" height="22" rx="2"/><rect x="43" y="63" width="12" height="12" fill="#fff"/><rect x="46" y="66" width="6" height="6"/>
+    <rect x="80" y="58" width="22" height="22" rx="2"/><rect x="85" y="63" width="12" height="12" fill="#fff"/><rect x="88" y="66" width="6" height="6"/>
+    <rect x="38" y="100" width="22" height="22" rx="2"/><rect x="43" y="105" width="12" height="12" fill="#fff"/><rect x="46" y="108" width="6" height="6"/>
+    <rect x="66" y="60" width="6" height="6"/><rect x="66" y="74" width="6" height="6"/><rect x="66" y="88" width="6" height="6"/>
+    <rect x="76" y="88" width="6" height="6"/><rect x="90" y="88" width="6" height="6"/><rect x="66" y="102" width="6" height="6"/>
+    <rect x="80" y="100" width="6" height="6"/><rect x="94" y="104" width="8" height="8"/><rect x="72" y="114" width="6" height="6"/>
+    <rect x="84" y="116" width="6" height="6"/><rect x="40" y="88" width="6" height="6"/><rect x="52" y="88" width="6" height="6"/>
+  </g>
+  <text x="70" y="142" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-weight="800" font-size="9" fill="#4b5875">MAHU</text>
+  <rect x="134" y="14" width="82" height="150" rx="16" fill="#11151f"/>
+  <rect x="139" y="19" width="72" height="140" rx="12" fill="#2a3550"/>
+  <g fill="none" stroke="#FDEF42" stroke-width="3.4" stroke-linecap="round">
+    <path d="M152 56 v-10 h10"/><path d="M198 56 v-10 h-10"/><path d="M152 100 v10 h10"/><path d="M198 100 v10 h-10"/>
+  </g>
+  <rect x="143" y="122" width="64" height="16" rx="8" fill="#FDEF42"/>
+  <text x="175" y="133" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-weight="800" font-size="6.6" fill="#0b1530">call.mahu.cards</text>
+  <circle cx="175" cy="78" r="12" fill="none" stroke="#fff" stroke-width="2" opacity=".5"/>
+</svg>

@@ -25,8 +25,18 @@ const faqItems = [
   },
   {
     question: "La carte est-elle compatible avec tous les smartphones ?",
-    answer:
-      "La carte NFC fonctionne avec tous les Android depuis la version 4.4, et sur iPhone depuis l'iPhone 7 (iOS 13+). Pour les appareils non compatibles NFC, un QR code est toujours disponible sur votre profil.",
+    answer: (
+      <>
+        Sur iPhone XS, XR et plus récents, il suffit d&apos;approcher le haut du téléphone. Sur iPhone 7, 8 et X,
+        passez par « Lecteur de tags NFC » dans le Centre de contrôle. La plupart des Android ont le NFC : il suffit de
+        l&apos;activer. Sans NFC, le QR code de la carte marche sur tous les téléphones. Tout est expliqué, avec des
+        images, sur notre page{" "}
+        <Link href="/guide" className="text-primary hover:underline">
+          Guide
+        </Link>
+        .
+      </>
+    ),
   },
   {
     question: "Quel est le délai de livraison ?",
