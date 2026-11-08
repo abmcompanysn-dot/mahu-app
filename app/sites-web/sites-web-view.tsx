@@ -20,9 +20,9 @@ type Country = "CA" | "FR"
 // Offre d'ouverture : les forfaits ci-dessous jusqu'a OPENING_END, ensuite le tarif standard
 // (a appliquer reellement apres cette date : un « prix normal » jamais pratique est interdit
 // en France comme au Canada).
-const PRICES: Record<Country, { essentiel: string; pro: string; standard: string; renew: string; tld: string }> = {
-  CA: { essentiel: "299 $ CA", pro: "399 $ CA", standard: "800 $ CA", renew: "99 $ CA / an", tld: ".ca ou .com" },
-  FR: { essentiel: "279 €", pro: "379 €", standard: "800 €", renew: "79 € / an", tld: ".fr ou .com" },
+const PRICES: Record<Country, { essentiel: string; pro: string; shop: string; standard: string; renew: string; tld: string }> = {
+  CA: { essentiel: "299 $ CA", pro: "399 $ CA", shop: "30 $ CA", standard: "800 $ CA", renew: "99 $ CA / an", tld: ".ca ou .com" },
+  FR: { essentiel: "279 €", pro: "379 €", shop: "29 €", standard: "800 €", renew: "79 € / an", tld: ".fr ou .com" },
 }
 const OPENING_END = { fr: "31 décembre 2026", en: "December 31, 2026" }
 
@@ -79,14 +79,17 @@ const T = {
     resultsSub: "Chiffres réels de nos plateformes en production.",
     caseTitle: "Projet phare · MIAD Market (Canada)",
     caseText: "Marketplace bilingue français / anglais livrée sur miadmarket.ca et miadmarket.com : paiement par carte et mobile money dans environ 19 pays, livraison DHL, catalogue Facebook / Instagram et suivi des conversions Meta.",
-    plansTitle: "Deux forfaits, un prix clair",
-    plansSub: "Prix pour la création + la première année de domaine, d'hébergement et d'e-mail.",
+    plansTitle: "Trois formules, un prix clair",
+    plansSub: "Sites vitrines : création + première année de domaine, d'hébergement et d'e-mail. Boutique : un abonnement mensuel.",
     once: "une seule fois",
     popular: "Le plus choisi",
     essentiel: { name: "Essentiel", for: "Pour se lancer : artisans, indépendants, consultants.", feats: ["Site d'une page (sections : accueil, services, à propos, contact)", "Nom de domaine + hébergement + HTTPS (1 an)", "1 adresse e-mail pro", "Formulaire de contact + WhatsApp", "Référencement Google de base", "1 série de corrections", "En ligne 7 jours après la prise de contact"] },
     pro: { name: "Pro", for: "Pour les PME, restaurants, salons, cabinets, commerces.", feats: ["Jusqu'à 5 pages (services, galerie, équipe, tarifs…)", "Nom de domaine + hébergement + HTTPS (1 an)", "Jusqu'à 5 adresses e-mail pro", "Formulaire, WhatsApp, Google Maps, réseaux sociaux", "Site en français et en anglais", "Référencement Google + fiche Google Business", "2 séries de corrections", "En ligne 7 jours après la prise de contact"] },
+    shop: { name: "Boutique en ligne", for: "Pour vendre vos produits en ligne, sans frais de création.", feats: ["Boutique prête : jusqu'à 50 produits, photos, prix, stock", "Panier et paiement par carte en ligne", "Commandes reçues par e-mail et WhatsApp", "Sur votreboutique.mahu.cards (ou votre domaine)", "Hébergement, HTTPS et mises à jour compris", "Sans engagement, annulable chaque mois", "En ligne 7 jours après la prise de contact"] },
+    perMonth: "par mois",
+    shopBadge: "Nouveau",
     choose: "Choisir ce forfait",
-    renew: (r: string) => `À partir de la 2e année : renouvellement domaine + hébergement + e-mail ${r}. Sans engagement.`,
+    renew: (r: string) => `Sites vitrines, à partir de la 2e année : renouvellement domaine + hébergement + e-mail ${r}. Sans engagement.`,
     workTitle: "Nos réalisations",
     workSub: "Sites et plateformes conçus et mis en ligne par l'équipe MAHU.",
     seeAll: "Voir tout le portfolio de l'équipe",
@@ -149,14 +152,17 @@ const T = {
     resultsSub: "Real figures from our platforms in production.",
     caseTitle: "Flagship project · MIAD Market (Canada)",
     caseText: "Bilingual French / English marketplace launched on miadmarket.ca and miadmarket.com: card and mobile money payments in about 19 countries, DHL shipping, Facebook / Instagram catalogue and Meta conversion tracking.",
-    plansTitle: "Two plans, one clear price",
-    plansSub: "Price covers design + the first year of domain, hosting and email.",
+    plansTitle: "Three offers, one clear price",
+    plansSub: "Websites: design + first year of domain, hosting and email. Online shop: a monthly subscription.",
     once: "one-time",
     popular: "Most popular",
     essentiel: { name: "Essential", for: "To get started: trades, freelancers, consultants.", feats: ["One-page website (home, services, about, contact)", "Domain + hosting + HTTPS (1 year)", "1 professional email address", "Contact form + WhatsApp", "Basic Google SEO", "1 round of revisions", "Live 7 days after first contact"] },
     pro: { name: "Pro", for: "For small businesses, restaurants, salons, firms, shops.", feats: ["Up to 5 pages (services, gallery, team, pricing…)", "Domain + hosting + HTTPS (1 year)", "Up to 5 professional email addresses", "Form, WhatsApp, Google Maps, social media", "Website in English and French", "Google SEO + Google Business profile", "2 rounds of revisions", "Live 7 days after first contact"] },
+    shop: { name: "Online shop", for: "Sell your products online, no setup fee.", feats: ["Ready-made shop: up to 50 products, photos, prices, stock", "Cart and online card payment", "Orders received by email and WhatsApp", "On yourshop.mahu.cards (or your own domain)", "Hosting, HTTPS and updates included", "No commitment, cancel any month", "Live 7 days after first contact"] },
+    perMonth: "per month",
+    shopBadge: "New",
     choose: "Choose this plan",
-    renew: (r: string) => `From year 2: domain + hosting + email renewal ${r}. No commitment.`,
+    renew: (r: string) => `Websites, from year 2: domain + hosting + email renewal ${r}. No commitment.`,
     workTitle: "Our work",
     workSub: "Websites and platforms designed and launched by the MAHU team.",
     seeAll: "See the team's full portfolio",
@@ -376,9 +382,10 @@ export function SitesWebView() {
         <div className="mt-6 rounded-2xl border border-[#f0561a]/25 bg-[#fff4ee] px-5 py-3 text-sm font-bold text-[#b8410f]">
           {t.opening(p.standard, OPENING_END[lang])}
         </div>
-        <div className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-2">
+        <div className="mt-8 grid grid-cols-1 gap-5 lg:grid-cols-3">
           <Plan badge={t.openingBadge} name={t.essentiel.name} audience={t.essentiel.for} price={p.essentiel} once={t.once} feats={t.essentiel.feats} cta={t.choose} plan="Essentiel" />
           <Plan badge={t.openingBadge} name={t.pro.name} audience={t.pro.for} price={p.pro} once={t.once} feats={t.pro.feats} cta={t.choose} plan="Pro" highlight={t.popular} />
+          <Plan badge={t.shopBadge} name={t.shop.name} audience={t.shop.for} price={p.shop} once={t.perMonth} feats={t.shop.feats} cta={t.choose} plan="Boutique" />
         </div>
         <p className="mt-4 text-sm text-[#5a6075]">{t.renew(p.renew)}</p>
       </section>
@@ -563,6 +570,7 @@ function QuoteForm({ t, country }: { t: (typeof T)["fr"]; country: Country }) {
           <option value="">{t.fUnsure}</option>
           <option value="Essentiel">{t.essentiel.name}</option>
           <option value="Pro">{t.pro.name}</option>
+          <option value="Boutique">{t.shop.name}</option>
         </select>
       </label>
       <label className="text-sm font-semibold sm:col-span-2">{t.fMsg}<textarea value={msg} onChange={(e) => setMsg(e.target.value)} placeholder={t.fMsgPh} rows={3} className={`${input} mt-1 resize-none`} /></label>
