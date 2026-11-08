@@ -21,8 +21,8 @@ type Country = "CA" | "FR"
 // (a appliquer reellement apres cette date : un « prix normal » jamais pratique est interdit
 // en France comme au Canada).
 const PRICES: Record<Country, { essentiel: string; pro: string; shop: string; standard: string; renew: string; tld: string }> = {
-  CA: { essentiel: "299 $ CA", pro: "399 $ CA", shop: "30 $ CA", standard: "800 $ CA", renew: "99 $ CA / an", tld: ".ca ou .com" },
-  FR: { essentiel: "279 €", pro: "379 €", shop: "29 €", standard: "800 €", renew: "79 € / an", tld: ".fr ou .com" },
+  CA: { essentiel: "299 $ CA", pro: "599 $ CA", shop: "30 $ CA", standard: "800 $ CA", renew: "99 $ CA / an", tld: ".ca ou .com" },
+  FR: { essentiel: "279 €", pro: "549 €", shop: "29 €", standard: "800 €", renew: "79 € / an", tld: ".fr ou .com" },
 }
 const OPENING_END = { fr: "31 décembre 2026", en: "December 31, 2026" }
 
@@ -61,7 +61,7 @@ const T = {
     ctaQuote: "Demander un devis gratuit",
     ctaWa: "Écrire sur WhatsApp",
     country: "Votre pays",
-    trust: ["En ligne en 7 jours", "Vous restez propriétaire du domaine", "Paiement sécurisé"],
+    trust: ["En ligne en 7 jours", "Vous payez après livraison", "Domaine à votre nom"],
     inclTitle: "Tout est inclus",
     inclSub: "Pas de frais cachés la première année : un seul prix pour un site prêt à recevoir vos clients.",
     incl: [
@@ -90,6 +90,13 @@ const T = {
     shopBadge: "Nouveau",
     choose: "Choisir ce forfait",
     renew: (r: string) => `Sites vitrines, à partir de la 2e année : renouvellement domaine + hébergement + e-mail ${r}. Sans engagement.`,
+    guarTitle: "Nos garanties",
+    guar: [
+      { t: "Livré en 7 jours", d: "Votre site est en ligne au plus tard 7 jours après la prise de contact." },
+      { t: "Vous payez après livraison", d: "Aucun acompte : vous payez une fois le site en ligne et vérifié." },
+      { t: "Site sécurisé", d: "HTTPS, sauvegardes automatiques et mises à jour de sécurité." },
+      { t: "Tout est à votre nom", d: "Nom de domaine, e-mails et contenus vous appartiennent." },
+    ],
     workTitle: "Nos réalisations",
     workSub: "Sites et plateformes conçus et mis en ligne par l'équipe MAHU.",
     seeAll: "Voir tout le portfolio de l'équipe",
@@ -97,9 +104,9 @@ const T = {
     stepsTitle: "Comment ça se passe",
     steps: [
       { t: "Devis en 24 h", d: "Vous décrivez votre activité, on vous propose le forfait adapté." },
-      { t: "Acompte de 50 %", d: "Paiement sécurisé en ligne par carte. Le reste à la mise en ligne." },
       { t: "Maquette et contenu", d: "On rédige et on met en forme ; vous validez ou demandez des corrections." },
       { t: "En ligne en 7 jours", d: "Au plus tard 7 jours après la prise de contact : domaine, e-mail et site activés, et tous vos accès." },
+      { t: "Vous payez après", d: "Vous vérifiez votre site en ligne, puis vous payez 100 % par carte, en paiement sécurisé. Aucun acompte." },
     ],
     faqTitle: "Questions fréquentes",
     faq: [
@@ -108,7 +115,7 @@ const T = {
       { q: "Vous êtes à Dakar : comment travaille-t-on ensemble ?", a: "Tout se fait à distance : appel vidéo, WhatsApp et e-mail. Nous avons des partenaires et des clients au Canada, et nous adaptons nos horaires à votre fuseau." },
       { q: "Je n'ai pas de textes ni de photos.", a: "Pas de problème : on rédige les textes à partir d'un court échange, et on utilise des photos libres de droits si vous n'en avez pas." },
       { q: "Je pourrai modifier mon site ensuite ?", a: "Les petites modifications du premier mois sont offertes. Ensuite, on les fait pour vous à petit prix, ou on vous forme pour les faire vous-même." },
-      { q: "Comment payer ?", a: "Par carte bancaire en ligne (paiement sécurisé). Le lien de paiement de l'acompte vous est envoyé avec le devis." },
+      { q: "Comment payer ?", a: "Rien à payer avant : vous payez 100 % après la livraison, une fois votre site en ligne et vérifié, par carte bancaire en paiement sécurisé. Pour la boutique, le premier mois se paie après sa mise en ligne." },
     ],
     formTitle: "Demandez votre devis gratuit",
     formSub: "Réponse sous 24 h, par e-mail ou WhatsApp.",
@@ -123,7 +130,7 @@ const T = {
     send: "Envoyer ma demande",
     sent: "Merci ! Votre demande est envoyée. Nous vous répondons sous 24 h.",
     err: "L'envoi n'a pas marché. Écrivez-nous sur WhatsApp ou à contact@mahu.cards.",
-    payNow: "Payer l'acompte en ligne",
+    payNow: "Payer en ligne",
     powered: "Propulsé par",
   },
   en: {
@@ -134,7 +141,7 @@ const T = {
     ctaQuote: "Get a free quote",
     ctaWa: "Message us on WhatsApp",
     country: "Your country",
-    trust: ["Live in 7 days", "You own your domain", "Secure payment"],
+    trust: ["Live in 7 days", "Pay after delivery", "Domain in your name"],
     inclTitle: "Everything included",
     inclSub: "No hidden fees in year one: one price for a website ready to welcome your customers.",
     incl: [
@@ -163,6 +170,13 @@ const T = {
     shopBadge: "New",
     choose: "Choose this plan",
     renew: (r: string) => `Websites, from year 2: domain + hosting + email renewal ${r}. No commitment.`,
+    guarTitle: "Our guarantees",
+    guar: [
+      { t: "Delivered in 7 days", d: "Your website is live at most 7 days after first contact." },
+      { t: "Pay after delivery", d: "No deposit: you pay once your website is live and checked." },
+      { t: "Secure website", d: "HTTPS, automatic backups and security updates." },
+      { t: "Everything in your name", d: "Domain name, emails and content belong to you." },
+    ],
     workTitle: "Our work",
     workSub: "Websites and platforms designed and launched by the MAHU team.",
     seeAll: "See the team's full portfolio",
@@ -170,9 +184,9 @@ const T = {
     stepsTitle: "How it works",
     steps: [
       { t: "Quote within 24 h", d: "Describe your business, we suggest the right plan." },
-      { t: "50% deposit", d: "Secure online card payment. The rest when your site goes live." },
       { t: "Design and content", d: "We write and design; you approve or ask for changes." },
       { t: "Live in 7 days", d: "At most 7 days after first contact: domain, email and website live, with all your access." },
+      { t: "Pay after delivery", d: "Check your live website, then pay 100% by card, securely. No deposit." },
     ],
     faqTitle: "Frequently asked questions",
     faq: [
@@ -181,7 +195,7 @@ const T = {
       { q: "You are based in Dakar: how do we work together?", a: "Everything is remote: video calls, WhatsApp and email. We have partners and clients in Canada and adapt to your time zone." },
       { q: "I don't have texts or photos.", a: "No problem: we write the copy after a short call, and use royalty-free photos if you have none." },
       { q: "Can I update my website later?", a: "Small changes in the first month are free. After that we make them for you at a small fee, or train you to do them yourself." },
-      { q: "How do I pay?", a: "By card online (secure payment). The deposit payment link is sent with your quote." },
+      { q: "How do I pay?", a: "Nothing upfront: you pay 100% after delivery, once your website is live and checked, by card with secure payment. For the online shop, the first month is paid once it is live." },
     ],
     formTitle: "Get your free quote",
     formSub: "Reply within 24 h, by email or WhatsApp.",
@@ -196,7 +210,7 @@ const T = {
     send: "Send my request",
     sent: "Thank you! Your request has been sent. We will reply within 24 h.",
     err: "Sending failed. Message us on WhatsApp or at contact@mahu.cards.",
-    payNow: "Pay the deposit online",
+    payNow: "Pay online",
     powered: "Powered by",
   },
 }
@@ -214,6 +228,16 @@ const STATS: { name: string; period: { fr: string; en: string }; items: { n: str
   },
   // Source : Bilan Mahu 2026 (9 oct. 2026) ci-dessus ; MIAD : liste des boutiques Dokan (71 vendeurs),
   // presentation MIAD du 17 oct. 2026 (867 produits enrichis), bilan technique du 20 sept. 2026 (~19 pays).
+  // DIARRA : console d'administration, 8 nov. 2026 (482 comptes ; 365 vendeurs ; 169 avec produit ; 21 pays connus).
+  {
+    name: "DIARRA",
+    period: { fr: "au 8 nov. 2026", en: "as of Nov 8, 2026" },
+    items: [
+      { n: "482", fr: "comptes inscrits, dont 365 vendeurs", en: "registered accounts, 365 of them sellers" },
+      { n: "169", fr: "vendeurs avec des produits en ligne", en: "sellers with products online" },
+      { n: "21", fr: "pays : Sénégal, Burkina Faso, Côte d'Ivoire, Cameroun…", en: "countries: Senegal, Burkina Faso, Ivory Coast, Cameroon…" },
+    ],
+  },
   {
     name: "MIAD Market",
     period: { fr: "Canada · Sénégal · 2026", en: "Canada · Senegal · 2026" },
@@ -276,7 +300,7 @@ export function SitesWebView() {
               </a>
             </div>
             <ul className="mt-7 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold text-[#4a5063]">
-              {[Clock, Globe, ShieldCheck].map((Icon, i) => (
+              {[Clock, CreditCard, Globe].map((Icon, i) => (
                 <li key={i} className="flex items-center gap-1.5"><Icon className="h-4 w-4 text-[#0a6cff]" />{t.trust[i]}</li>
               ))}
             </ul>
@@ -324,7 +348,7 @@ export function SitesWebView() {
       <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
         <h2 className="text-3xl font-black tracking-tight sm:text-4xl">{t.resultsTitle}</h2>
         <p className="mt-2 text-[#4a5063]">{t.resultsSub}</p>
-        <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-3">
           {STATS.map((g) => (
             <div key={g.name} className="rounded-2xl border border-black/5 bg-white p-5 shadow-sm">
               <div className="flex items-center justify-between gap-2">
@@ -388,6 +412,25 @@ export function SitesWebView() {
           <Plan badge={t.shopBadge} name={t.shop.name} audience={t.shop.for} price={p.shop} once={t.perMonth} feats={t.shop.feats} cta={t.choose} plan="Boutique" />
         </div>
         <p className="mt-4 text-sm text-[#5a6075]">{t.renew(p.renew)}</p>
+      </section>
+
+      {/* Garanties */}
+      <section className="mx-auto max-w-6xl px-4 pb-14 sm:px-6">
+        <div className="rounded-3xl border border-[#0a6cff]/15 bg-gradient-to-br from-[#eef5ff] to-white p-6 sm:p-8">
+          <h2 className="flex items-center gap-2 text-2xl font-black tracking-tight sm:text-3xl"><ShieldCheck className="h-7 w-7 text-[#0a6cff]" />{t.guarTitle}</h2>
+          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {t.guar.map((g, i) => {
+              const Icon = [Clock, CreditCard, ShieldCheck, Globe][i]
+              return (
+                <div key={g.t} className="rounded-2xl bg-white p-5 shadow-sm">
+                  <Icon className="h-5 w-5 text-[#0a6cff]" />
+                  <h3 className="mt-2 font-bold">{g.t}</h3>
+                  <p className="mt-1 text-sm leading-relaxed text-[#5a6075]">{g.d}</p>
+                </div>
+              )
+            })}
+          </div>
+        </div>
       </section>
 
       {/* Realisations */}
