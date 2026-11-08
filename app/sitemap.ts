@@ -3,7 +3,7 @@ import { headers } from "next/headers"
 
 export const dynamic = "force-dynamic"
 
-const PUBLIC_PAGES = ["", "/register", "/login", "/faq", "/livraison", "/bu-bees", "/guide", "/documentation", "/conditions-utilisation", "/confidentialite"]
+const PUBLIC_PAGES = ["", "/register", "/login", "/faq", "/livraison", "/bu-bees", "/guide", "/sites-web", "/documentation", "/conditions-utilisation", "/confidentialite"]
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const host = (await headers()).get("host") || "ai.mahu.cards"
