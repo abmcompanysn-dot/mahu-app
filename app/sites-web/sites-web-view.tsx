@@ -226,7 +226,7 @@ const STATS: { name: string; period: { fr: string; en: string }; items: { n: str
       { n: "59", fr: "prospects captés pour nos clients", en: "leads captured for our clients" },
     ],
   },
-  // Source : Bilan Mahu 2026 (9 oct. 2026) ci-dessus ; MIAD : liste des boutiques Dokan (71 vendeurs),
+  // Source : Bilan Mahu 2026 (9 oct. 2026) ci-dessus ; MIAD : 249 vendeurs (chiffre de la direction, 9 nov. 2026),
   // presentation MIAD du 17 oct. 2026 (867 produits enrichis), bilan technique du 20 sept. 2026 (~19 pays).
   // DIARRA : console d'administration, 8 nov. 2026 (482 comptes ; 365 vendeurs ; 169 avec produit ; 21 pays connus).
   {
@@ -242,7 +242,7 @@ const STATS: { name: string; period: { fr: string; en: string }; items: { n: str
     name: "MIAD Market",
     period: { fr: "Canada · Sénégal · 2026", en: "Canada · Senegal · 2026" },
     items: [
-      { n: "71", fr: "boutiques vendeurs sur la plateforme", en: "seller shops on the platform" },
+      { n: "249", fr: "vendeurs inscrits sur la plateforme", en: "sellers registered on the platform" },
       { n: "867", fr: "produits repris et enrichis (FR / EN)", en: "products migrated and enriched (FR / EN)" },
       { n: "~19", fr: "pays payables en mobile money, plus la carte", en: "countries paying by mobile money, plus cards" },
     ],
