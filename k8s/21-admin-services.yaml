@@ -1,0 +1,29 @@
+# Page admin "Services du serveur" (/admin/services) : le backend peut voir
+# l'etat de LiteLLM et l'allumer / l'eteindre (0 ou 1 replique), et rien
+# d'autre dans le namespace mahu. Les droits sur Guacamole (namespace mahu-pc)
+# sont deja dans k8s/20-cloudpc.yaml.
+#   kubectl apply -f k8s/21-admin-services.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: service-switch
+  namespace: mahu
+rules:
+  - apiGroups: ["apps"]
+    resources: [deployments, deployments/scale]
+    resourceNames: [litellm]
+    verbs: [get, patch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: backend-service-switch
+  namespace: mahu
+subjects:
+  - kind: ServiceAccount
+    name: backend
+    namespace: mahu
+roleRef:
+  kind: Role
+  name: service-switch
+  apiGroup: rbac.authorization.k8s.io

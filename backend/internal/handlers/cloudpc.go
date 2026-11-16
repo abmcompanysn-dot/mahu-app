@@ -317,6 +317,11 @@ func (d *Deps) OpenCloudPCSession(w http.ResponseWriter, r *http.Request, code s
 		httpx.WriteError(w, http.StatusServiceUnavailable, "Service momentanement indisponible")
 		return
 	}
+	// L'ecran (Guacamole) peut avoir ete eteint depuis /admin/services pour
+	// economiser la memoire : on le rallume avant d'ouvrir l'ordinateur.
+	if err := d.ensureCloudPCScreen(kc); err != nil {
+		log.Printf("[cloudpc] rallumage ecran: %v", err)
+	}
 
 	if !pc.Running {
 		cloudPCStartMu.Lock()

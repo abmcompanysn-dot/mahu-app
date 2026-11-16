@@ -253,6 +253,14 @@ export interface OutreachDraft {
   askFeedback: boolean
 }
 
+// Service du serveur allumable/eteignable depuis /admin/services.
+export interface ServerService {
+  id: string
+  label: string
+  description: string
+  state: "on" | "off" | "starting" | "error"
+}
+
 export interface CloudPC {
   _id: string
   cardCode: string
@@ -530,6 +538,14 @@ export const adminApi = {
 
   deleteOutreachCampaign: (token: string, id: string) =>
     request<{ success: boolean }>(`${ADMIN_BASE_URL}/outreach/campaigns/${id}`, token, { method: "DELETE" }),
+  listServices: (token: string) => request<{ services: ServerService[] }>(`${ADMIN_BASE_URL}/services`, token),
+
+  setService: (token: string, id: string, on: boolean) =>
+    request<{ success: boolean; state: ServerService["state"] }>(`${ADMIN_BASE_URL}/services/${id}`, token, {
+      method: "POST",
+      body: JSON.stringify({ on }),
+    }),
+
   listCloudPCs: (token: string) => request<{ pcs: CloudPC[]; maxRunning: number }>(`${ADMIN_BASE_URL}/cloudpc`, token),
 
   createCloudPC: (token: string, data: { cardCode: string; ownerName: string; ownerEmail: string; pin: string; months: number }) =>

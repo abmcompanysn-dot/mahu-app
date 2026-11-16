@@ -194,6 +194,10 @@ func main() {
 		deps.OutreachUnsubscribe(w, r, r.PathValue("token"))
 	})
 
+	protected.Handle("GET /api/admin/services", adminOnly(http.HandlerFunc(deps.AdminListServices)))
+	protected.Handle("POST /api/admin/services/{id}", adminOnly(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		deps.AdminSetService(w, r, r.PathValue("id"))
+	})))
 	protected.Handle("GET /api/admin/cloudpc", adminOnly(http.HandlerFunc(deps.AdminListCloudPCs)))
 	protected.Handle("POST /api/admin/cloudpc", adminOnly(http.HandlerFunc(deps.AdminCreateCloudPC)))
 	protected.Handle("PATCH /api/admin/cloudpc/{id}", adminOnly(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
