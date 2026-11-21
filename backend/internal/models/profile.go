@@ -35,6 +35,11 @@ type Profile struct {
 	// ModeConfidentiel "OUI": the public card shows only photo, name, title
 	// and company plus the contact form - see publicProfileView.
 	ModeConfidentiel string    `bson:"modeConfidentiel,omitempty"`
+	// EmailPublic is the address shown on the public card (Email button,
+	// saved contact) when it differs from the account's login email - e.g. a
+	// professional address while the account was opened with a personal one.
+	// Empty = the login email is shown, as before.
+	EmailPublic string    `bson:"emailPublic,omitempty"`
 	CreatedAt        time.Time `bson:"createdAt"`
 	UpdatedAt        time.Time `bson:"updatedAt"`
 }

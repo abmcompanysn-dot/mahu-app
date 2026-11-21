@@ -58,6 +58,8 @@ export interface Profile {
   Liens_Sociaux_JSON: string
   Lead_Capture_Actif: string
   Mode_Confidentiel?: string
+  /** Email affiche sur la carte publique ; vide = email du compte. */
+  Email_Public?: string
   Services_JSON: string
   Mise_En_Page: string
   Couleur_Theme: string

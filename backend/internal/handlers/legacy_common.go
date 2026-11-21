@@ -145,6 +145,7 @@ func profileToMap(p *models.Profile) map[string]any {
 		"Langue":               p.Langue,
 		"Redirection_Site_Web": p.RedirectionSiteWeb,
 		"Mode_Confidentiel":    p.ModeConfidentiel,
+		"Email_Public":         p.EmailPublic,
 	}
 }
 

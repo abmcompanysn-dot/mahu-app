@@ -49,11 +49,29 @@ func applyProfileFields(profile *models.Profile, payload map[string]any) {
 	set("Langue", &profile.Langue)
 	set("Redirection_Site_Web", &profile.RedirectionSiteWeb)
 	set("Mode_Confidentiel", &profile.ModeConfidentiel)
+	// Email affiche sur la carte : vide (= email du compte) ou une adresse valide.
+	if v, ok := payload["Email_Public"].(string); ok {
+		v = strings.TrimSpace(v)
+		if v == "" || publicEmailPattern.MatchString(v) {
+			profile.EmailPublic = strings.ToLower(v)
+		}
+	}
+}
+
+var publicEmailPattern = regexp.MustCompile(`^[^\s@<>"']+@[^\s@<>"']+\.[a-zA-Z]{2,}$`)
+
+// publicEmail is the address visitors see on the card: the profile's public
+// email when set, otherwise the account's login email.
+func publicEmail(user *models.User, profile *models.Profile) string {
+	if profile != nil && profile.EmailPublic != "" {
+		return profile.EmailPublic
+	}
+	return user.Email
 }
 
 func cacheProfileForUser(ctx context.Context, user *models.User, profile *models.Profile) {
 	data := profileToMap(profile)
-	data["Email"] = user.Email
+	data["Email"] = publicEmail(user, profile)
 	data["URL_Profil"] = user.ProfileURL
 
 	for _, slug := range []string{user.ProfileURL, user.ProfileURL2, user.ProfileURL3} {
@@ -135,6 +153,7 @@ func (d *Deps) legacySaveProfile(ctx context.Context, payload map[string]any, us
 		"langue":             profile.Langue,
 		"redirectionSiteWeb": profile.RedirectionSiteWeb,
 		"modeConfidentiel":   profile.ModeConfidentiel,
+		"emailPublic":        profile.EmailPublic,
 		"updatedAt":          now,
 	}
 	if _, err := db.Collection(models.ProfilesCollection).UpdateOne(ctx, bson.M{"_id": profile.ID}, bson.M{"$set": update}); err != nil {
@@ -223,7 +242,7 @@ func (d *Deps) legacyGetProfileData(ctx context.Context, profileURL string) (map
 	}
 
 	data := profileToMap(profile)
-	data["Email"] = user.Email
+	data["Email"] = publicEmail(&user, profile)
 	data["URL_Profil"] = user.ProfileURL
 
 	if user.EnterpriseID != "" {

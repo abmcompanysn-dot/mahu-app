@@ -77,6 +77,7 @@ export default function ProfilePage() {
     Compagnie: "",
     Location: "",
     Telephone: "",
+    Email_Public: "",
     URL_Profil: "",
     URL_Photo: "",
     URL_Couverture: "",
@@ -98,6 +99,7 @@ export default function ProfilePage() {
         Compagnie: profile.Compagnie || "",
         Location: profile.Location || "",
         Telephone: profile.Telephone || "",
+        Email_Public: profile.Email_Public || "",
         URL_Profil: dashboardData.user?.URL_Profil || "",
         URL_Photo: profile.URL_Photo || "",
         URL_Couverture: profile.URL_Couverture || "",
@@ -134,6 +136,7 @@ export default function ProfilePage() {
         Compagnie: formData.Compagnie,
         Location: formData.Location,
         Telephone: formData.Telephone,
+        Email_Public: formData.Email_Public.trim(),
         URL_Profil: formData.URL_Profil,
         Liens_Sociaux_JSON: JSON.stringify(socialLinks),
         Services_JSON: JSON.stringify(
@@ -445,6 +448,22 @@ export default function ProfilePage() {
                       placeholder="+33 6 12 34 56 78"
                     />
                   </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-muted-foreground mb-2">Email affiché sur votre carte</label>
+                  <input
+                    type="email"
+                    value={formData.Email_Public}
+                    onChange={(e) => setFormData({ ...formData, Email_Public: e.target.value })}
+                    className="w-full px-4 py-3 rounded-xl bg-muted/30 border border-border/50 text-foreground focus:outline-none focus:border-primary/50 transition-colors"
+                    placeholder={dashboardData?.user?.Email || "contact@votre-entreprise.com"}
+                  />
+                  <p className="mt-1.5 text-xs text-muted-foreground">
+                    Par exemple votre email professionnel. Il s&apos;affiche sur votre carte et dans le contact enregistré ; vous
+                    continuez à vous connecter avec l&apos;email de votre compte
+                    {dashboardData?.user?.Email ? ` (${dashboardData.user.Email})` : ""}. Laissez vide pour afficher celui-ci.
+                  </p>
                 </div>
 
                 <div>
