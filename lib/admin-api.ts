@@ -351,6 +351,10 @@ export const adminApi = {
       body: JSON.stringify({ plan }),
     }),
 
+  // Remet le mot de passe par defaut du guide client ; le client devra en choisir un autre a la connexion.
+  resetUserPassword: (token: string, userId: string) =>
+    request<{ success: boolean }>(`${ADMIN_BASE_URL}/users/${userId}/reset-password`, token, { method: "POST" }),
+
   setUserDisabled: (token: string, userId: string, disabled: boolean) =>
     request<{ success: boolean }>(`${ADMIN_BASE_URL}/users/${userId}/disable`, token, {
       method: "PATCH",

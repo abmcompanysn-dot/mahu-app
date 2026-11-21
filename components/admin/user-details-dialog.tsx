@@ -1,7 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { ExternalLink, Loader2 } from "lucide-react"
+import { ExternalLink, KeyRound, Loader2 } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useAdminAuth } from "@/contexts/admin-auth-context"
@@ -46,11 +47,25 @@ export function UserDetailsDialog({ userId, onClose }: { userId: string | null; 
   const { token } = useAdminAuth()
   const [details, setDetails] = useState<UserDetails | null>(null)
   const [error, setError] = useState("")
+  const [pwdState, setPwdState] = useState<"idle" | "busy" | "done" | "error">("idle")
+
+  const resetPassword = async () => {
+    if (!token || !userId) return
+    if (!window.confirm("Remettre le mot de passe par defaut du guide client ? Le client devra en choisir un nouveau a sa prochaine connexion.")) return
+    setPwdState("busy")
+    try {
+      await adminApi.resetUserPassword(token, userId)
+      setPwdState("done")
+    } catch {
+      setPwdState("error")
+    }
+  }
 
   useEffect(() => {
     if (!token || !userId) return
     setDetails(null)
     setError("")
+    setPwdState("idle")
     adminApi
       .getUserDetails(token, userId)
       .then(setDetails)
@@ -127,6 +142,16 @@ export function UserDetailsDialog({ userId, onClose }: { userId: string | null; 
               </Row>
               <Row label="Profil configure">{u.onboardingStatus === "COMPLETED" ? "Oui" : "Non"}</Row>
               <Row label="Acces IA">{u.aiEnabled ? "Oui" : "Non"}</Row>
+              <div className="flex flex-wrap items-center gap-3 pt-2">
+                <Button size="sm" variant="outline" disabled={pwdState === "busy"} onClick={resetPassword}>
+                  {pwdState === "busy" ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <KeyRound className="w-4 h-4 mr-2" />}
+                  Remettre le mot de passe par defaut
+                </Button>
+                {pwdState === "done" && (
+                  <span className="text-xs text-emerald-500">Fait : le client se connecte avec le mot de passe du guide, puis en choisit un nouveau.</span>
+                )}
+                {pwdState === "error" && <span className="text-xs text-destructive">Echec, reessayez.</span>}
+              </div>
             </Section>
 
             <Section title="Profil public">
