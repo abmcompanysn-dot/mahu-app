@@ -3,7 +3,7 @@
 import { useEffect } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Activity, BarChart3, Loader2, Megaphone, Shield, Sparkles, Users, Wallet, IdCard, ShoppingBag, Package, MessageSquare, Building2, BadgeDollarSign, Mail, Monitor, GraduationCap, Printer, Server } from "lucide-react"
+import { Activity, BarChart3, Loader2, Megaphone, Shield, Sparkles, Users, Wallet, IdCard, ShoppingBag, Package, MessageSquare, Building2, BadgeDollarSign, Mail, Monitor, GraduationCap, Printer, Server, QrCode } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAdminAuth } from "@/contexts/admin-auth-context"
 
@@ -21,6 +21,7 @@ const NAV_ITEMS = [
   { href: "/admin/cards", label: "Cartes & revendeurs", icon: IdCard },
   { href: "/admin/cartes-etudiants", label: "Cartes etudiants", icon: GraduationCap },
   { href: "/admin/cartes-bu-bees", label: "Generateur Bu Bees", icon: Printer },
+  { href: "/admin/qr-studio", label: "Studio QR", icon: QrCode },
   { href: "/admin/consumption", label: "Consommation IA", icon: BarChart3 },
   { href: "/admin/litellm", label: "Etat LiteLLM", icon: Activity },
   { href: "/admin/services", label: "Services du serveur", icon: Server },
