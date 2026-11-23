@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { ExternalLink, KeyRound, Loader2 } from "lucide-react"
+import { ExternalLink, KeyRound, Loader2, Pencil } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -9,6 +9,7 @@ import { useAdminAuth } from "@/contexts/admin-auth-context"
 import { adminApi, type UserDetails } from "@/lib/admin-api"
 import { formatXof } from "@/lib/shop-api"
 import { PUBLIC_PROFILE_URL } from "@/lib/site"
+import { UserProfileEditor } from "@/components/admin/user-profile-editor"
 
 function formatDate(value?: string) {
   return value ? new Date(value).toLocaleDateString("fr-FR") : "-"
@@ -48,6 +49,7 @@ export function UserDetailsDialog({ userId, onClose }: { userId: string | null; 
   const [details, setDetails] = useState<UserDetails | null>(null)
   const [error, setError] = useState("")
   const [pwdState, setPwdState] = useState<"idle" | "busy" | "done" | "error">("idle")
+  const [editing, setEditing] = useState(false)
 
   const resetPassword = async () => {
     if (!token || !userId) return
@@ -66,6 +68,7 @@ export function UserDetailsDialog({ userId, onClose }: { userId: string | null; 
     setDetails(null)
     setError("")
     setPwdState("idle")
+    setEditing(false)
     adminApi
       .getUserDetails(token, userId)
       .then(setDetails)
@@ -155,6 +158,22 @@ export function UserDetailsDialog({ userId, onClose }: { userId: string | null; 
             </Section>
 
             <Section title="Profil public">
+              {p && token && userId && (
+                <div>
+                  <Button size="sm" variant="outline" onClick={() => setEditing((v) => !v)}>
+                    <Pencil className="w-4 h-4 mr-2" />
+                    {editing ? "Fermer l'editeur" : "Modifier le profil"}
+                  </Button>
+                </div>
+              )}
+              {p && editing && token && userId && (
+                <UserProfileEditor
+                  token={token}
+                  userId={userId}
+                  profile={p}
+                  onSaved={(np) => setDetails((d) => (d ? { ...d, profile: np } : d))}
+                />
+              )}
               {p ? (
                 <>
                   <Row label="Nom">{p.nomComplet}</Row>

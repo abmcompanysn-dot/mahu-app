@@ -193,6 +193,8 @@ export interface UserDetails {
     compagnie: string
     location: string
     urlPhoto: string
+    urlCouverture?: string
+    emailPublic?: string
     leadCaptureActif: string
     liensSociauxJson: string
   } | null
@@ -485,6 +487,14 @@ export const adminApi = {
 
   getUserDetails: (token: string, userId: string) =>
     request<UserDetails>(`${ADMIN_BASE_URL}/users/${userId}/details`, token),
+
+  // Corrige le profil public d'un client sans son mot de passe (champs autorises cote serveur :
+  // Nom_Complet, Profession, Compagnie, Location, Telephone, Email_Public, Liens_Sociaux_JSON, URL_Photo, URL_Couverture).
+  updateUserProfile: (token: string, userId: string, fields: Record<string, string>) =>
+    request<{ success: boolean; changed: string[] }>(`${ADMIN_BASE_URL}/users/${userId}/profile`, token, {
+      method: "PATCH",
+      body: JSON.stringify(fields),
+    }),
 
   listProspects: (token: string) => request<{ prospects: ProspectRow[] }>(`${ADMIN_BASE_URL}/prospects`, token),
   outreachSenders: (token: string) =>

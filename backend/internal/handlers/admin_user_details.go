@@ -22,6 +22,8 @@ type adminProfileView struct {
 	Compagnie        string `json:"compagnie"`
 	Location         string `json:"location"`
 	URLPhoto         string `json:"urlPhoto"`
+	URLCouverture    string `json:"urlCouverture"`
+	EmailPublic      string `json:"emailPublic"`
 	LeadCaptureActif string `json:"leadCaptureActif"`
 	LiensSociauxJSON string `json:"liensSociauxJson"`
 }
@@ -62,7 +64,8 @@ func (d *Deps) AdminGetUserDetails(w http.ResponseWriter, r *http.Request, id st
 	if err := db.Collection(models.ProfilesCollection).FindOne(ctx, bson.M{"userId": objID}).Decode(&p); err == nil {
 		profile = &adminProfileView{
 			NomComplet: p.NomComplet, Telephone: p.Telephone, Profession: p.Profession, Compagnie: p.Compagnie,
-			Location: p.Location, URLPhoto: p.URLPhoto, LeadCaptureActif: p.LeadCaptureActif, LiensSociauxJSON: p.LiensSociauxJSON,
+			Location: p.Location, URLPhoto: p.URLPhoto, URLCouverture: p.URLCouverture, EmailPublic: p.EmailPublic,
+			LeadCaptureActif: p.LeadCaptureActif, LiensSociauxJSON: p.LiensSociauxJSON,
 		}
 	} else if err != mongo.ErrNoDocuments {
 		httpx.WriteError(w, http.StatusInternalServerError, "Erreur serveur")
