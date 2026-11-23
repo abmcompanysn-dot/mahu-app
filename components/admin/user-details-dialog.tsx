@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { ExternalLink, KeyRound, Loader2, Pencil } from "lucide-react"
+import { ExternalLink, KeyRound, Loader2, Pencil, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -50,6 +50,33 @@ export function UserDetailsDialog({ userId, onClose }: { userId: string | null; 
   const [error, setError] = useState("")
   const [pwdState, setPwdState] = useState<"idle" | "busy" | "done" | "error">("idle")
   const [editing, setEditing] = useState(false)
+  // Multi-profils
+  const [editingSlug, setEditingSlug] = useState<string | null>(null)
+  const [newSlug, setNewSlug] = useState("")
+  const [newCode, setNewCode] = useState("")
+  const [adding, setAdding] = useState(false)
+  const [addMsg, setAddMsg] = useState("")
+
+  const reload = () => {
+    if (!token || !userId) return
+    adminApi.getUserDetails(token, userId).then(setDetails).catch(() => {})
+  }
+
+  const addProfile = async () => {
+    if (!token || !userId) return
+    setAdding(true)
+    setAddMsg("")
+    try {
+      const r = await adminApi.addUserExtraProfile(token, userId, newSlug.trim(), newCode.trim())
+      setAddMsg(`Profil /p/${r.profileUrl || newSlug} cree.`)
+      setNewSlug("")
+      setNewCode("")
+      reload()
+    } catch (err) {
+      setAddMsg(err instanceof Error ? err.message : "Creation impossible.")
+    }
+    setAdding(false)
+  }
 
   const resetPassword = async () => {
     if (!token || !userId) return
@@ -69,6 +96,8 @@ export function UserDetailsDialog({ userId, onClose }: { userId: string | null; 
     setError("")
     setPwdState("idle")
     setEditing(false)
+    setEditingSlug(null)
+    setAddMsg("")
     adminApi
       .getUserDetails(token, userId)
       .then(setDetails)
@@ -195,6 +224,70 @@ export function UserDetailsDialog({ userId, onClose }: { userId: string | null; 
               ) : (
                 <p className="text-sm text-muted-foreground">Aucun profil.</p>
               )}
+            </Section>
+
+            <Section title="Profils en plus (multi-profils)">
+              {(details.extraProfiles || []).length === 0 && (
+                <p className="text-sm text-muted-foreground">Aucun profil en plus.</p>
+              )}
+              {(details.extraProfiles || []).map((ep) => (
+                <div key={ep.slug} className="py-2 border-b border-border/40 last:border-0 space-y-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <a
+                      href={`${PUBLIC_PROFILE_URL}/p/${ep.slug}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+                    >
+                      /p/{ep.slug}
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                    <span className="text-xs text-muted-foreground">
+                      {ep.compagnie || ep.nomComplet} - {ep.viewCount} vues
+                    </span>
+                    {token && userId && (
+                      <Button size="sm" variant="outline" onClick={() => setEditingSlug(editingSlug === ep.slug ? null : ep.slug)}>
+                        <Pencil className="w-4 h-4 mr-2" />
+                        {editingSlug === ep.slug ? "Fermer" : "Modifier"}
+                      </Button>
+                    )}
+                  </div>
+                  {editingSlug === ep.slug && token && userId && (
+                    <UserProfileEditor
+                      key={ep.slug}
+                      token={token}
+                      userId={userId}
+                      profile={ep}
+                      slug={ep.slug}
+                      onSaved={() => reload()}
+                    />
+                  )}
+                </div>
+              ))}
+              <div className="pt-2 space-y-2">
+                <p className="text-xs text-muted-foreground">
+                  Ajouter un profil a ce compte : une adresse /p/... et le code d&apos;une carte libre (une carte par profil).
+                </p>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    value={newSlug}
+                    onChange={(e) => setNewSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
+                    placeholder="adresse (ex. apsxyz-sarl)"
+                    className="flex-1 min-w-0 rounded-md border border-border bg-background px-3 py-2 text-sm"
+                  />
+                  <input
+                    value={newCode}
+                    onChange={(e) => setNewCode(e.target.value.toUpperCase())}
+                    placeholder="Code de la carte"
+                    className="sm:w-40 rounded-md border border-border bg-background px-3 py-2 text-sm"
+                  />
+                  <Button size="sm" disabled={adding || !newSlug || !newCode} onClick={addProfile}>
+                    {adding ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
+                    Ajouter un profil
+                  </Button>
+                </div>
+                {addMsg && <p className="text-xs text-muted-foreground">{addMsg}</p>}
+              </div>
             </Section>
 
             <Section title="Cartes">

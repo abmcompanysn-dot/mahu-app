@@ -204,6 +204,8 @@ export interface UserDetails {
   prospectCount: number
   prospects: Array<{ dateCapture: string; nom: string; contact: string; message: string }>
   viewCount: number
+  // Multi-profils : profils publics en plus du compte (une carte chacun)
+  extraProfiles?: Array<NonNullable<UserDetails["profile"]> & { slug: string; viewCount: number }>
 }
 
 export interface OutreachSender {
@@ -490,8 +492,16 @@ export const adminApi = {
 
   // Corrige le profil public d'un client sans son mot de passe (champs autorises cote serveur :
   // Nom_Complet, Profession, Compagnie, Location, Telephone, Email_Public, Liens_Sociaux_JSON, URL_Photo, URL_Couverture).
-  updateUserProfile: (token: string, userId: string, fields: Record<string, string>) =>
-    request<{ success: boolean; changed: string[] }>(`${ADMIN_BASE_URL}/users/${userId}/profile`, token, {
+  // Multi-profils : ajoute un profil public au compte (adresse + code de la carte).
+  addUserExtraProfile: (token: string, userId: string, profileUrl: string, cardCode: string) =>
+    request<{ success: boolean; profileUrl?: string }>(`${ADMIN_BASE_URL}/users/${userId}/profiles`, token, {
+      method: "POST",
+      body: JSON.stringify({ profileUrl, cardCode }),
+    }),
+
+  // slug : un profil en plus du client (sinon le profil principal).
+  updateUserProfile: (token: string, userId: string, fields: Record<string, string>, slug?: string) =>
+    request<{ success: boolean; changed: string[] }>(`${ADMIN_BASE_URL}/users/${userId}/profile${slug ? `?slug=${encodeURIComponent(slug)}` : ""}`, token, {
       method: "PATCH",
       body: JSON.stringify(fields),
     }),

@@ -42,11 +42,14 @@ export function UserProfileEditor({
   userId,
   profile,
   onSaved,
+  slug,
 }: {
   token: string
   userId: string
   profile: Profile
   onSaved: (p: Profile) => void
+  // Profil en plus du client (multi-profils) ; absent = profil principal
+  slug?: string
 }) {
   const initialLinks = parseLinks(profile.liensSociauxJson)
   const [texts, setTexts] = useState<Record<string, string>>(() =>
@@ -93,7 +96,7 @@ export function UserProfileEditor({
     setState("saving")
     setMessage("")
     try {
-      await adminApi.updateUserProfile(token, userId, fields)
+      await adminApi.updateUserProfile(token, userId, fields, slug)
       setState("done")
       setMessage("Profil mis a jour : visible tout de suite sur la carte du client.")
       onSaved({
