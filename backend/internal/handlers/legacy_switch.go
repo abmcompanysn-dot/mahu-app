@@ -66,6 +66,14 @@ func (d *Deps) runLegacyAction(ctx context.Context, action string, payload map[s
 		return d.legacyGetDashboardData(ctx, user)
 	case "saveProfile":
 		return d.legacySaveProfile(ctx, payload, user)
+	case "listMyProfiles":
+		return d.legacyListMyProfiles(ctx, user)
+	case "addExtraProfile":
+		return d.addExtraProfile(ctx, user, str(payload, "profileUrl"), str(payload, "cardCode"), false)
+	case "getExtraProfile":
+		return d.legacyGetExtraProfile(ctx, payload, user)
+	case "saveExtraProfile":
+		return d.legacySaveExtraProfile(ctx, payload, user)
 	case "getPortfolio":
 		return d.legacyGetPortfolio(ctx, user)
 	case "savePortfolio":

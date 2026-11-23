@@ -28,6 +28,12 @@ type adminProfileView struct {
 	LiensSociauxJSON string `json:"liensSociauxJson"`
 }
 
+type adminExtraProfileView struct {
+	adminProfileView
+	Slug      string `json:"slug"`
+	ViewCount int64  `json:"viewCount"`
+}
+
 type adminCardView struct {
 	CodeCarte      string     `json:"codeCarte"`
 	Statut         string     `json:"statut"`
@@ -105,6 +111,19 @@ func (d *Deps) AdminGetUserDetails(w http.ResponseWriter, r *http.Request, id st
 		}
 	}
 
+	extraProfiles := []adminExtraProfileView{}
+	if extras, err := listExtraProfiles(ctx, objID); err == nil {
+		for _, ep := range extras {
+			n, _ := db.Collection(models.ViewEventsCollection).CountDocuments(ctx, bson.M{"profileUrl": ep.Slug})
+			extraProfiles = append(extraProfiles, adminExtraProfileView{
+				adminProfileView: adminProfileView{NomComplet: ep.NomComplet, Telephone: ep.Telephone, Profession: ep.Profession,
+					Compagnie: ep.Compagnie, Location: ep.Location, URLPhoto: ep.URLPhoto, URLCouverture: ep.URLCouverture,
+					EmailPublic: ep.EmailPublic, LeadCaptureActif: ep.LeadCaptureActif, LiensSociauxJSON: ep.LiensSociauxJSON},
+				Slug: ep.Slug, ViewCount: n,
+			})
+		}
+	}
+
 	var viewCount int64
 	if user.ProfileURL != "" {
 		viewCount, _ = db.Collection(models.ViewEventsCollection).CountDocuments(ctx, bson.M{"profileUrl": user.ProfileURL})
@@ -130,5 +149,6 @@ func (d *Deps) AdminGetUserDetails(w http.ResponseWriter, r *http.Request, id st
 		"prospectCount": prospectCount,
 		"prospects":     prospects,
 		"viewCount":     viewCount,
+		"extraProfiles": extraProfiles,
 	})
 }

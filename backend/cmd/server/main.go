@@ -140,6 +140,9 @@ func main() {
 	protected.Handle("PATCH /api/admin/users/{id}/profile", adminOnly(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		deps.AdminUpdateUserProfile(w, r, r.PathValue("id"))
 	})))
+	protected.Handle("POST /api/admin/users/{id}/profiles", adminOnly(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		deps.AdminAddExtraProfile(w, r, r.PathValue("id"))
+	})))
 	protected.Handle("POST /api/admin/2fa/setup", adminOnly(http.HandlerFunc(deps.Setup2FA)))
 	protected.Handle("POST /api/admin/2fa/confirm", adminOnly(http.HandlerFunc(deps.Confirm2FA)))
 	protected.Handle("POST /api/admin/2fa/disable", adminOnly(http.HandlerFunc(deps.Disable2FA)))

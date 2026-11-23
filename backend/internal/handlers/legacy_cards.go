@@ -177,6 +177,11 @@ func (d *Deps) legacyQuickRegisterAndActivate(ctx context.Context, payload map[s
 	if err := db.Collection(models.UsersCollection).FindOne(ctx, bson.M{"profileUrl": slug}).Decode(&slugConflict); err == nil {
 		return map[string]any{"success": false, "error": "Cette adresse profil est deja prise. Choisissez-en une autre."}, nil
 	}
+	if ep, err := findExtraProfileBySlug(ctx, slug); err != nil {
+		return nil, err
+	} else if ep != nil {
+		return map[string]any{"success": false, "error": "Cette adresse profil est deja prise. Choisissez-en une autre."}, nil
+	}
 
 	storedPassword, err := legacyauth.HashPassword(password)
 	if err != nil {

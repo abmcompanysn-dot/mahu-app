@@ -181,7 +181,12 @@ func findProfileOwnerByURL(ctx context.Context, profileURL string) (*profileOwne
 		{"profileUrl": slug}, {"profileUrl2": slug}, {"profileUrl3": slug},
 	}}).Decode(&user)
 	if err == mongo.ErrNoDocuments {
-		return nil, nil
+		// Adresse d'un profil supplementaire (multi-profils) ?
+		_, owner, err := extraProfileOwner(ctx, slug)
+		if err != nil || owner == nil {
+			return nil, err
+		}
+		return &profileOwnerRef{ID: owner.ID, Email: owner.Email}, nil
 	}
 	if err != nil {
 		return nil, err

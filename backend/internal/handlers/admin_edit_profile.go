@@ -160,7 +160,74 @@ func (d *Deps) AdminUpdateUserProfile(w http.ResponseWriter, r *http.Request, us
 		return
 	}
 
-	res, err := d.legacySaveProfile(ctx, payload, &user)
+	target := user.ProfileURL
+	if slug := r.URL.Query().Get("slug"); slug != "" && normalizeProfileSlug(slug) != normalizeProfileSlug(user.ProfileURL) {
+		// Profil supplementaire du client (multi-profils).
+		ep, err := ownedExtraProfile(ctx, &user, slug)
+		if err != nil {
+			httpx.WriteError(w, http.StatusInternalServerError, "Erreur serveur")
+			return
+		}
+		if ep == nil {
+			httpx.WriteError(w, http.StatusNotFound, "Ce profil n'appartient pas a ce client")
+			return
+		}
+		if err := saveExtraProfileFields(ctx, &user, ep, payload); err != nil {
+			httpx.WriteError(w, http.StatusInternalServerError, "Erreur serveur")
+			return
+		}
+		target = ep.Slug
+	} else {
+		res, err := d.legacySaveProfile(ctx, payload, &user)
+		if err != nil {
+			httpx.WriteError(w, http.StatusInternalServerError, "Erreur serveur")
+			return
+		}
+		if res["success"] != true {
+			msg, _ := res["error"].(string)
+			httpx.WriteError(w, http.StatusBadRequest, msg)
+			return
+		}
+	}
+
+	d.logAction(ctx, "adminUpdateUserProfile", models.LogStatusInfo,
+		fmt.Sprintf("Admin %s a modifie le profil de %s (/p/%s) : %s", admin.Email, user.Email, target, strings.Join(changed, ", ")),
+		admin.Email)
+
+	httpx.WriteJSON(w, http.StatusOK, map[string]any{"success": true, "changed": changed})
+}
+
+// AdminAddExtraProfile adds another public profile (multi-profils) to a
+// client account, at the given address, consuming one card code - e.g. one
+// account with a card per company. Paid codes are accepted here: MAHU was
+// paid directly.
+func (d *Deps) AdminAddExtraProfile(w http.ResponseWriter, r *http.Request, userIDHex string) {
+	userID, err := primitive.ObjectIDFromHex(userIDHex)
+	if err != nil {
+		httpx.WriteError(w, http.StatusBadRequest, "ID invalide")
+		return
+	}
+	admin, ok := middleware.Admin(r)
+	if !ok {
+		httpx.WriteError(w, http.StatusUnauthorized, "Non autorise")
+		return
+	}
+	r.Body = http.MaxBytesReader(w, r.Body, 4<<10)
+	var body struct {
+		ProfileURL string `json:"profileUrl"`
+		CardCode   string `json:"cardCode"`
+	}
+	if err := httpx.DecodeJSON(r, &body); err != nil {
+		httpx.WriteError(w, http.StatusBadRequest, "Donnees invalides")
+		return
+	}
+	ctx := r.Context()
+	var user models.User
+	if err := db.Collection(models.UsersCollection).FindOne(ctx, bson.M{"_id": userID}).Decode(&user); err != nil {
+		httpx.WriteError(w, http.StatusNotFound, "Utilisateur introuvable")
+		return
+	}
+	res, err := d.addExtraProfile(ctx, &user, body.ProfileURL, body.CardCode, true)
 	if err != nil {
 		httpx.WriteError(w, http.StatusInternalServerError, "Erreur serveur")
 		return
@@ -170,10 +237,7 @@ func (d *Deps) AdminUpdateUserProfile(w http.ResponseWriter, r *http.Request, us
 		httpx.WriteError(w, http.StatusBadRequest, msg)
 		return
 	}
-
-	d.logAction(ctx, "adminUpdateUserProfile", models.LogStatusInfo,
-		fmt.Sprintf("Admin %s a modifie le profil de %s (/p/%s) : %s", admin.Email, user.Email, user.ProfileURL, strings.Join(changed, ", ")),
-		admin.Email)
-
-	httpx.WriteJSON(w, http.StatusOK, map[string]any{"success": true, "changed": changed})
+	d.logAction(ctx, "adminAddExtraProfile", models.LogStatusInfo,
+		fmt.Sprintf("Admin %s a ajoute le profil /p/%v au compte %s", admin.Email, res["profileUrl"], user.Email), admin.Email)
+	httpx.WriteJSON(w, http.StatusOK, res)
 }

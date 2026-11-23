@@ -254,6 +254,31 @@ export const api = {
   saveProfile: (token: string, data: Partial<Profile>) =>
     callAppScript("saveProfile", data, token),
   
+  // Multi-profils : un compte, plusieurs profils publics (un code de carte par profil en plus).
+  listMyProfiles: (token: string) =>
+    callAppScript<never>("listMyProfiles", {}, token) as Promise<{
+      success: boolean
+      profiles?: Array<{ profileUrl: string; name: string; primary: boolean; views: number }>
+      error?: string
+    }>,
+
+  addExtraProfile: (token: string, profileUrl: string, cardCode: string) =>
+    callAppScript<never>("addExtraProfile", { profileUrl, cardCode }, token) as Promise<{
+      success: boolean
+      profileUrl?: string
+      error?: string
+    }>,
+
+  getExtraProfile: (token: string, profileUrl: string) =>
+    callAppScript<never>("getExtraProfile", { profileUrl }, token) as Promise<{
+      success: boolean
+      profile?: Profile
+      error?: string
+    }>,
+
+  saveExtraProfile: (token: string, profileUrl: string, data: Partial<Profile>) =>
+    callAppScript("saveExtraProfile", { ...data, profileUrl }, token),
+
   saveProfileImage: (token: string, data: { imageBase64: string; type: 'photo' | 'cover' }) =>
     callAppScript("saveProfileImage", { 
       imageType: data.type === 'photo' ? 'picture' : 'cover',

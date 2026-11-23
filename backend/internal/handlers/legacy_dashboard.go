@@ -55,6 +55,11 @@ func (d *Deps) legacyGetDashboardData(ctx context.Context, user *models.User) (m
 			userURLs[strings.ToLower(u)] = true
 		}
 	}
+	if extras, err := listExtraProfiles(ctx, user.ID); err == nil {
+		for _, ep := range extras {
+			userURLs[ep.Slug] = true
+		}
+	}
 	urlList := make([]string, 0, len(userURLs))
 	for u := range userURLs {
 		urlList = append(urlList, u)

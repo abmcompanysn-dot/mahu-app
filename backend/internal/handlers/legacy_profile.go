@@ -101,6 +101,11 @@ func (d *Deps) legacySaveProfile(ctx context.Context, payload map[string]any, us
 		if err == nil {
 			return map[string]any{"success": false, "error": "Cette URL de profil est deja utilisee. Veuillez en choisir une autre."}, nil
 		}
+		if ep, err := findExtraProfileBySlug(ctx, newURL); err != nil {
+			return nil, err
+		} else if ep != nil {
+			return map[string]any{"success": false, "error": "Cette URL de profil est deja utilisee. Veuillez en choisir une autre."}, nil
+		}
 
 		oldURL := user.ProfileURL
 		if _, err := db.Collection(models.UsersCollection).UpdateOne(ctx, bson.M{"_id": user.ID},
@@ -227,7 +232,20 @@ func (d *Deps) legacyGetProfileData(ctx context.Context, profileURL string) (map
 		{"profileUrl3": slugLower},
 	}}).Decode(&user)
 	if err != nil {
-		return map[string]any{"error": "Profil non trouve."}, nil
+		// Profil supplementaire d'un compte (multi-profils) ?
+		ep, owner, epErr := extraProfileOwner(ctx, slugLower)
+		if epErr != nil {
+			return nil, epErr
+		}
+		if ep == nil || owner == nil {
+			return map[string]any{"error": "Profil non trouve."}, nil
+		}
+		if blankCardHidden(owner) {
+			return map[string]any{"error": "Profil desactive."}, nil
+		}
+		data := extraProfilePublicData(owner, ep)
+		_ = db.SetCache(ctx, profileCacheKey(profileURL), data, profileCacheSeconds)
+		return publicProfileView(data), nil
 	}
 	if blankCardHidden(&user) {
 		return map[string]any{"error": "Profil desactive."}, nil

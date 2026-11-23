@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { 
-  User, Briefcase, Link as LinkIcon, Palette, 
+import {
+  User, Briefcase, Link as LinkIcon, Palette,
   Camera, Save, Loader2, Plus, Trash2, Check,
   Linkedin, Twitter, Instagram, Globe, Github, Mail, Phone, Facebook, Youtube, MessageCircle, Ghost, Send, AtSign, Pin
 } from "lucide-react"
@@ -53,6 +53,9 @@ const accentColors = [
   { name: "Jaune", value: "#FFCC00" },
 ]
 
+// Multi-profils : un compte, plusieurs profils publics (une carte par profil en plus).
+type MyProfile = { profileUrl: string; name: string; primary: boolean; views: number }
+
 interface SocialLink {
   type: string
   url: string
@@ -67,7 +70,7 @@ export default function ProfilePage() {
   const [saveSuccess, setSaveSuccess] = useState(false)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [uploadingCover, setUploadingCover] = useState(false)
-  
+
   const photoInputRef = useRef<HTMLInputElement>(null)
   const coverInputRef = useRef<HTMLInputElement>(null)
 
@@ -82,17 +85,27 @@ export default function ProfilePage() {
     URL_Photo: "",
     URL_Couverture: "",
   })
-  
+
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>([])
   // Services affiches sous les reseaux sur la carte publique (Services_JSON).
   const [services, setServices] = useState<Array<{ title: string; description?: string }>>([])
   const [selectedColor, setSelectedColor] = useState("#007AFF")
   const [hideBranding, setHideBranding] = useState(false)
 
-  // Load profile data
-  useEffect(() => {
-    if (dashboardData?.profile) {
-      const profile = dashboardData.profile
+  // Multi-profils : null = profil principal, sinon l'adresse du profil en plus edite
+  const [myProfiles, setMyProfiles] = useState<MyProfile[]>([])
+  const [activeSlug, setActiveSlug] = useState<string | null>(null)
+  const [extraLoading, setExtraLoading] = useState(false)
+  const [showAdd, setShowAdd] = useState(false)
+  const [newSlug, setNewSlug] = useState("")
+  const [newCode, setNewCode] = useState("")
+  const [adding, setAdding] = useState(false)
+  const [addError, setAddError] = useState("")
+  const [saveError, setSaveError] = useState("")
+
+  // Remplit l'editeur depuis un profil (principal ou en plus)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const fillForm = (profile: any, profileUrl: string) => {
       setFormData({
         Nom_Complet: profile.Nom_Complet || "",
         Profession: profile.Profession || "",
@@ -100,11 +113,11 @@ export default function ProfilePage() {
         Location: profile.Location || "",
         Telephone: profile.Telephone || "",
         Email_Public: profile.Email_Public || "",
-        URL_Profil: dashboardData.user?.URL_Profil || "",
+        URL_Profil: profileUrl,
         URL_Photo: profile.URL_Photo || "",
         URL_Couverture: profile.URL_Couverture || "",
       })
-      
+
       try {
         const links = JSON.parse(profile.Liens_Sociaux_JSON || "[]")
         setSocialLinks(links)
@@ -118,11 +131,73 @@ export default function ProfilePage() {
       } catch {
         setServices([])
       }
-      
+
       setSelectedColor(profile.Couleur_Theme || "#007AFF")
       setHideBranding(profile.Cacher_Marque === "OUI")
+  }
+
+  // Load profile data (profil principal)
+  useEffect(() => {
+    if (activeSlug === null && dashboardData?.profile) {
+      fillForm(dashboardData.profile, dashboardData.user?.URL_Profil || "")
     }
-  }, [dashboardData])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dashboardData, activeSlug])
+
+  const loadProfiles = async () => {
+    if (!token) return
+    try {
+      const r = await api.listMyProfiles(token)
+      if (r.success && r.profiles) setMyProfiles(r.profiles)
+    } catch {
+      // liste indisponible : l'editeur reste sur le profil principal
+    }
+  }
+
+  useEffect(() => {
+    loadProfiles()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token])
+
+  const switchProfile = async (slug: string | null) => {
+    setSaveError("")
+    setActiveSlug(slug)
+    if (slug === null) {
+      if (dashboardData?.profile) fillForm(dashboardData.profile, dashboardData.user?.URL_Profil || "")
+      return
+    }
+    if (!token) return
+    setExtraLoading(true)
+    try {
+      const r = await api.getExtraProfile(token, slug)
+      if (r.success && r.profile) fillForm(r.profile, slug)
+      else setSaveError(r.error || "Profil introuvable.")
+    } catch {
+      setSaveError("Chargement du profil impossible.")
+    }
+    setExtraLoading(false)
+  }
+
+  const handleAddProfile = async () => {
+    if (!token) return
+    setAdding(true)
+    setAddError("")
+    try {
+      const r = await api.addExtraProfile(token, newSlug.trim(), newCode.trim())
+      if (r.success && r.profileUrl) {
+        setShowAdd(false)
+        setNewSlug("")
+        setNewCode("")
+        await loadProfiles()
+        await switchProfile(r.profileUrl)
+      } else {
+        setAddError(r.error || "Creation du profil impossible.")
+      }
+    } catch {
+      setAddError("Creation du profil impossible.")
+    }
+    setAdding(false)
+  }
 
   const handleSave = async () => {
     if (!token) return
@@ -149,13 +224,23 @@ export default function ProfilePage() {
         Cacher_Marque: hideBranding ? "OUI" : "NON",
       }
 
-      const result = await api.saveProfile(token, profileData)
-      
+      setSaveError("")
+      // Profil en plus : son adresse ne change pas, ses images partent avec le reste
+      const { URL_Profil: _url, ...rest } = profileData
+      void _url
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const result: any = activeSlug
+        ? await api.saveExtraProfile(token, activeSlug, { ...rest, URL_Photo: formData.URL_Photo, URL_Couverture: formData.URL_Couverture })
+        : await api.saveProfile(token, profileData)
+
       if (result.success) {
         setSaveSuccess(true)
         setTimeout(() => setSaveSuccess(false), 3000)
         // Refresh dashboard data
-        fetchDashboardData()
+        if (activeSlug) loadProfiles()
+        else fetchDashboardData()
+      } else if (result.error) {
+        setSaveError(result.error)
       }
     } catch (error) {
       console.error("Erreur sauvegarde:", error)
@@ -166,18 +251,27 @@ export default function ProfilePage() {
 
   const handleImageUpload = async (file: File, type: 'photo' | 'cover') => {
     if (!token || !file) return
-    
+
     if (type === 'photo') setUploadingPhoto(true)
     else setUploadingCover(true)
 
     try {
       // Upload to Cloudinary first
       const cloudinaryResult = await uploadToCloudinary(file)
-      
+
       if (!cloudinaryResult.success || !cloudinaryResult.url) {
         console.error("Erreur Cloudinary:", cloudinaryResult.error)
         if (type === 'photo') setUploadingPhoto(false)
         else setUploadingCover(false)
+        return
+      }
+
+      // Profil en plus : l'image va sur ce profil, pas sur le principal
+      if (activeSlug) {
+        const key = type === 'photo' ? 'URL_Photo' : 'URL_Couverture'
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const r: any = await api.saveExtraProfile(token, activeSlug, { [key]: cloudinaryResult.url })
+        if (r.success) setFormData(prev => ({ ...prev, [key]: cloudinaryResult.url! }))
         return
       }
 
@@ -186,7 +280,7 @@ export default function ProfilePage() {
         imageBase64: cloudinaryResult.url, // C'est l'URL Cloudinary, pas base64
         type: type
       })
-      
+
       if (result.success) {
         // Update local state with new URL
         if (type === 'photo') {
@@ -242,7 +336,7 @@ export default function ProfilePage() {
           </div>
           <Button
             onClick={handleSave}
-            disabled={saving}
+            disabled={saving || extraLoading}
             className="bg-primary hover:bg-primary/90"
           >
             {saving ? (
@@ -256,8 +350,75 @@ export default function ProfilePage() {
           </Button>
         </motion.div>
 
-        <LeadCaptureToggle />
-        <ConfidentialModeToggle />
+        {saveError && <p className="text-sm text-red-500">{saveError}</p>}
+
+        {/* Multi-profils : un compte, plusieurs cartes */}
+        <div className="p-4 rounded-2xl bg-card/50 border border-border/50 space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-sm font-semibold text-foreground">Mes profils</p>
+            <Button type="button" variant="outline" size="sm" onClick={() => { setShowAdd(!showAdd); setAddError("") }}>
+              <Plus className="w-4 h-4 mr-1" /> Ajouter un profil
+            </Button>
+          </div>
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {(myProfiles.length ? myProfiles : [{ profileUrl: formData.URL_Profil, name: "", primary: true, views: 0 }]).map((p) => {
+              const active = p.primary ? activeSlug === null : activeSlug === p.profileUrl
+              return (
+                <button
+                  key={p.primary ? "principal" : p.profileUrl}
+                  type="button"
+                  onClick={() => switchProfile(p.primary ? null : p.profileUrl)}
+                  className={`shrink-0 rounded-xl px-3 py-2 text-left text-sm border transition-colors ${
+                    active ? "bg-primary text-primary-foreground border-primary" : "border-border/60 text-foreground hover:bg-muted/50"
+                  }`}
+                >
+                  <span className="block font-semibold">{p.name || (p.primary ? "Profil principal" : p.profileUrl)}</span>
+                  <span className="block text-xs opacity-80">
+                    /p/{p.profileUrl}{p.primary ? " · principal" : ""}{myProfiles.length ? ` · ${p.views} vues` : ""}
+                  </span>
+                </button>
+              )
+            })}
+            {extraLoading && <Loader2 className="w-5 h-5 animate-spin self-center text-muted-foreground" />}
+          </div>
+          {showAdd && (
+            <div className="space-y-2 rounded-xl border border-border/60 p-3">
+              <p className="text-xs text-muted-foreground">
+                Un profil en plus = une carte MAHU en plus. Choisissez l&apos;adresse du nouveau profil et entrez le code de sa carte.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <input
+                  value={newSlug}
+                  onChange={(e) => setNewSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
+                  placeholder="adresse (ex. mon-entreprise)"
+                  className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-muted/30 border border-border/50 text-foreground text-sm focus:outline-none focus:border-primary/50"
+                />
+                <input
+                  value={newCode}
+                  onChange={(e) => setNewCode(e.target.value.toUpperCase())}
+                  placeholder="Code de la carte"
+                  className="sm:w-44 px-3 py-2 rounded-xl bg-muted/30 border border-border/50 text-foreground text-sm focus:outline-none focus:border-primary/50"
+                />
+                <Button type="button" onClick={handleAddProfile} disabled={adding || !newSlug || !newCode}>
+                  {adding ? <Loader2 className="w-4 h-4 animate-spin" /> : "Creer"}
+                </Button>
+              </div>
+              {addError && <p className="text-sm text-red-500">{addError}</p>}
+            </div>
+          )}
+          {activeSlug && (
+            <p className="text-xs text-muted-foreground">
+              Vous modifiez le profil <strong>{host}/p/{activeSlug}</strong> : son adresse ne change pas.
+            </p>
+          )}
+        </div>
+
+        {activeSlug === null && (
+          <>
+            <LeadCaptureToggle />
+            <ConfidentialModeToggle />
+          </>
+        )}
 
         {/* Tabs Navigation */}
         <motion.div
@@ -300,13 +461,13 @@ export default function ProfilePage() {
                 className="space-y-6"
               >
                 <h3 className="text-lg font-semibold text-foreground">Images du profil</h3>
-                
+
                 <div className="flex flex-col sm:flex-row gap-6">
                   {/* Profile Picture */}
                   <div className="text-center">
                     <div className="relative inline-block">
                       {formData.URL_Photo ? (
-                        <div 
+                        <div
                           className="w-28 h-28 rounded-full bg-cover bg-center border-4 border-background"
                           style={{ backgroundImage: `url(${formData.URL_Photo})` }}
                         />
@@ -345,11 +506,11 @@ export default function ProfilePage() {
 
                   {/* Cover Image */}
                   <div className="flex-1">
-                    <div 
+                    <div
                       className="relative h-32 rounded-xl bg-cover bg-center overflow-hidden"
-                      style={{ 
-                        backgroundImage: formData.URL_Couverture 
-                          ? `url(${formData.URL_Couverture})` 
+                      style={{
+                        backgroundImage: formData.URL_Couverture
+                          ? `url(${formData.URL_Couverture})`
                           : `linear-gradient(135deg, ${selectedColor}40, ${selectedColor}20)`
                       }}
                     >
@@ -475,6 +636,7 @@ export default function ProfilePage() {
                     <input
                       type="text"
                       value={formData.URL_Profil}
+                      disabled={activeSlug !== null}
                       onChange={(e) => setFormData({ ...formData, URL_Profil: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })}
                       className="flex-1 min-w-0 px-3 sm:px-4 py-3 rounded-r-xl bg-muted/30 border border-border/50 text-foreground focus:outline-none focus:border-primary/50 transition-colors"
                       placeholder="jean-dupont"
@@ -496,7 +658,7 @@ export default function ProfilePage() {
                 {socialLinks.map((link, index) => {
                   const platform = socialPlatforms.find(p => p.id === link.type) || socialPlatforms.find(p => p.id === "website")!
                   const Icon = platform.icon
-                  
+
                   return (
                     <motion.div
                       key={index}
@@ -635,8 +797,8 @@ export default function ProfilePage() {
                         whileTap={{ scale: 0.9 }}
                         onClick={() => setSelectedColor(color.value)}
                         className={`w-12 h-12 rounded-xl transition-all ${
-                          selectedColor === color.value 
-                            ? "ring-2 ring-offset-2 ring-offset-background ring-foreground" 
+                          selectedColor === color.value
+                            ? "ring-2 ring-offset-2 ring-offset-background ring-foreground"
                             : ""
                         }`}
                         style={{ backgroundColor: color.value }}
@@ -676,7 +838,7 @@ export default function ProfilePage() {
       <div className="lg:col-span-1 min-w-0">
         <div className="sticky top-24">
           <p className="text-sm text-muted-foreground text-center mb-4">Apercu de votre carte</p>
-          <PhonePreview 
+          <PhonePreview
             profile={{
               ...dashboardData?.profile,
               Nom_Complet: formData.Nom_Complet,
