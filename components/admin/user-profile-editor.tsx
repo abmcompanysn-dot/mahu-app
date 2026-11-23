@@ -23,6 +23,7 @@ const TEXT_FIELDS: Array<[keyof Profile, string, string]> = [
   ["location", "Location", "Ville / adresse"],
   ["telephone", "Telephone", "Telephone"],
   ["emailPublic", "Email_Public", "Email affiche (vide = email du compte)"],
+  ["couleurTheme", "Couleur_Theme", "Couleur du profil (ex. #2E9E3E)"],
 ]
 
 function parseLinks(json?: string): Link[] {

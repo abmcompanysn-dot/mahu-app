@@ -26,6 +26,7 @@ type adminProfileView struct {
 	EmailPublic      string `json:"emailPublic"`
 	LeadCaptureActif string `json:"leadCaptureActif"`
 	LiensSociauxJSON string `json:"liensSociauxJson"`
+	CouleurTheme     string `json:"couleurTheme"`
 }
 
 type adminExtraProfileView struct {
@@ -71,7 +72,7 @@ func (d *Deps) AdminGetUserDetails(w http.ResponseWriter, r *http.Request, id st
 		profile = &adminProfileView{
 			NomComplet: p.NomComplet, Telephone: p.Telephone, Profession: p.Profession, Compagnie: p.Compagnie,
 			Location: p.Location, URLPhoto: p.URLPhoto, URLCouverture: p.URLCouverture, EmailPublic: p.EmailPublic,
-			LeadCaptureActif: p.LeadCaptureActif, LiensSociauxJSON: p.LiensSociauxJSON,
+			LeadCaptureActif: p.LeadCaptureActif, LiensSociauxJSON: p.LiensSociauxJSON, CouleurTheme: p.CouleurTheme,
 		}
 	} else if err != mongo.ErrNoDocuments {
 		httpx.WriteError(w, http.StatusInternalServerError, "Erreur serveur")
@@ -118,7 +119,8 @@ func (d *Deps) AdminGetUserDetails(w http.ResponseWriter, r *http.Request, id st
 			extraProfiles = append(extraProfiles, adminExtraProfileView{
 				adminProfileView: adminProfileView{NomComplet: ep.NomComplet, Telephone: ep.Telephone, Profession: ep.Profession,
 					Compagnie: ep.Compagnie, Location: ep.Location, URLPhoto: ep.URLPhoto, URLCouverture: ep.URLCouverture,
-					EmailPublic: ep.EmailPublic, LeadCaptureActif: ep.LeadCaptureActif, LiensSociauxJSON: ep.LiensSociauxJSON},
+					EmailPublic: ep.EmailPublic, LeadCaptureActif: ep.LeadCaptureActif, LiensSociauxJSON: ep.LiensSociauxJSON,
+					CouleurTheme: ep.CouleurTheme},
 				Slug: ep.Slug, ViewCount: n,
 			})
 		}

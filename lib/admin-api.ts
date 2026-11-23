@@ -195,6 +195,7 @@ export interface UserDetails {
     urlPhoto: string
     urlCouverture?: string
     emailPublic?: string
+    couleurTheme?: string
     leadCaptureActif: string
     liensSociauxJson: string
   } | null

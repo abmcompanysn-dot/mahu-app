@@ -30,6 +30,7 @@ var adminEditableProfileFields = map[string]int{
 	"Liens_Sociaux_JSON": 20000,
 	"URL_Photo":          500,
 	"URL_Couverture":     500,
+	"Couleur_Theme":      7,
 }
 
 const adminProfileMaxLinks = 30
@@ -38,7 +39,9 @@ var (
 	linkTypePattern = regexp.MustCompile(`^[a-z0-9_-]{1,24}$`)
 	// Les images doivent venir du compte Cloudinary de MAHU (meme origine que
 	// l'editeur de profil) : pas d'image hebergee n'importe ou.
-	mahuImagePattern = regexp.MustCompile(`^https://res\.cloudinary\.com/dl3cdiz6k/image/upload/[A-Za-z0-9_./,:-]+$`)
+	// Couleur du profil (boutons, liens) : uniquement #RRGGBB.
+	themeColorPattern = regexp.MustCompile(`^#[0-9A-Fa-f]{6}$`)
+	mahuImagePattern  = regexp.MustCompile(`^https://res\.cloudinary\.com/dl3cdiz6k/image/upload/[A-Za-z0-9_./,:-]+$`)
 )
 
 type adminProfileLink struct {
@@ -132,6 +135,11 @@ func (d *Deps) AdminUpdateUserProfile(w http.ResponseWriter, r *http.Request, us
 		case "URL_Photo", "URL_Couverture":
 			if v != "" && !mahuImagePattern.MatchString(v) {
 				httpx.WriteError(w, http.StatusBadRequest, "L'image doit etre envoyee depuis la console (Cloudinary MAHU)")
+				return
+			}
+		case "Couleur_Theme":
+			if v != "" && !themeColorPattern.MatchString(v) {
+				httpx.WriteError(w, http.StatusBadRequest, "Couleur invalide (format #RRGGBB)")
 				return
 			}
 		case "Email_Public":
