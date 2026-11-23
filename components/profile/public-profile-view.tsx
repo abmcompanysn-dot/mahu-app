@@ -60,6 +60,27 @@ function getSocialIcon(type: string) {
   return socialIcons[type.toLowerCase()] || socialIcons.default
 }
 
+// Nom affiche quand le lien n'a pas de libelle perso : « Instagram » plutot que « instagram ».
+const socialNames: Record<string, string> = {
+  linkedin: "LinkedIn",
+  twitter: "X",
+  instagram: "Instagram",
+  facebook: "Facebook",
+  github: "GitHub",
+  youtube: "YouTube",
+  tiktok: "TikTok",
+  snapchat: "Snapchat",
+  telegram: "Telegram",
+  threads: "Threads",
+  pinterest: "Pinterest",
+  whatsapp: "WhatsApp",
+  website: "Site web",
+}
+
+function getSocialName(type: string) {
+  return socialNames[type.toLowerCase()] || type
+}
+
 // Le profil arrive deja rempli depuis le serveur (app/p/[username]/page.tsx),
 // donc la carte s'affiche des le premier rendu, sans attendre le JS. Le
 // chargement cote navigateur ne sert que de secours si le serveur a echoue.
@@ -409,7 +430,7 @@ END:VCARD`
                       className="flex items-center gap-4 p-3 rounded-xl bg-muted/20 hover:bg-muted/40 transition-colors"
                     >
                       <Icon className="w-5 h-5" style={{ color: accentColor }} />
-                      <span className="text-foreground">{link.label || link.type}</span>
+                      <span className="text-foreground">{link.label || getSocialName(link.type)}</span>
                     </a>
                   )
                 })}
