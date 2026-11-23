@@ -36,10 +36,10 @@ const socialPlatforms = [
   { id: "telegram", label: "Telegram", icon: Send, placeholder: "https://t.me/username" },
   { id: "threads", label: "Threads", icon: AtSign, placeholder: "https://threads.net/@username" },
   { id: "pinterest", label: "Pinterest", icon: Pin, placeholder: "https://pinterest.com/username" },
-  { id: "whatsapp", label: "WhatsApp", icon: MessageCircle, placeholder: "+33612345678" },
+  { id: "whatsapp", label: "WhatsApp", icon: MessageCircle, placeholder: "+221 77 123 45 67" },
   { id: "website", label: "Site web", icon: Globe, placeholder: "https://votre-site.com" },
   { id: "email", label: "Email", icon: Mail, placeholder: "email@exemple.com" },
-  { id: "phone", label: "Telephone", icon: Phone, placeholder: "+33 6 12 34 56 78" },
+  { id: "phone", label: "Telephone (appel)", icon: Phone, placeholder: "+221 77 123 45 67" },
 ]
 
 const accentColors = [
@@ -299,8 +299,8 @@ export default function ProfilePage() {
     }
   }
 
-  const addSocialLink = () => {
-    setSocialLinks([...socialLinks, { type: "website", url: "", label: "" }])
+  const addSocialLink = (type = "website") => {
+    setSocialLinks([...socialLinks, { type, url: "", label: "" }])
   }
 
   const removeSocialLink = (index: number) => {
@@ -711,12 +711,30 @@ export default function ProfilePage() {
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={addSocialLink}
+                  onClick={() => addSocialLink()}
                   className="w-full flex items-center justify-center gap-2 px-4 py-4 rounded-xl border-2 border-dashed border-border/50 text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors"
                 >
                   <Plus className="w-4 h-4" />
                   Ajouter un lien
                 </motion.button>
+
+                {/* Numeros : il suffit de taper le numero, le profil en fait un bouton WhatsApp ou un bouton d'appel */}
+                <div className="grid grid-cols-2 gap-3">
+                  {([["whatsapp", MessageCircle, "Numero WhatsApp"], ["phone", Phone, "Numero d'appel"]] as const).map(([type, Icon, text]) => (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => addSocialLink(type)}
+                      className="flex items-center justify-center gap-2 px-3 py-3 rounded-xl border border-border/50 bg-muted/20 text-sm text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors"
+                    >
+                      <Icon className="w-4 h-4" />
+                      {text}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Tapez simplement le numero (ex. +221 71 095 64 64) et un nom comme « Numero commercial » : un clic ouvre WhatsApp ou lance l&apos;appel.
+                </p>
               </motion.div>
             )}
 

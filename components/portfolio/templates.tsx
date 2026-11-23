@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { videoEmbed, type PortfolioItem, type PortfolioView } from "@/lib/portfolio"
 import { MotionTemplate } from "@/components/portfolio/motion-template"
+import { linkHref } from "@/lib/link-href"
 
 // Les 5 modeles de portfolio etudiant. Ils ne recoivent que des donnees (pas
 // d'etat) : la meme vue sert a la page publique, aux demos et a l'apercu de
@@ -15,14 +16,14 @@ const F = {
 
 const LINK_LABEL: Record<string, string> = {
   linkedin: "LinkedIn", github: "GitHub", website: "Site web", instagram: "Instagram", twitter: "X",
-  facebook: "Facebook", youtube: "YouTube", tiktok: "TikTok", whatsapp: "WhatsApp", behance: "Behance", snapchat: "Snapchat",
+  facebook: "Facebook", youtube: "YouTube", tiktok: "TikTok", whatsapp: "WhatsApp", phone: "Téléphone", email: "Email", behance: "Behance", snapchat: "Snapchat",
 }
 
 function contactList(v: PortfolioView) {
   const out: Array<{ label: string; href: string }> = []
   if (v.email) out.push({ label: v.email, href: `mailto:${v.email}` })
   if (v.phone) out.push({ label: v.phone, href: `tel:${v.phone.replace(/\s/g, "")}` })
-  for (const l of v.links) out.push({ label: LINK_LABEL[l.type] || l.type, href: l.url })
+  for (const l of v.links) out.push({ label: LINK_LABEL[l.type] || l.type, href: linkHref(l.type, l.url) })
   return out
 }
 

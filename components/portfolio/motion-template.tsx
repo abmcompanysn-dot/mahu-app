@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react"
 import { animate, motion, useInView, useReducedMotion, useScroll, useSpring, useTransform } from "framer-motion"
 import { ArrowUpRight, Mail, MapPin, Phone } from "lucide-react"
 import { videoEmbed, type PortfolioItem, type PortfolioView } from "@/lib/portfolio"
+import { linkHref } from "@/lib/link-href"
 import { ReachSection } from "@/components/portfolio/reach-globe"
 import { StoryPlayerButton, StorySection } from "@/components/portfolio/story-section"
 
@@ -145,7 +146,7 @@ function Hero({ v }: { v: PortfolioView }) {
               </a>
             )}
             {v.links.map((l) => (
-              <a key={l.url} href={l.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-full border border-white/15 px-5 py-3 text-sm font-semibold text-white/80 hover:bg-white/10">
+              <a key={l.url} href={linkHref(l.type, l.url)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-full border border-white/15 px-5 py-3 text-sm font-semibold text-white/80 hover:bg-white/10">
                 {LINK_LABEL[l.type] || l.type} <ArrowUpRight className="h-3.5 w-3.5" />
               </a>
             ))}

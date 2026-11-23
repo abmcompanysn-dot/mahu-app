@@ -14,6 +14,7 @@ import { LEAD_CHANNELS, PHONE_PREFIXES, formatLeadContact, type LeadChannel } fr
 import { BlankCardActivation } from "@/components/profile/blank-card-activation"
 import { Button } from "@/components/ui/button"
 import { optimizedImage } from "@/lib/image"
+import { linkHref } from "@/lib/link-href"
 
 interface SocialLink {
   type: string
@@ -52,6 +53,8 @@ const socialIcons: Record<string, React.ElementType> = {
   threads: AtSign,
   pinterest: Pin,
   whatsapp: MessageCircle,
+  phone: Phone,
+  email: Mail,
   website: Globe,
   default: Link2,
 }
@@ -74,6 +77,8 @@ const socialNames: Record<string, string> = {
   threads: "Threads",
   pinterest: "Pinterest",
   whatsapp: "WhatsApp",
+  phone: "Téléphone",
+  email: "Email",
   website: "Site web",
 }
 
@@ -421,16 +426,19 @@ END:VCARD`
               <div className="mt-6 space-y-2">
                 {socialLinks.map((link, idx) => {
                   const Icon = getSocialIcon(link.type)
+                  const href = linkHref(link.type, link.url)
+                  const external = /^https?:/i.test(href)
+                  // un numero d'appel sans libelle affiche le numero lui-meme
+                  const text = link.label || (link.type === "phone" && link.url.replace(/^tel:/i, "").trim()) || getSocialName(link.type)
                   return (
                     <a
                       key={idx}
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      href={href}
+                      {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
                       className="flex items-center gap-4 p-3 rounded-xl bg-muted/20 hover:bg-muted/40 transition-colors"
                     >
                       <Icon className="w-5 h-5" style={{ color: accentColor }} />
-                      <span className="text-foreground">{link.label || getSocialName(link.type)}</span>
+                      <span className="text-foreground">{text}</span>
                     </a>
                   )
                 })}

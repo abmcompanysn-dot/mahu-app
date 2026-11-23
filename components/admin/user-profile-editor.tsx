@@ -5,6 +5,7 @@ import { ImagePlus, Loader2, Plus, Save, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { adminApi, type UserDetails } from "@/lib/admin-api"
+import { isNumberLink, linkHref } from "@/lib/link-href"
 import { uploadToCloudinary } from "@/lib/cloudinary"
 
 type Profile = NonNullable<UserDetails["profile"]>
@@ -14,7 +15,12 @@ const LINK_TYPES: Array<[string, string]> = [
   ["whatsapp", "WhatsApp"], ["instagram", "Instagram"], ["facebook", "Facebook"], ["tiktok", "TikTok"],
   ["linkedin", "LinkedIn"], ["twitter", "X (Twitter)"], ["youtube", "YouTube"], ["snapchat", "Snapchat"],
   ["telegram", "Telegram"], ["threads", "Threads"], ["pinterest", "Pinterest"], ["github", "GitHub"], ["website", "Site web"],
+  ["phone", "Telephone (appel)"], ["email", "Email"],
 ]
+
+const PLACEHOLDER: Record<string, string> = {
+  whatsapp: "+221 77 123 45 67", phone: "+221 77 123 45 67", email: "contact@exemple.com",
+}
 
 const TEXT_FIELDS: Array<[keyof Profile, string, string]> = [
   ["nomComplet", "Nom_Complet", "Nom affiche"],
@@ -85,7 +91,8 @@ export function UserProfileEditor({
     for (const [k, apiKey] of TEXT_FIELDS) {
       if ((texts[k] ?? "") !== String(profile[k] ?? "")) fields[apiKey] = texts[k] ?? ""
     }
-    const cleanLinks = links.filter((l) => l.url.trim())
+    // un numero tape (WhatsApp / telephone) devient wa.me/... ou tel:+..., une adresse email devient mailto:
+    const cleanLinks = links.filter((l) => l.url.trim()).map((l) => ({ ...l, url: linkHref(l.type, l.url) }))
     if (JSON.stringify(cleanLinks) !== JSON.stringify(initialLinks)) fields.Liens_Sociaux_JSON = JSON.stringify(cleanLinks)
     if (photo !== (profile.urlPhoto || "")) fields.URL_Photo = photo
     if (cover !== (profile.urlCouverture || "")) fields.URL_Couverture = cover
@@ -128,7 +135,7 @@ export function UserProfileEditor({
 
       <div className="space-y-2">
         <div className="text-xs font-medium text-muted-foreground">
-          Reseaux - laisser « Nom affiche » vide pour afficher le nom du reseau (ex. « Instagram »)
+          Reseaux et numeros - laisser « Nom affiche » vide pour afficher le nom du reseau (ex. « Instagram »)
         </div>
         {links.map((l, i) => (
           <div key={i} className="grid grid-cols-[7.5rem_1fr_9rem_auto] gap-2 items-center">
@@ -142,7 +149,7 @@ export function UserProfileEditor({
                 <option key={v} value={v}>{name}</option>
               ))}
             </select>
-            <Input placeholder="https://..." value={l.url} onChange={(e) => setLink(i, { url: e.target.value })} />
+            <Input placeholder={PLACEHOLDER[l.type] || "https://..."} inputMode={isNumberLink(l.type) ? "tel" : undefined} value={l.url} onChange={(e) => setLink(i, { url: e.target.value })} />
             <Input placeholder="Nom affiche" value={l.label} onChange={(e) => setLink(i, { label: e.target.value })} />
             <Button type="button" size="icon" variant="ghost" onClick={() => setLinks((ls) => ls.filter((_, j) => j !== i))} aria-label="Supprimer le lien">
               <Trash2 className="w-4 h-4" />
@@ -152,6 +159,16 @@ export function UserProfileEditor({
         <Button type="button" size="sm" variant="outline" onClick={() => setLinks((ls) => [...ls, { type: "website", url: "", label: "" }])}>
           <Plus className="w-4 h-4 mr-1" /> Ajouter un lien
         </Button>
+        <Button type="button" size="sm" variant="outline" className="ml-2" onClick={() => setLinks((ls) => [...ls, { type: "whatsapp", url: "", label: "" }])}>
+          <Plus className="w-4 h-4 mr-1" /> Numero WhatsApp
+        </Button>
+        <Button type="button" size="sm" variant="outline" className="ml-2" onClick={() => setLinks((ls) => [...ls, { type: "phone", url: "", label: "" }])}>
+          <Plus className="w-4 h-4 mr-1" /> Numero d&apos;appel
+        </Button>
+        <div className="text-[11px] text-muted-foreground">
+          Pour un numero, tapez-le simplement (ex. +221 71 095 64 64) : WhatsApp ouvre la discussion, « Numero d&apos;appel » lance l&apos;appel.
+          Nom affiche conseille : « Numero commercial », « Bureau »...
+        </div>
       </div>
 
       <div className="grid sm:grid-cols-2 gap-3">
