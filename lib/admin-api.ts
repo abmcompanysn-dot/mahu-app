@@ -14,6 +14,12 @@ export interface AdminInfo {
   role: "admin" | "superadmin"
 }
 
+export interface DatabaseExport {
+  filename: string
+  zipBase64: string
+  collections: { name: string; rows: number }[]
+}
+
 export interface AdminStats {
   adminCount: number
   announcementCount: number
@@ -416,6 +422,9 @@ export const adminApi = {
     callAppScript("adminBroadcastMessage", { subject, title, message }, token),
 
   getStats: (token: string) => request<AdminStats>(`${ADMIN_BASE_URL}/stats`, token),
+
+  // Toute la base en CSV (1 fichier par table, dans un ZIP). Codes d'activation inclus, mots de passe exclus.
+  exportDatabase: (token: string) => request<DatabaseExport>(`${ADMIN_BASE_URL}/export`, token),
 
   getConsumption: (token: string) => request<ConsumptionStats>(`${ADMIN_BASE_URL}/consumption`, token),
 

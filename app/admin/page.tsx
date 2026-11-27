@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Loader2, LogOut, Users, Wallet } from "lucide-react"
+import { Database, Download, Loader2, LogOut, Users, Wallet } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -25,6 +25,29 @@ export default function AdminHomePage() {
   const [payments, setPayments] = useState<PaymentsResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [exporting, setExporting] = useState(false)
+  const [exportInfo, setExportInfo] = useState("")
+
+  const exportDatabase = async () => {
+    if (!token) return
+    setExporting(true)
+    setExportInfo("")
+    try {
+      const res = await adminApi.exportDatabase(token)
+      const bytes = Uint8Array.from(atob(res.zipBase64), (c) => c.charCodeAt(0))
+      const a = document.createElement("a")
+      a.href = URL.createObjectURL(new Blob([bytes], { type: "application/zip" }))
+      a.download = res.filename
+      a.click()
+      setTimeout(() => URL.revokeObjectURL(a.href), 10000)
+      const total = res.collections.reduce((n, c) => n + c.rows, 0)
+      setExportInfo(`${res.collections.length} tables, ${total} lignes - ${res.filename}`)
+    } catch (err) {
+      setExportInfo(err instanceof Error ? err.message : "Export impossible")
+    } finally {
+      setExporting(false)
+    }
+  }
 
   useEffect(() => {
     if (authLoading) return
@@ -97,6 +120,25 @@ export default function AdminHomePage() {
             </CardHeader>
           </Card>
         </div>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
+            <div className="space-y-1.5">
+              <CardTitle className="flex items-center gap-2">
+                <Database className="w-5 h-5" /> Exporter toute la base
+              </CardTitle>
+              <CardDescription>
+                Un ZIP avec un fichier CSV par table (Excel / Google Sheets). Codes d&apos;activation inclus, mots de
+                passe exclus. Contient les donnees des clients : a garder prive.
+              </CardDescription>
+              {exportInfo && <p className="text-sm text-muted-foreground">{exportInfo}</p>}
+            </div>
+            <Button onClick={exportDatabase} disabled={exporting}>
+              {exporting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
+              Exporter (CSV)
+            </Button>
+          </CardHeader>
+        </Card>
 
         <Card>
           <CardHeader>
