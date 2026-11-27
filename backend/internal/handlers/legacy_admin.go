@@ -234,7 +234,8 @@ func newCardCodes(ctx context.Context, prefix string, n int) ([]string, error) {
 }
 
 func (d *Deps) legacyAdminUpdateCardSale(ctx context.Context, payload map[string]any, user *models.User) (map[string]any, error) {
-	if _, err := d.checkStaffAccess(user); err != nil {
+	perms, err := d.checkStaffAccess(user)
+	if err != nil {
 		return nil, err
 	}
 
@@ -242,7 +243,15 @@ func (d *Deps) legacyAdminUpdateCardSale(ctx context.Context, payload map[string
 	vendeur := orDefault(str(payload, "vendeur"), "Mahu Direct")
 	now := time.Now()
 
-	res, err := db.Collection(models.PhysicalCardsCollection).UpdateOne(ctx, bson.M{"codeCarte": code},
+	// Hors super-admin : uniquement les cartes du lot de ce revendeur, et la
+	// vente reste a son nom (sinon tout compte client pouvait modifier
+	// n'importe quelle carte dont il lit le code dans le QR).
+	filter := bson.M{"codeCarte": code}
+	if !perms.isSuper {
+		filter["vendeur"] = user.Email
+		vendeur = user.Email
+	}
+	res, err := db.Collection(models.PhysicalCardsCollection).UpdateOne(ctx, filter,
 		bson.M{"$set": bson.M{"statut": models.CardStatusSold, "dateVente": now, "vendeur": vendeur, "commentaire": str(payload, "commentaire")}})
 	if err != nil {
 		return nil, err
@@ -329,12 +338,18 @@ func (d *Deps) legacyAdminCreateReseller(ctx context.Context, payload map[string
 }
 
 func (d *Deps) legacyAdminDeactivateCard(ctx context.Context, payload map[string]any, user *models.User) (map[string]any, error) {
-	if _, err := d.checkStaffAccess(user); err != nil {
+	perms, err := d.checkStaffAccess(user)
+	if err != nil {
 		return nil, err
 	}
 
 	code := str(payload, "code")
-	res, err := db.Collection(models.PhysicalCardsCollection).UpdateOne(ctx, bson.M{"codeCarte": code},
+	// Hors super-admin : uniquement les cartes du lot de ce revendeur.
+	filter := bson.M{"codeCarte": code}
+	if !perms.isSuper {
+		filter["vendeur"] = user.Email
+	}
+	res, err := db.Collection(models.PhysicalCardsCollection).UpdateOne(ctx, filter,
 		bson.M{"$set": bson.M{"statut": models.CardStatusDeactivated}})
 	if err != nil {
 		return nil, err

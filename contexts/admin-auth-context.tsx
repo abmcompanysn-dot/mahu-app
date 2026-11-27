@@ -12,8 +12,9 @@ interface AdminAuthContextValue {
   login: (
     email: string,
     password: string
-  ) => Promise<{ success: boolean; error?: string; twoFactorRequired?: boolean }>
+  ) => Promise<{ success: boolean; error?: string; twoFactorRequired?: boolean; twoFactorSetupRequired?: boolean }>
   verify2fa: (code: string) => Promise<{ success: boolean; error?: string }>
+  replaceToken: (token: string) => void
   logout: () => void
 }
 
@@ -52,7 +53,13 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("mahu_admin_info", JSON.stringify(result.admin))
     setToken(result.token)
     setAdmin(result.admin)
-    return { success: true }
+    return { success: true, twoFactorSetupRequired: result.twoFactorSetupRequired }
+  }, [])
+
+  // Nouveau jeton complet renvoye apres l'activation de la 2FA.
+  const replaceToken = useCallback((newToken: string) => {
+    localStorage.setItem("mahu_admin_token", newToken)
+    setToken(newToken)
   }, [])
 
   const verify2fa = useCallback(
@@ -92,6 +99,7 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
         twoFactorPending: !!pendingToken,
         login,
         verify2fa,
+        replaceToken,
         logout,
       }}
     >

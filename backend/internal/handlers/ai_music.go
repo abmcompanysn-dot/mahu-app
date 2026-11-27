@@ -197,7 +197,7 @@ func callHuggingFaceMusicGen(apiKey, prompt string) ([]byte, string, error) {
 		body, _ := io.ReadAll(resp.Body)
 		var hfErr hfErrorResponse
 		if json.Unmarshal(body, &hfErr) == nil && hfErr.Error != "" {
-			return nil, "", fmt.Errorf(hfErr.Error)
+			return nil, "", fmt.Errorf("%s", hfErr.Error)
 		}
 		return nil, "", fmt.Errorf("Echec de generation musicale (HTTP %d)", resp.StatusCode)
 	}

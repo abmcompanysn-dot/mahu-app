@@ -2,14 +2,53 @@ package cloudinaryutil
 
 import (
 	"bytes"
+	"crypto/sha1"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
 	"mime/multipart"
 	"net/http"
+	"sort"
+	"strconv"
+	"strings"
+	"time"
 
 	"mahu-backend/internal/config"
 )
+
+// Signed dit si les envois Cloudinary sont signes (cle API + secret configures).
+func Signed(env *config.Env) bool {
+	return env.CloudinaryAPIKey != "" && env.CloudinaryAPISecret != ""
+}
+
+// Sign calcule la signature Cloudinary : parametres tries par nom, joints en
+// « a=1&b=2 », suivis du secret API, puis SHA-1 en hexadecimal.
+func Sign(params map[string]string, apiSecret string) string {
+	keys := make([]string, 0, len(params))
+	for k := range params {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	parts := make([]string, len(keys))
+	for i, k := range keys {
+		parts[i] = k + "=" + params[k]
+	}
+	sum := sha1.Sum([]byte(strings.Join(parts, "&") + apiSecret))
+	return hex.EncodeToString(sum[:])
+}
+
+// UploadParams : champs a envoyer avec le fichier (preset, et signature si configuree).
+func UploadParams(env *config.Env) map[string]string {
+	params := map[string]string{"upload_preset": env.CloudinaryUploadPreset}
+	if !Signed(env) {
+		return params
+	}
+	params["timestamp"] = strconv.FormatInt(time.Now().Unix(), 10)
+	params["signature"] = Sign(params, env.CloudinaryAPISecret)
+	params["api_key"] = env.CloudinaryAPIKey
+	return params
+}
 
 type uploadResponse struct {
 	SecureURL string `json:"secure_url"`
@@ -31,8 +70,10 @@ func UploadBase64(env *config.Env, base64Data string) (string, error) {
 	if err := writer.WriteField("file", base64Data); err != nil {
 		return "", err
 	}
-	if err := writer.WriteField("upload_preset", env.CloudinaryUploadPreset); err != nil {
-		return "", err
+	for k, v := range UploadParams(env) {
+		if err := writer.WriteField(k, v); err != nil {
+			return "", err
+		}
 	}
 	if err := writer.Close(); err != nil {
 		return "", err
@@ -84,8 +125,10 @@ func UploadVideo(env *config.Env, file string) (secureURL string, publicID strin
 	if err := writer.WriteField("file", file); err != nil {
 		return "", "", err
 	}
-	if err := writer.WriteField("upload_preset", env.CloudinaryUploadPreset); err != nil {
-		return "", "", err
+	for k, v := range UploadParams(env) {
+		if err := writer.WriteField(k, v); err != nil {
+			return "", "", err
+		}
 	}
 	if err := writer.Close(); err != nil {
 		return "", "", err

@@ -302,6 +302,18 @@ async function request<T>(url: string, token: string, options: RequestInit = {})
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: "Erreur inconnue" }))
+    if (typeof window !== "undefined") {
+      // 2FA obligatoire : tant qu'elle n'est pas activee, seule la page Securite est ouverte.
+      if (response.status === 403 && error.code === "2FA_SETUP_REQUIRED" && window.location.pathname !== "/admin/security") {
+        window.location.href = "/admin/security"
+      }
+      // Session expiree ou coupee : retour a la connexion.
+      if (response.status === 401 && window.location.pathname !== "/admin/login") {
+        localStorage.removeItem("mahu_admin_token")
+        localStorage.removeItem("mahu_admin_info")
+        window.location.href = "/admin/login"
+      }
+    }
     throw new Error(error.error || `Erreur ${response.status}`)
   }
 
@@ -325,6 +337,7 @@ export const adminApi = {
     return {
       success: true as const,
       twoFactorRequired: false as const,
+      twoFactorSetupRequired: !!data.twoFactorSetupRequired,
       token: data.token as string,
       admin: data.admin as AdminInfo,
     }
@@ -346,7 +359,7 @@ export const adminApi = {
   setup2fa: (token: string) => request<{ secret: string; otpauthUrl: string }>(`${ADMIN_BASE_URL}/2fa/setup`, token, { method: "POST" }),
 
   confirm2fa: (token: string, code: string) =>
-    request<{ success: boolean }>(`${ADMIN_BASE_URL}/2fa/confirm`, token, {
+    request<{ success: boolean; token?: string }>(`${ADMIN_BASE_URL}/2fa/confirm`, token, {
       method: "POST",
       body: JSON.stringify({ code }),
     }),

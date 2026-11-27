@@ -144,7 +144,9 @@ func (d *Deps) legacyRegisterUser(ctx context.Context, email, password, enterpri
 	if err != nil {
 		return nil, err
 	}
-	if existing != nil {
+	// Les emails super-admin donnent les droits staff : jamais de compte cree
+	// par une inscription publique (l'email n'est pas verifie).
+	if existing != nil || d.Env.IsSuperAdmin(email) {
 		return map[string]any{"success": false, "error": signupEmailRefused}, nil
 	}
 
@@ -284,14 +286,19 @@ func (d *Deps) legacyChangePassword(ctx context.Context, payload map[string]any,
 		return nil, err
 	}
 	_, err = db.Collection(models.UsersCollection).UpdateOne(ctx, bson.M{"_id": user.ID}, bson.M{
-		"$set":   bson.M{"passwordHash": stored, "updatedAt": time.Now()},
+		"$set":   bson.M{"passwordHash": stored, "sessionsValidAfter": models.RevokeSessionsNow(), "updatedAt": time.Now()},
 		"$unset": bson.M{"mustChangePassword": ""},
 	})
 	if err != nil {
 		return nil, err
 	}
+	// Les autres appareils sont deconnectes ; celui-ci recoit un nouveau jeton.
+	token, err := authutil.SignUserToken(d.Env.JWTSecret, user.ID.Hex(), user.Email, user.Role)
+	if err != nil {
+		return nil, err
+	}
 	d.logAction(ctx, "changePassword", models.LogStatusSuccess, "Mot de passe change", user.Email)
-	return map[string]any{"success": true, "message": "Mot de passe change."}, nil
+	return map[string]any{"success": true, "message": "Mot de passe change.", "token": token}, nil
 }
 
 func (d *Deps) legacyForgotPassword(ctx context.Context, email string) (map[string]any, error) {
@@ -368,7 +375,7 @@ func (d *Deps) legacyResetPassword(ctx context.Context, token, newPassword strin
 	}
 
 	_, err = db.Collection(models.UsersCollection).UpdateOne(ctx, bson.M{"_id": user.ID}, bson.M{
-		"$set":   bson.M{"passwordHash": storedPassword, "updatedAt": time.Now()},
+		"$set":   bson.M{"passwordHash": storedPassword, "sessionsValidAfter": models.RevokeSessionsNow(), "updatedAt": time.Now()},
 		"$unset": bson.M{"resetToken": "", "resetTokenExpiration": ""},
 	})
 	if err != nil {

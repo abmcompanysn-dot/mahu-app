@@ -52,7 +52,7 @@ func (d *Deps) LegacyPost(w http.ResponseWriter, r *http.Request) {
 		// staff actions (card/reseller management) without a separate
 		// re-implementation. Synthesized, not persisted: an authenticated
 		// AdminUser is already fully trusted (it's what gates /api/admin/*).
-		if claims, err := authutil.VerifyAdminToken(d.Env.JWTSecret, token); err == nil {
+		if claims, err := authutil.VerifyAdminToken(d.Env.JWTSecret, token); err == nil && claims.MFA {
 			user = &models.User{Email: claims.Email, Role: models.RoleAdmin}
 		}
 	}

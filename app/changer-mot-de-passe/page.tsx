@@ -6,7 +6,7 @@ import { Eye, EyeOff, Loader2, Lock, ShieldCheck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { api } from "@/lib/api"
-import { MUST_CHANGE_PASSWORD_KEY } from "@/contexts/auth-context"
+import { MUST_CHANGE_PASSWORD_KEY, useAuth } from "@/contexts/auth-context"
 
 // Premiere connexion d'un compte livre avec le mot de passe provisoire
 // (mahu1234@, guide glisse avec la carte) : le client choisit le sien avant
@@ -19,6 +19,7 @@ export default function ChangePasswordPage() {
   const [show, setShow] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const { hydrateFromToken } = useAuth()
 
   useEffect(() => {
     if (!localStorage.getItem("mahu_token")) router.replace("/login")
@@ -35,6 +36,10 @@ export default function ChangePasswordPage() {
     try {
       const res = await api.changePassword(token, current, next)
       if (res.success) {
+        // Le serveur coupe les anciennes sessions apres un changement de mot de
+        // passe et renvoie un nouveau jeton pour garder cet appareil connecte.
+        const newToken = (res as { token?: string }).token
+        if (newToken) hydrateFromToken(newToken, localStorage.getItem("mahu_role") || "user")
         localStorage.removeItem(MUST_CHANGE_PASSWORD_KEY)
         router.replace("/dashboard")
         return

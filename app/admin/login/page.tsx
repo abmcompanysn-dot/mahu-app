@@ -22,7 +22,8 @@ export default function AdminLoginPage() {
 
     const result = await login(email.toLowerCase().trim(), password)
     if (result.success && !result.twoFactorRequired) {
-      router.push("/admin")
+      // 2FA obligatoire : premier passage par la page Securite pour l'activer.
+      router.push(result.twoFactorSetupRequired ? "/admin/security" : "/admin")
     } else if (!result.success) {
       setError(result.error || "Identifiants incorrects")
     }

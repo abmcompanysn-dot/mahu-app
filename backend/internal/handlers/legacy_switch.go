@@ -45,7 +45,9 @@ func (d *Deps) runLegacyAction(ctx context.Context, action string, payload map[s
 	case "checkCardStatus":
 		return d.legacyCheckCardStatus(ctx, payload)
 	case "quickRegisterAndActivate":
-		return d.legacyQuickRegisterAndActivate(ctx, payload)
+		// Ancienne action v1 (aucune page ne l'appelle) : creait un compte sans
+		// code de carte paye et pouvait s'attribuer n'importe quelle carte.
+		return map[string]any{"success": false, "error": "Action desactivee. Activez votre carte depuis la page d'inscription."}, nil
 	case "saveCustomCardOrder":
 		return d.legacySaveCustomCardOrder(ctx, payload)
 	case "saveStoreOrder":
@@ -90,6 +92,10 @@ func (d *Deps) runLegacyAction(ctx context.Context, action string, payload map[s
 	case "setModuleState":
 		d.legacySetModuleState(ctx, str(payload, "moduleName"), boolField(payload, "isEnabled"), user)
 		return map[string]any{"success": true}, nil
+	case "getUploadSignature":
+		// Envoi de photo/video sur Cloudinary : signe par le serveur pour un
+		// utilisateur connecte (signed=false tant que le secret n'est pas configure).
+		return d.legacyUploadSignature(), nil
 	case "getPublicProfileUrl":
 		return d.legacyGetPublicProfileUrl(user), nil
 	case "logout":

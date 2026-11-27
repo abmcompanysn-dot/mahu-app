@@ -49,6 +49,12 @@ func (d *Deps) SocialLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	email = strings.ToLower(email)
+	// Google confirme toujours l'email : on refuse un email non verifie, sinon
+	// n'importe qui pourrait se faire passer pour le proprietaire d'un compte.
+	if verified, _ := decoded.Claims["email_verified"].(bool); provider == "google.com" && !verified {
+		httpx.WriteJSON(w, http.StatusForbidden, map[string]any{"success": false, "error": "Email Google non verifie"})
+		return
+	}
 
 	col := db.Collection(models.UsersCollection)
 
@@ -74,6 +80,12 @@ func (d *Deps) SocialLogin(w http.ResponseWriter, r *http.Request) {
 				hasProvider = true
 				break
 			}
+		}
+		if !hasProvider && d.Env.IsSuperAdmin(email) {
+			// Compte avec droits staff : pas de rattachement automatique d'un
+			// nouveau compte Google/Facebook, connexion par mot de passe.
+			httpx.WriteJSON(w, http.StatusForbidden, map[string]any{"success": false, "error": "Connectez-vous avec votre mot de passe."})
+			return
 		}
 		if !hasProvider {
 			user.Providers = append(user.Providers, models.Provider{Provider: provider, ProviderUID: decoded.UID})

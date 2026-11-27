@@ -31,7 +31,7 @@ func (d *Deps) AdminResetPasswordToDefault(w http.ResponseWriter, r *http.Reques
 	}
 	ctx := r.Context()
 	res, err := db.Collection(models.UsersCollection).UpdateOne(ctx, bson.M{"_id": userID}, bson.M{
-		"$set":   bson.M{"passwordHash": stored, "mustChangePassword": true, "updatedAt": time.Now()},
+		"$set":   bson.M{"passwordHash": stored, "mustChangePassword": true, "sessionsValidAfter": models.RevokeSessionsNow(), "updatedAt": time.Now()},
 		"$unset": bson.M{"resetToken": "", "resetTokenExpiration": ""},
 	})
 	if err != nil {

@@ -505,10 +505,11 @@ func (d *Deps) SetUserDisabled(w http.ResponseWriter, r *http.Request, userIDHex
 	}
 
 	ctx := r.Context()
-	res, err := db.Collection(models.UsersCollection).UpdateOne(ctx, bson.M{"_id": userID}, bson.M{"$set": bson.M{
-		"disabled":  req.Disabled,
-		"updatedAt": time.Now(),
-	}})
+	set := bson.M{"disabled": req.Disabled, "updatedAt": time.Now()}
+	if req.Disabled {
+		set["sessionsValidAfter"] = models.RevokeSessionsNow() // deconnecte tout de suite
+	}
+	res, err := db.Collection(models.UsersCollection).UpdateOne(ctx, bson.M{"_id": userID}, bson.M{"$set": set})
 	if err != nil {
 		httpx.WriteError(w, http.StatusInternalServerError, "Erreur serveur")
 		return

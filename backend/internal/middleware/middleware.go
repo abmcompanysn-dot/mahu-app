@@ -5,9 +5,59 @@ import (
 	"net/http"
 	"strings"
 
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
+
 	"mahu-backend/internal/authutil"
+	"mahu-backend/internal/db"
 	"mahu-backend/internal/httpx"
+	"mahu-backend/internal/models"
 )
+
+// adminMFASetupAllowed : un jeton admin obtenu sans code 2FA ne sert qu'a
+// activer la 2FA (obligatoire). Si l'admin l'a deja activee, il doit se
+// reconnecter (anciens jetons emis avant cette regle).
+func adminMFASetupAllowed(w http.ResponseWriter, r *http.Request, claims *authutil.AdminClaims) bool {
+	id, err := primitive.ObjectIDFromHex(claims.Sub())
+	if err != nil || db.DB == nil {
+		httpx.WriteError(w, http.StatusUnauthorized, "Invalid or expired token")
+		return false
+	}
+	var a models.AdminUser
+	opts := options.FindOne().SetProjection(bson.M{"totpEnabled": 1})
+	if err := db.Collection(models.AdminUsersCollection).FindOne(r.Context(), bson.M{"_id": id}, opts).Decode(&a); err != nil {
+		httpx.WriteError(w, http.StatusUnauthorized, "Invalid or expired token")
+		return false
+	}
+	if a.TOTPEnabled {
+		httpx.WriteError(w, http.StatusUnauthorized, "Session expiree, reconnectez-vous avec votre code 2FA")
+		return false
+	}
+	if r.Method == http.MethodPost && (r.URL.Path == "/api/admin/2fa/setup" || r.URL.Path == "/api/admin/2fa/confirm") {
+		return true
+	}
+	httpx.WriteJSON(w, http.StatusForbidden, map[string]any{
+		"error": "Activez la double authentification (2FA) pour acceder a l'admin.",
+		"code":  "2FA_SETUP_REQUIRED",
+	})
+	return false
+}
+
+// userSessionValid verifie en base que le compte n'est pas desactive et que la
+// session n'a pas ete coupee (mot de passe change) depuis l'emission du jeton.
+func userSessionValid(ctx context.Context, claims *authutil.UserClaims) bool {
+	id, err := primitive.ObjectIDFromHex(claims.Sub())
+	if err != nil || claims.IssuedAt == nil || db.DB == nil {
+		return false
+	}
+	var u models.User
+	opts := options.FindOne().SetProjection(bson.M{"disabled": 1, "sessionsValidAfter": 1})
+	if err := db.Collection(models.UsersCollection).FindOne(ctx, bson.M{"_id": id}, opts).Decode(&u); err != nil {
+		return false
+	}
+	return u.SessionValid(claims.IssuedAt.Time)
+}
 
 type ctxKey string
 
@@ -53,6 +103,9 @@ func RequireAdminAuth(jwtSecret string) func(http.Handler) http.Handler {
 				httpx.WriteError(w, http.StatusUnauthorized, "Invalid or expired token")
 				return
 			}
+			if !claims.MFA && !adminMFASetupAllowed(w, r, claims) {
+				return
+			}
 			ctx := context.WithValue(r.Context(), adminCtxKey, claims)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
@@ -70,6 +123,10 @@ func RequireUserAuth(jwtSecret string) func(http.Handler) http.Handler {
 			claims, err := authutil.VerifyUserToken(jwtSecret, token)
 			if err != nil {
 				httpx.WriteError(w, http.StatusUnauthorized, "Invalid or expired token")
+				return
+			}
+			if !userSessionValid(r.Context(), claims) {
+				httpx.WriteError(w, http.StatusUnauthorized, "Session expiree, reconnectez-vous")
 				return
 			}
 			ctx := context.WithValue(r.Context(), userCtxKey, claims)

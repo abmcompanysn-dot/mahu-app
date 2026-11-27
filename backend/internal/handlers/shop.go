@@ -233,7 +233,7 @@ func (d *Deps) CreateDepositCheckout(w http.ResponseWriter, r *http.Request) {
 	if existing, err := findUserByEmail(ctx, req.Email); err != nil {
 		httpx.WriteError(w, http.StatusInternalServerError, "Erreur serveur")
 		return
-	} else if existing != nil {
+	} else if existing != nil || d.Env.IsSuperAdmin(req.Email) {
 		httpx.WriteError(w, http.StatusBadRequest, signupEmailRefused)
 		return
 	}
@@ -380,7 +380,7 @@ func (d *Deps) CreateCodeCheckout(w http.ResponseWriter, r *http.Request) {
 	if existing, err := findUserByEmail(ctx, req.Email); err != nil {
 		httpx.WriteError(w, http.StatusInternalServerError, "Erreur serveur")
 		return
-	} else if existing != nil {
+	} else if existing != nil || d.Env.IsSuperAdmin(req.Email) {
 		httpx.WriteError(w, http.StatusBadRequest, signupEmailRefused)
 		return
 	}

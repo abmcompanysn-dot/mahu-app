@@ -69,14 +69,16 @@ func (d *Deps) AdminLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := authutil.SignAdminToken(d.Env.JWTSecret, admin.ID.Hex(), admin.Email, admin.Role)
+	// 2FA pas encore activee : jeton limite a son activation (obligatoire).
+	token, err := authutil.SignAdminToken(d.Env.JWTSecret, admin.ID.Hex(), admin.Email, admin.Role, false)
 	if err != nil {
 		httpx.WriteError(w, http.StatusInternalServerError, "Erreur serveur")
 		return
 	}
 
 	httpx.WriteJSON(w, http.StatusOK, map[string]any{
-		"token": token,
+		"twoFactorSetupRequired": true,
+		"token":                  token,
 		"admin": map[string]any{
 			"id":    admin.ID.Hex(),
 			"email": admin.Email,

@@ -1,15 +1,17 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import QRCode from "qrcode"
-import { Loader2, ShieldCheck, ShieldOff } from "lucide-react"
+import { Loader2, ShieldCheck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useAdminAuth } from "@/contexts/admin-auth-context"
 import { adminApi } from "@/lib/admin-api"
 
 export default function AdminSecurityPage() {
-  const { token, admin } = useAdminAuth()
+  const { token, admin, replaceToken } = useAdminAuth()
+  const router = useRouter()
   const [enrolling, setEnrolling] = useState(false)
   const [secret, setSecret] = useState("")
   const [qrDataUrl, setQrDataUrl] = useState("")
@@ -41,28 +43,16 @@ export default function AdminSecurityPage() {
     setBusy(true)
     setError("")
     try {
-      await adminApi.confirm2fa(token, code)
+      const res = await adminApi.confirm2fa(token, code)
+      if (res.token) replaceToken(res.token)
       setEnrolling(false)
-      setMessage("2FA activee avec succes.")
+      setMessage("2FA activee avec succes. Ouverture de l'admin...")
+      setTimeout(() => router.push("/admin"), 1200)
       setCode("")
       setSecret("")
       setQrDataUrl("")
     } catch (err) {
       setError(err instanceof Error ? err.message : "Code invalide")
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  const disable2fa = async () => {
-    if (!token) return
-    setBusy(true)
-    setError("")
-    try {
-      await adminApi.disable2fa(token)
-      setMessage("2FA desactivee.")
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur")
     } finally {
       setBusy(false)
     }
@@ -88,10 +78,11 @@ export default function AdminSecurityPage() {
                   {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4 mr-2" />}
                   Activer la 2FA
                 </Button>
-                <Button variant="outline" onClick={disable2fa} disabled={busy}>
-                  <ShieldOff className="w-4 h-4 mr-2" />
-                  Desactiver la 2FA
-                </Button>
+                <p className="text-sm text-muted-foreground">
+                  Obligatoire pour l&apos;admin : a chaque connexion, en plus du mot de passe, vous tapez le code a 6
+                  chiffres de votre application (Google Authenticator, Authy...). Si elle est deja active, ignorez ce
+                  bouton.
+                </p>
               </div>
             ) : (
               <form onSubmit={confirmEnrollment} className="space-y-4">

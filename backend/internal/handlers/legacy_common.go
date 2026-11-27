@@ -34,6 +34,9 @@ func (d *Deps) legacyUser(ctx context.Context, token string) (*models.User, erro
 	if err := db.Collection(models.UsersCollection).FindOne(ctx, bson.M{"_id": userID}).Decode(&user); err != nil {
 		return nil, nil
 	}
+	if claims.IssuedAt == nil || !user.SessionValid(claims.IssuedAt.Time) {
+		return nil, nil // compte desactive ou session coupee (mot de passe change)
+	}
 	return &user, nil
 }
 

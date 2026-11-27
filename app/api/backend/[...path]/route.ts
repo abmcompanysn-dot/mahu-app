@@ -12,7 +12,14 @@ async function forward(request: NextRequest, path: string[]) {
     )
   }
 
-  const targetUrl = new URL(`/${path.join("/")}`, BACKEND_URL)
+  // Chaque segment est re-encode : Next.js decode « %2F » en « / » dans les
+  // segments, et « /%2Fautre-site.com/... » ferait sinon partir la requete
+  // (avec la cle de service) vers un autre serveur. On verifie aussi l'origine.
+  const backendOrigin = new URL(BACKEND_URL).origin
+  const targetUrl = new URL(`/${path.map((segment) => encodeURIComponent(segment)).join("/")}`, backendOrigin)
+  if (targetUrl.origin !== backendOrigin || path.some((segment) => segment === "." || segment === "..")) {
+    return NextResponse.json({ success: false, error: "Chemin invalide" }, { status: 400 })
+  }
   request.nextUrl.searchParams.forEach((value, key) => {
     targetUrl.searchParams.set(key, value)
   })

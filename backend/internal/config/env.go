@@ -80,6 +80,11 @@ type Env struct {
 	// photo/cover uploads, replacing the previous Google Drive upload.
 	CloudinaryCloudName    string
 	CloudinaryUploadPreset string
+	// Envois signes (optionnels) : avec la cle API + le secret Cloudinary, le
+	// backend signe chaque envoi d'un utilisateur connecte, et le preset peut
+	// passer en mode « Signed » (plus d'envoi anonyme). Vides = mode non signe.
+	CloudinaryAPIKey    string
+	CloudinaryAPISecret string
 
 	// Alibaba Cloud Model Studio (Qwen). DashscopeAPIBase is the OpenAI-
 	// compatible endpoint (used by litellm/config.yaml for chat/vision).
@@ -244,6 +249,8 @@ func Load() (*Env, error) {
 
 		CloudinaryCloudName:    getDefault("CLOUDINARY_CLOUD_NAME", "dl3cdiz6k"),
 		CloudinaryUploadPreset: getDefault("CLOUDINARY_UPLOAD_PRESET", "mahucards"),
+		CloudinaryAPIKey:       getDefault("CLOUDINARY_API_KEY", ""),
+		CloudinaryAPISecret:    getDefault("CLOUDINARY_API_SECRET", ""),
 
 		DashscopeAPIKey:  getDefault("DASHSCOPE_API_KEY", ""),
 		DashscopeAPIBase: getDefault("DASHSCOPE_API_BASE", ""),

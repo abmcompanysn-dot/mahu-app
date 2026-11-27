@@ -67,7 +67,7 @@ func (d *Deps) Verify2FA(w http.ResponseWriter, r *http.Request) {
 	}
 	limitAdmin2FA.reset(ctx, admin.ID.Hex())
 
-	token, err := authutil.SignAdminToken(d.Env.JWTSecret, admin.ID.Hex(), admin.Email, admin.Role)
+	token, err := authutil.SignAdminToken(d.Env.JWTSecret, admin.ID.Hex(), admin.Email, admin.Role, true)
 	if err != nil {
 		httpx.WriteError(w, http.StatusInternalServerError, "Erreur serveur")
 		return
@@ -109,12 +109,17 @@ func (d *Deps) Setup2FA(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
-	_, err = db.Collection(models.AdminUsersCollection).UpdateOne(ctx, bson.M{"_id": adminID}, bson.M{"$set": bson.M{
-		"totpSecret":  key.Secret(),
-		"totpEnabled": false,
-	}})
+	// Jamais sur une 2FA deja active : sinon cliquer « Activer » la coupait
+	// (totpEnabled repassait a false) jusqu'a la confirmation.
+	res, err := db.Collection(models.AdminUsersCollection).UpdateOne(ctx,
+		bson.M{"_id": adminID, "totpEnabled": bson.M{"$ne": true}},
+		bson.M{"$set": bson.M{"totpSecret": key.Secret(), "totpEnabled": false}})
 	if err != nil {
 		httpx.WriteError(w, http.StatusInternalServerError, "Erreur serveur")
+		return
+	}
+	if res.MatchedCount == 0 {
+		httpx.WriteError(w, http.StatusConflict, "La 2FA est deja active sur ce compte.")
 		return
 	}
 
@@ -157,7 +162,7 @@ func (d *Deps) Confirm2FA(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if admin.TOTPSecret == "" || !totp.Validate(req.Code, admin.TOTPSecret) {
-		httpx.WriteError(w, http.StatusUnauthorized, "Code invalide")
+		httpx.WriteError(w, http.StatusBadRequest, "Code invalide")
 		return
 	}
 
@@ -169,33 +174,18 @@ func (d *Deps) Confirm2FA(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	httpx.WriteJSON(w, http.StatusOK, map[string]any{"success": true})
-}
-
-// Disable2FA turns 2FA back off for the logged-in admin (they're already
-// authenticated via RequireAdminAuth, which today only ever issues a token
-// after either a plain password check or a completed 2FA challenge).
-func (d *Deps) Disable2FA(w http.ResponseWriter, r *http.Request) {
-	claims, ok := middleware.Admin(r)
-	if !ok {
-		httpx.WriteError(w, http.StatusUnauthorized, "Unauthorized")
-		return
-	}
-	adminID, err := primitive.ObjectIDFromHex(claims.Sub())
-	if err != nil {
-		httpx.WriteError(w, http.StatusUnauthorized, "Invalid token")
-		return
-	}
-
-	ctx := r.Context()
-	_, err = db.Collection(models.AdminUsersCollection).UpdateOne(ctx, bson.M{"_id": adminID}, bson.M{"$set": bson.M{
-		"totpSecret":  "",
-		"totpEnabled": false,
-	}})
+	// Code verifie : nouveau jeton complet, l'admin continue sans se reconnecter.
+	token, err := authutil.SignAdminToken(d.Env.JWTSecret, admin.ID.Hex(), admin.Email, admin.Role, true)
 	if err != nil {
 		httpx.WriteError(w, http.StatusInternalServerError, "Erreur serveur")
 		return
 	}
+	httpx.WriteJSON(w, http.StatusOK, map[string]any{"success": true, "token": token})
+}
 
-	httpx.WriteJSON(w, http.StatusOK, map[string]any{"success": true})
+// Disable2FA : refuse. La 2FA est obligatoire pour l'admin (acces a toute la
+// base, export...). Pour changer de telephone, la reinitialiser depuis le
+// serveur (champ totpEnabled de l'admin dans Mongo, ou cmd/seedadmin).
+func (d *Deps) Disable2FA(w http.ResponseWriter, r *http.Request) {
+	httpx.WriteError(w, http.StatusForbidden, "La double authentification est obligatoire pour l'admin.")
 }

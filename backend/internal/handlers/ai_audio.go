@@ -72,7 +72,7 @@ func synthesizeSpeech(env *config.Env, text string) ([]byte, error) {
 		if msg == "" {
 			msg = "Echec de synthese vocale"
 		}
-		return nil, fmt.Errorf(msg)
+		return nil, fmt.Errorf("%s", msg)
 	}
 
 	audioResp, err := http.Get(result.Output.Audio.URL)

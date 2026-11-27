@@ -9,6 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
+	"mahu-backend/internal/cloudinaryutil"
 	"mahu-backend/internal/db"
 	"mahu-backend/internal/models"
 )
@@ -352,4 +353,15 @@ func publicProfileView(data map[string]any) map[string]any {
 		}
 	}
 	return view
+}
+
+// legacyUploadSignature renvoie les champs a joindre a un envoi Cloudinary
+// depuis le navigateur (voir lib/cloudinary.ts). Sans secret configure :
+// signed=false et le site envoie comme avant (preset non signe).
+func (d *Deps) legacyUploadSignature() map[string]any {
+	if !cloudinaryutil.Signed(d.Env) {
+		return map[string]any{"success": true, "signed": false}
+	}
+	return map[string]any{"success": true, "signed": true, "cloudName": d.Env.CloudinaryCloudName,
+		"params": cloudinaryutil.UploadParams(d.Env)}
 }

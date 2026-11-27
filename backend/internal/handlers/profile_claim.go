@@ -108,7 +108,7 @@ func (d *Deps) legacyActivateBlankCard(ctx context.Context, payload map[string]a
 	if err != nil {
 		return nil, err
 	}
-	if existing != nil {
+	if existing != nil || d.Env.IsSuperAdmin(email) {
 		return map[string]any{"success": false, "error": signupEmailRefused}, nil
 	}
 

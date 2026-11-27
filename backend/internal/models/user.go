@@ -40,6 +40,11 @@ type User struct {
 	// biometric) but keep their data, unlike a delete.
 	Disabled bool `bson:"disabled,omitempty" json:"disabled,omitempty"`
 
+	// Les jetons emis avant cette date sont refuses : mis a jour quand le mot
+	// de passe change (client, oubli, admin) ou quand le compte est desactive,
+	// pour couper les sessions deja ouvertes (jetons valables 30 jours).
+	SessionsValidAfter *time.Time `bson:"sessionsValidAfter,omitempty" json:"-"`
+
 	// Blank card activation (handlers/profile_claim.go): the admin confirms
 	// each one by email; unconfirmed after the deadline, the account is
 	// disabled and its public profile hidden.
@@ -71,3 +76,18 @@ const (
 func (u *User) IDHex() string {
 	return u.ID.Hex()
 }
+
+// SessionValid dit si un jeton emis a issuedAt est encore accepte pour ce compte.
+func (u *User) SessionValid(issuedAt time.Time) bool {
+	if u.Disabled {
+		return false
+	}
+	if u.SessionsValidAfter != nil && issuedAt.Before(u.SessionsValidAfter.Truncate(time.Second)) {
+		return false
+	}
+	return true
+}
+
+// RevokeSessionsNow : valeur a enregistrer dans sessionsValidAfter (a la seconde,
+// comme le champ iat des jetons).
+func RevokeSessionsNow() time.Time { return time.Now().Truncate(time.Second) }

@@ -11,6 +11,9 @@ type AdminClaims struct {
 	Type  string `json:"type"`
 	Email string `json:"email"`
 	Role  string `json:"role"`
+	// MFA : le jeton a ete obtenu avec le code 2FA. Sans lui, l'admin ne peut
+	// qu'activer sa 2FA (obligatoire) - voir middleware.RequireAdminAuth.
+	MFA bool `json:"mfa,omitempty"`
 	jwt.RegisteredClaims
 }
 
@@ -24,10 +27,11 @@ type UserClaims struct {
 func (c *AdminClaims) Sub() string { return c.RegisteredClaims.Subject }
 func (c *UserClaims) Sub() string  { return c.RegisteredClaims.Subject }
 
-func SignAdminToken(secret, sub, email, role string) (string, error) {
+func SignAdminToken(secret, sub, email, role string, mfa bool) (string, error) {
 	now := time.Now()
 	claims := AdminClaims{
 		Type:  "admin",
+		MFA:   mfa,
 		Email: email,
 		Role:  role,
 		RegisteredClaims: jwt.RegisteredClaims{
